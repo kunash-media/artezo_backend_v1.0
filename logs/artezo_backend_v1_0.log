@@ -1,0 +1,814 @@
+2026-03-04T11:12:10.743+05:30  INFO 11884 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 11884 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T11:12:10.751+05:30  INFO 11884 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T11:12:10.837+05:30  INFO 11884 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T11:12:10.838+05:30  INFO 11884 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T11:12:10.838+05:30  INFO 11884 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T11:12:12.246+05:30  INFO 11884 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T11:12:12.366+05:30  INFO 11884 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 102 ms. Found 4 JPA repository interfaces.
+2026-03-04T11:12:13.284+05:30  INFO 11884 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T11:12:13.307+05:30  INFO 11884 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T11:12:13.307+05:30  INFO 11884 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T11:12:13.374+05:30  INFO 11884 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2535 ms
+2026-03-04T11:12:13.702+05:30  INFO 11884 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T11:12:13.805+05:30  INFO 11884 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T11:12:14.577+05:30  INFO 11884 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T11:12:14.620+05:30  INFO 11884 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T11:12:14.861+05:30  INFO 11884 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@14b2a4c2
+2026-03-04T11:12:14.863+05:30  INFO 11884 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T11:12:14.974+05:30  INFO 11884 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T11:12:16.390+05:30  INFO 11884 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T11:12:16.569+05:30  INFO 11884 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T11:12:16.703+05:30  INFO 11884 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T11:12:17.243+05:30  INFO 11884 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T11:12:17.269+05:30  WARN 11884 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T11:12:17.520+05:30 DEBUG 11884 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 16 mappings in 'requestMappingHandlerMapping'
+2026-03-04T11:12:17.559+05:30 DEBUG 11884 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T11:12:17.565+05:30  INFO 11884 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 7.517 seconds (process running for 9.296)
+2026-03-04T11:30:04.706+05:30  INFO 11884 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T11:30:04.711+05:30  INFO 11884 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T11:30:04.714+05:30  INFO 11884 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T11:30:04.719+05:30  INFO 11884 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T11:30:04.731+05:30  INFO 11884 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T14:55:57.142+05:30  INFO 8572 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 8572 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T14:55:57.148+05:30  INFO 8572 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T14:55:57.272+05:30  INFO 8572 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T14:55:57.273+05:30  INFO 8572 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T14:55:57.274+05:30  INFO 8572 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T14:55:59.296+05:30  INFO 8572 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T14:55:59.486+05:30  INFO 8572 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 151 ms. Found 4 JPA repository interfaces.
+2026-03-04T14:56:00.893+05:30  INFO 8572 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T14:56:00.933+05:30  INFO 8572 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T14:56:00.933+05:30  INFO 8572 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T14:56:01.031+05:30  INFO 8572 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 3755 ms
+2026-03-04T14:56:01.443+05:30  INFO 8572 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T14:56:01.571+05:30  INFO 8572 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T14:56:02.872+05:30  INFO 8572 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T14:56:02.941+05:30  INFO 8572 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T14:56:03.428+05:30  INFO 8572 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7bc447ec
+2026-03-04T14:56:03.433+05:30  INFO 8572 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T14:56:03.704+05:30  INFO 8572 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T14:56:06.239+05:30  INFO 8572 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T14:56:07.779+05:30  INFO 8572 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T14:56:08.080+05:30  INFO 8572 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T14:56:08.787+05:30  INFO 8572 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T14:56:08.833+05:30  WARN 8572 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T14:56:09.189+05:30 DEBUG 8572 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 16 mappings in 'requestMappingHandlerMapping'
+2026-03-04T14:56:09.236+05:30 DEBUG 8572 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T14:56:09.243+05:30  INFO 8572 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 13.274 seconds (process running for 14.546)
+2026-03-04T14:57:22.494+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-04T14:57:22.497+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-03-04T14:57:22.502+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2026-03-04T14:57:22.508+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2026-03-04T14:57:22.582+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 2 RequestBodyAdvice, 1 ResponseBodyAdvice
+2026-03-04T14:57:22.728+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2026-03-04T14:57:22.735+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@214e21b8
+2026-03-04T14:57:22.751+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@3cb58ace
+2026-03-04T14:57:22.751+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2026-03-04T14:57:22.751+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 253 ms
+2026-03-04T14:57:22.776+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/products/create-product", parameters={multipart}
+2026-03-04T14:57:23.249+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#createProduct(CreateProductRequestDto, MultipartFile, List, List, List, List, List)
+2026-03-04T14:57:23.582+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] .m.m.a.RequestPartMethodArgumentResolver : Read "application/json" to [com.artezo.dto.request.CreateProductRequestDto@769ec04e]
+2026-03-04T14:57:23.612+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.artezo.controller.ProductController    : Creating product: name = Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants = true
+2026-03-04T14:57:23.793+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Creating product → name: Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants: true
+2026-03-04T14:57:28.420+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Product created → id: 1, strId: PRD00001
+2026-03-04T14:57:34.458+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Saved 3 installation steps for product 1
+2026-03-04T14:57:34.633+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for root SKU: ART-WPLATE-GLD, stock: 150
+2026-03-04T14:57:34.648+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for variant SKU: ART-WPLATE-GLD, stock: 150
+2026-03-04T14:57:34.673+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for variant SKU: ART-WPLATE-BLK, stock: 85
+2026-03-04T14:57:37.987+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T14:57:37.988+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.ProductResponseDto@4b67bd71]
+2026-03-04T14:57:38.155+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2026-03-04T14:59:07.609+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T14:59:07.610+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T14:59:07.633+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-5] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T14:59:07.881+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T14:59:07.884+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T14:59:07.926+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T14:59:43.823+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/2", parameters={}
+2026-03-04T14:59:43.825+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T14:59:43.827+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-6] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 2
+2026-03-04T14:59:43.847+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [*/*, application/json, application/*+json]
+2026-03-04T14:59:43.848+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Nothing to write: null body
+2026-03-04T14:59:43.849+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
+2026-03-04T14:59:54.704+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T14:59:54.707+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T14:59:54.708+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-7] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T14:59:54.740+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T14:59:54.740+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T14:59:54.760+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T15:00:44.975+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:00:44.983+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:00:44.991+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-8] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:00:45.118+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:00:45.118+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:00:45.234+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/.well-known/appspecific/com.chrome.devtools.json", parameters={}
+2026-03-04T15:00:45.240+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
+2026-03-04T15:00:45.246+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+2026-03-04T15:00:45.251+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource .well-known/appspecific/com.chrome.devtools.json for request '/.well-known/appspecific/com.chrome.devtools.json'.]
+2026-03-04T15:00:45.252+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
+2026-03-04T15:00:45.260+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
+2026-03-04T15:00:45.276+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.webmvc.autoconfigure.error.BasicErrorController#error(HttpServletRequest)
+2026-03-04T15:00:45.280+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T15:00:45.280+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Wed Mar 04 15:00:45 IST 2026, status=404, error=Not Found, trace=org.springframework.web. (truncated)...]
+2026-03-04T15:00:45.290+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
+2026-03-04T15:00:45.308+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.handler.DisconnectedClient       : Looks like the client has gone away: org.springframework.web.context.request.async.AsyncRequestNotUsableException: ServletOutputStream failed to write: java.io.IOException: An established connection was aborted by the software in your host machine (For a full stack trace, set the log category 'org.apache.commons.logging.impl.Slf4jLogFactory$Slf4jLocationAwareLog@68f8fcb6' to TRACE level.)
+2026-03-04T15:00:45.309+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T15:00:45.332+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-10] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:00:45.334+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:00:45.342+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-10] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:00:45.387+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:00:45.387+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:00:45.403+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-10] o.s.w.s.handler.DisconnectedClient       : Looks like the client has gone away: org.springframework.web.context.request.async.AsyncRequestNotUsableException: ServletOutputStream failed to write: java.io.IOException: An established connection was aborted by the software in your host machine (For a full stack trace, set the log category 'org.apache.commons.logging.impl.Slf4jLogFactory$Slf4jLocationAwareLog@68f8fcb6' to TRACE level.)
+2026-03-04T15:00:45.405+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 206 PARTIAL_CONTENT
+2026-03-04T15:00:45.408+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:00:45.410+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:00:45.411+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-2] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:00:45.447+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:00:45.447+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:00:45.447+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 206 PARTIAL_CONTENT
+2026-03-04T15:00:46.885+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:00:46.886+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:00:46.890+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-1] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:00:46.930+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:00:46.930+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:00:46.981+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 206 PARTIAL_CONTENT
+2026-03-04T15:01:02.475+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:01:02.480+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:01:02.485+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-4] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:01:02.587+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:01:02.590+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:01:02.800+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/.well-known/appspecific/com.chrome.devtools.json", parameters={}
+2026-03-04T15:01:02.808+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
+2026-03-04T15:01:02.820+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+2026-03-04T15:01:02.820+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource .well-known/appspecific/com.chrome.devtools.json for request '/.well-known/appspecific/com.chrome.devtools.json'.]
+2026-03-04T15:01:02.820+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
+2026-03-04T15:01:02.825+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
+2026-03-04T15:01:02.826+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.webmvc.autoconfigure.error.BasicErrorController#error(HttpServletRequest)
+2026-03-04T15:01:02.827+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T15:01:02.827+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Wed Mar 04 15:01:02 IST 2026, status=404, error=Not Found, trace=org.springframework.web. (truncated)...]
+2026-03-04T15:01:02.833+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
+2026-03-04T15:01:02.885+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.handler.DisconnectedClient       : Looks like the client has gone away: org.springframework.web.context.request.async.AsyncRequestNotUsableException: ServletOutputStream failed to write: java.io.IOException: An established connection was aborted by the software in your host machine (For a full stack trace, set the log category 'org.apache.commons.logging.impl.Slf4jLogFactory$Slf4jLocationAwareLog@68f8fcb6' to TRACE level.)
+2026-03-04T15:01:02.890+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T15:01:02.902+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:01:02.908+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:01:02.912+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-6] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:01:02.983+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:01:02.983+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:01:02.994+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:01:02.995+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:01:02.995+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.w.s.handler.DisconnectedClient       : Looks like the client has gone away: org.springframework.web.context.request.async.AsyncRequestNotUsableException: ServletOutputStream failed to write: java.io.IOException: An established connection was aborted by the software in your host machine (For a full stack trace, set the log category 'org.apache.commons.logging.impl.Slf4jLogFactory$Slf4jLocationAwareLog@68f8fcb6' to TRACE level.)
+2026-03-04T15:01:02.995+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-7] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:01:03.000+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 206 PARTIAL_CONTENT
+2026-03-04T15:01:03.048+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:01:03.048+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:01:03.055+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 206 PARTIAL_CONTENT
+2026-03-04T15:01:03.108+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:01:03.108+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:01:03.116+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-9] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:01:03.159+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:01:03.159+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:01:03.492+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 206 PARTIAL_CONTENT
+2026-03-04T15:01:03.594+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/favicon.ico", parameters={}
+2026-03-04T15:01:03.602+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
+2026-03-04T15:01:03.607+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+2026-03-04T15:01:03.611+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.servlet.resource.NoResourceFoundException: No static resource favicon.ico for request '/favicon.ico'.]
+2026-03-04T15:01:03.611+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
+2026-03-04T15:01:03.611+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
+2026-03-04T15:01:03.614+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.webmvc.autoconfigure.error.BasicErrorController#error(HttpServletRequest)
+2026-03-04T15:01:03.617+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json;q=0.8', given [image/avif, image/webp, image/apng, image/svg+xml, image/*, */*;q=0.8] and supported [application/json, application/*+json]
+2026-03-04T15:01:03.619+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Wed Mar 04 15:01:03 IST 2026, status=404, error=Not Found, trace=org.springframework.web. (truncated)...]
+2026-03-04T15:01:03.626+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
+2026-03-04T15:12:17.077+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:12:17.077+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:12:17.077+05:30  INFO 8572 --- [Artezo] [http-nio-8085-exec-2] c.artezo.controller.ProductController    : Streaming installation video for product 1, step 1
+2026-03-04T15:12:17.157+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:12:17.157+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:12:17.220+05:30 DEBUG 8572 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T15:29:37.314+05:30  INFO 8572 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T15:29:37.326+05:30  INFO 8572 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T15:29:37.351+05:30  INFO 8572 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T15:29:37.361+05:30  INFO 8572 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T15:29:37.368+05:30  INFO 8572 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T15:29:51.823+05:30  INFO 19072 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 19072 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T15:29:51.830+05:30  INFO 19072 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T15:29:51.955+05:30  INFO 19072 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T15:29:51.956+05:30  INFO 19072 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T15:29:51.956+05:30  INFO 19072 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T15:29:53.817+05:30  INFO 19072 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T15:29:53.981+05:30  INFO 19072 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 134 ms. Found 4 JPA repository interfaces.
+2026-03-04T15:29:55.353+05:30  INFO 19072 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T15:29:55.393+05:30  INFO 19072 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T15:29:55.394+05:30  INFO 19072 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T15:29:55.476+05:30  INFO 19072 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 3518 ms
+2026-03-04T15:29:55.961+05:30  INFO 19072 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T15:29:56.122+05:30  INFO 19072 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T15:29:57.204+05:30  INFO 19072 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T15:29:57.282+05:30  INFO 19072 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T15:29:57.590+05:30  INFO 19072 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@57d33cba
+2026-03-04T15:29:57.593+05:30  INFO 19072 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T15:29:57.800+05:30  INFO 19072 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T15:29:59.806+05:30  INFO 19072 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T15:29:59.940+05:30  INFO 19072 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T15:30:00.131+05:30  INFO 19072 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T15:30:00.704+05:30  WARN 19072 --- [Artezo] [restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'org.springframework.cache.CacheManager' available: no CacheResolver specified - register a CacheManager bean or remove the @EnableCaching annotation from your configuration.
+2026-03-04T15:30:00.706+05:30  INFO 19072 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T15:30:00.713+05:30  INFO 19072 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T15:30:00.725+05:30  INFO 19072 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T15:30:00.730+05:30  INFO 19072 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-03-04T15:30:00.750+05:30  INFO 19072 --- [Artezo] [restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-03-04T15:30:00.792+05:30 ERROR 19072 --- [Artezo] [restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+A component required a bean of type 'org.springframework.cache.CacheManager' that could not be found.
+
+
+Action:
+
+Consider defining a bean of type 'org.springframework.cache.CacheManager' in your configuration.
+
+2026-03-04T15:33:51.190+05:30  INFO 16104 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 16104 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T15:33:51.196+05:30  INFO 16104 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T15:33:51.310+05:30  INFO 16104 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T15:33:51.310+05:30  INFO 16104 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T15:33:51.311+05:30  INFO 16104 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T15:33:53.287+05:30  INFO 16104 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T15:33:53.435+05:30  INFO 16104 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 120 ms. Found 4 JPA repository interfaces.
+2026-03-04T15:33:54.904+05:30  INFO 16104 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T15:33:54.949+05:30  INFO 16104 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T15:33:54.951+05:30  INFO 16104 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T15:33:55.038+05:30  INFO 16104 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 3725 ms
+2026-03-04T15:33:55.527+05:30  INFO 16104 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T15:33:55.675+05:30  INFO 16104 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T15:33:56.699+05:30  INFO 16104 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T15:33:56.759+05:30  INFO 16104 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T15:33:57.105+05:30  INFO 16104 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3dc00d83
+2026-03-04T15:33:57.110+05:30  INFO 16104 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T15:33:57.298+05:30  INFO 16104 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T15:33:59.289+05:30  INFO 16104 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T15:33:59.505+05:30  INFO 16104 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T15:33:59.679+05:30  INFO 16104 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T15:34:00.330+05:30  INFO 16104 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T15:34:00.355+05:30  WARN 16104 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T15:34:00.701+05:30 DEBUG 16104 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 16 mappings in 'requestMappingHandlerMapping'
+2026-03-04T15:34:00.749+05:30 DEBUG 16104 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T15:34:00.755+05:30  INFO 16104 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 10.542 seconds (process running for 11.76)
+2026-03-04T15:34:07.583+05:30  INFO 16104 --- [Artezo] [http-nio-8085-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-04T15:34:07.584+05:30  INFO 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-03-04T15:34:07.594+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2026-03-04T15:34:07.599+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2026-03-04T15:34:07.743+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 2 RequestBodyAdvice, 1 ResponseBodyAdvice
+2026-03-04T15:34:07.842+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2026-03-04T15:34:07.851+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@e31f52e
+2026-03-04T15:34:07.858+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@5cde19ff
+2026-03-04T15:34:07.859+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2026-03-04T15:34:07.860+05:30  INFO 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 274 ms
+2026-03-04T15:34:07.874+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:34:07.977+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:34:09.393+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:34:09.402+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:34:09.499+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T15:34:39.794+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:34:39.797+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:34:39.835+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:34:39.837+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:34:39.896+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T15:34:46.355+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/installation-video/1", parameters={}
+2026-03-04T15:34:46.358+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#streamInstallationVideo(Long, int, String, HttpServletRequest)
+2026-03-04T15:34:46.376+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T15:34:46.377+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T15:34:46.424+05:30 DEBUG 16104 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T16:24:25.310+05:30  INFO 16104 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T16:24:25.317+05:30  INFO 16104 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T16:24:25.323+05:30  INFO 16104 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:24:25.330+05:30  INFO 16104 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T16:24:25.333+05:30  INFO 16104 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T16:27:43.152+05:30  INFO 4704 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 4704 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T16:27:43.157+05:30  INFO 4704 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T16:27:43.241+05:30  INFO 4704 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T16:27:43.242+05:30  INFO 4704 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T16:27:43.242+05:30  INFO 4704 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T16:27:44.515+05:30  INFO 4704 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T16:27:44.620+05:30  INFO 4704 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 83 ms. Found 4 JPA repository interfaces.
+2026-03-04T16:27:45.546+05:30  INFO 4704 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T16:27:45.568+05:30  INFO 4704 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T16:27:45.569+05:30  INFO 4704 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T16:27:45.639+05:30  INFO 4704 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2396 ms
+2026-03-04T16:27:45.985+05:30  INFO 4704 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T16:27:46.052+05:30  INFO 4704 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T16:27:46.730+05:30  INFO 4704 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T16:27:46.776+05:30  INFO 4704 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T16:27:46.965+05:30  INFO 4704 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@b9fd14e
+2026-03-04T16:27:46.967+05:30  INFO 4704 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T16:27:47.054+05:30  INFO 4704 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T16:27:48.311+05:30  INFO 4704 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T16:27:48.472+05:30  INFO 4704 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:27:48.614+05:30  INFO 4704 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T16:27:49.096+05:30  INFO 4704 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T16:27:49.119+05:30  WARN 4704 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T16:27:49.390+05:30 DEBUG 4704 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 17 mappings in 'requestMappingHandlerMapping'
+2026-03-04T16:27:49.426+05:30 DEBUG 4704 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T16:27:49.431+05:30  INFO 4704 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 7.063 seconds (process running for 8.053)
+2026-03-04T16:33:26.256+05:30  INFO 4704 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T16:33:26.261+05:30  INFO 4704 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T16:33:26.265+05:30  INFO 4704 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:33:26.268+05:30  INFO 4704 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T16:33:26.277+05:30  INFO 4704 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T16:33:33.225+05:30  INFO 12824 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 12824 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T16:33:33.231+05:30  INFO 12824 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T16:33:33.336+05:30  INFO 12824 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T16:33:33.337+05:30  INFO 12824 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T16:33:33.337+05:30  INFO 12824 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T16:33:34.540+05:30  INFO 12824 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T16:33:34.650+05:30  INFO 12824 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 91 ms. Found 4 JPA repository interfaces.
+2026-03-04T16:33:35.887+05:30  INFO 12824 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T16:33:35.912+05:30  INFO 12824 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T16:33:35.913+05:30  INFO 12824 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T16:33:36.003+05:30  INFO 12824 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2664 ms
+2026-03-04T16:33:36.443+05:30  INFO 12824 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T16:33:36.648+05:30  INFO 12824 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T16:33:38.221+05:30  INFO 12824 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T16:33:38.251+05:30  INFO 12824 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T16:33:38.713+05:30  INFO 12824 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@51c8a438
+2026-03-04T16:33:38.717+05:30  INFO 12824 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T16:33:38.922+05:30  INFO 12824 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T16:33:40.479+05:30  INFO 12824 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T16:33:40.582+05:30  INFO 12824 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:33:40.788+05:30  INFO 12824 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T16:33:41.470+05:30  INFO 12824 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T16:33:41.494+05:30  WARN 12824 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T16:33:41.768+05:30 DEBUG 12824 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 17 mappings in 'requestMappingHandlerMapping'
+2026-03-04T16:33:41.809+05:30 DEBUG 12824 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T16:33:41.812+05:30  INFO 12824 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 9.403 seconds (process running for 10.526)
+2026-03-04T16:34:20.112+05:30  INFO 12824 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T16:34:20.117+05:30  INFO 12824 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T16:34:20.120+05:30  INFO 12824 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:34:20.124+05:30  INFO 12824 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T16:34:20.133+05:30  INFO 12824 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T16:34:25.741+05:30  INFO 19092 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 19092 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T16:34:25.745+05:30  INFO 19092 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T16:34:25.824+05:30  INFO 19092 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T16:34:25.824+05:30  INFO 19092 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T16:34:25.824+05:30  INFO 19092 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T16:34:26.981+05:30  INFO 19092 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T16:34:27.075+05:30  INFO 19092 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 77 ms. Found 4 JPA repository interfaces.
+2026-03-04T16:34:27.947+05:30  INFO 19092 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T16:34:27.971+05:30  INFO 19092 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T16:34:27.971+05:30  INFO 19092 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T16:34:28.026+05:30  INFO 19092 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2201 ms
+2026-03-04T16:34:28.353+05:30  INFO 19092 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T16:34:28.440+05:30  INFO 19092 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T16:34:29.073+05:30  INFO 19092 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T16:34:29.118+05:30  INFO 19092 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T16:34:29.313+05:30  INFO 19092 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@b9fd14e
+2026-03-04T16:34:29.315+05:30  INFO 19092 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T16:34:29.394+05:30  INFO 19092 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T16:34:30.675+05:30  INFO 19092 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T16:34:30.765+05:30  INFO 19092 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:34:30.888+05:30  INFO 19092 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T16:34:31.368+05:30  INFO 19092 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T16:34:31.390+05:30  WARN 19092 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T16:34:31.628+05:30 DEBUG 19092 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 17 mappings in 'requestMappingHandlerMapping'
+2026-03-04T16:34:31.670+05:30 DEBUG 19092 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T16:34:31.674+05:30  INFO 19092 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 6.681 seconds (process running for 7.589)
+2026-03-04T16:38:05.946+05:30  INFO 19092 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T16:38:05.951+05:30  INFO 19092 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T16:38:05.954+05:30  INFO 19092 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:38:05.957+05:30  INFO 19092 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T16:38:05.965+05:30  INFO 19092 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T16:38:12.510+05:30  INFO 19664 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 19664 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T16:38:12.514+05:30  INFO 19664 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T16:38:12.589+05:30  INFO 19664 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T16:38:12.590+05:30  INFO 19664 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T16:38:12.590+05:30  INFO 19664 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T16:38:13.768+05:30  INFO 19664 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T16:38:13.868+05:30  INFO 19664 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 81 ms. Found 4 JPA repository interfaces.
+2026-03-04T16:38:14.747+05:30  INFO 19664 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T16:38:14.771+05:30  INFO 19664 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T16:38:14.771+05:30  INFO 19664 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T16:38:14.837+05:30  INFO 19664 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2246 ms
+2026-03-04T16:38:15.146+05:30  INFO 19664 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T16:38:15.227+05:30  INFO 19664 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T16:38:15.846+05:30  INFO 19664 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T16:38:15.889+05:30  INFO 19664 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T16:38:16.086+05:30  INFO 19664 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5d75a163
+2026-03-04T16:38:16.088+05:30  INFO 19664 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T16:38:16.178+05:30  INFO 19664 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T16:38:17.398+05:30  INFO 19664 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T16:38:18.243+05:30  INFO 19664 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:38:18.364+05:30  INFO 19664 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T16:38:18.818+05:30  INFO 19664 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T16:38:18.839+05:30  WARN 19664 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T16:38:19.087+05:30 DEBUG 19664 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 17 mappings in 'requestMappingHandlerMapping'
+2026-03-04T16:38:19.124+05:30 DEBUG 19664 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T16:38:19.129+05:30  INFO 19664 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 7.257 seconds (process running for 11.988)
+2026-03-04T16:38:35.884+05:30  INFO 19664 --- [Artezo] [http-nio-8085-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-04T16:38:35.885+05:30  INFO 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-03-04T16:38:35.887+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2026-03-04T16:38:35.889+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2026-03-04T16:38:35.922+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 2 RequestBodyAdvice, 1 ResponseBodyAdvice
+2026-03-04T16:38:35.997+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2026-03-04T16:38:36.004+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@5ddb9a9f
+2026-03-04T16:38:36.008+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@76707fd3
+2026-03-04T16:38:36.008+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2026-03-04T16:38:36.009+05:30  INFO 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 123 ms
+2026-03-04T16:38:36.021+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/products/create-product", parameters={multipart}
+2026-03-04T16:38:36.262+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#createProduct(CreateProductRequestDto, MultipartFile, List, List, List, MultipartFile, List, List)
+2026-03-04T16:38:36.410+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] .m.m.a.RequestPartMethodArgumentResolver : Read "application/json" to [com.artezo.dto.request.CreateProductRequestDto@294aeea]
+2026-03-04T16:38:36.421+05:30  INFO 19664 --- [Artezo] [http-nio-8085-exec-1] c.artezo.controller.ProductController    : Creating product: name = Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants = true
+2026-03-04T16:38:36.523+05:30  INFO 19664 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Creating product → name: Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants: true
+2026-03-04T16:38:37.869+05:30  WARN 19664 --- [Artezo] [http-nio-8085-exec-1] org.hibernate.orm.jdbc.error             : HHH000247: ErrorCode: 1406, SQLState: 22001
+2026-03-04T16:38:37.869+05:30  WARN 19664 --- [Artezo] [http-nio-8085-exec-1] org.hibernate.orm.jdbc.error             : Data truncation: Data too long for column 'product_video_data' at row 1
+2026-03-04T16:38:37.894+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Failed to complete request: org.springframework.dao.DataIntegrityViolationException: could not execute statement [Data truncation: Data too long for column 'product_video_data' at row 1] [insert into products_table (about_item,additional_info,addon_keys,brand_name,created_at,current_mrp_price,current_selling_price,current_sku,current_stock,description,faq,global_tags,has_variants,hero_banners,is_customizable,is_deleted,is_exchange,main_image_data,product_category,product_name,product_str_id,product_sub_category,product_video_data,selected_color,specifications,under_trend_category,updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)]; SQL [insert into products_table (about_item,additional_info,addon_keys,brand_name,created_at,current_mrp_price,current_selling_price,current_sku,current_stock,description,faq,global_tags,has_variants,hero_banners,is_customizable,is_deleted,is_exchange,main_image_data,product_category,product_name,product_str_id,product_sub_category,product_video_data,selected_color,specifications,under_trend_category,updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)]
+2026-03-04T16:38:37.895+05:30 ERROR 19664 --- [Artezo] [http-nio-8085-exec-1] o.a.c.c.C.[.[.[/].[dispatcherServlet]    : Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: org.springframework.dao.DataIntegrityViolationException: could not execute statement [Data truncation: Data too long for column 'product_video_data' at row 1] [insert into products_table (about_item,additional_info,addon_keys,brand_name,created_at,current_mrp_price,current_selling_price,current_sku,current_stock,description,faq,global_tags,has_variants,hero_banners,is_customizable,is_deleted,is_exchange,main_image_data,product_category,product_name,product_str_id,product_sub_category,product_video_data,selected_color,specifications,under_trend_category,updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)]; SQL [insert into products_table (about_item,additional_info,addon_keys,brand_name,created_at,current_mrp_price,current_selling_price,current_sku,current_stock,description,faq,global_tags,has_variants,hero_banners,is_customizable,is_deleted,is_exchange,main_image_data,product_category,product_name,product_str_id,product_sub_category,product_video_data,selected_color,specifications,under_trend_category,updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)]] with root cause
+
+com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Data too long for column 'product_video_data' at row 1
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:96) ~[mysql-connector-j-9.6.0.jar:9.6.0]
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988) ~[mysql-connector-j-9.6.0.jar:9.6.0]
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1166) ~[mysql-connector-j-9.6.0.jar:9.6.0]
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdateInternal(ClientPreparedStatement.java:1101) ~[mysql-connector-j-9.6.0.jar:9.6.0]
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeLargeUpdate(ClientPreparedStatement.java:1448) ~[mysql-connector-j-9.6.0.jar:9.6.0]
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeUpdate(ClientPreparedStatement.java:1084) ~[mysql-connector-j-9.6.0.jar:9.6.0]
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.executeUpdate(ProxyPreparedStatement.java:61) ~[HikariCP-7.0.2.jar:na]
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.executeUpdate(HikariProxyPreparedStatement.java) ~[HikariCP-7.0.2.jar:na]
+	at org.hibernate.engine.jdbc.internal.ResultSetReturnImpl.executeUpdate(ResultSetReturnImpl.java:181) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.id.insert.GetGeneratedKeysDelegate.performMutation(GetGeneratedKeysDelegate.java:103) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.engine.jdbc.mutation.internal.MutationExecutorSingleNonBatched.performNonBatchedOperations(MutationExecutorSingleNonBatched.java:45) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.engine.jdbc.mutation.internal.AbstractMutationExecutor.execute(AbstractMutationExecutor.java:66) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.engine.jdbc.mutation.internal.AbstractMutationExecutor.execute(AbstractMutationExecutor.java:55) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.doStaticInserts(InsertCoordinatorStandard.java:180) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.coordinateInsert(InsertCoordinatorStandard.java:120) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.insert(InsertCoordinatorStandard.java:84) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.action.internal.EntityIdentityInsertAction.execute(EntityIdentityInsertAction.java:85) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.engine.spi.ActionQueue.execute(ActionQueue.java:667) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.engine.spi.ActionQueue.addResolvedEntityInsertAction(ActionQueue.java:291) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.engine.spi.ActionQueue.addInsertAction(ActionQueue.java:270) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.engine.spi.ActionQueue.addAction(ActionQueue.java:322) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.AbstractSaveEventListener.addInsertAction(AbstractSaveEventListener.java:371) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.AbstractSaveEventListener.performSaveOrReplicate(AbstractSaveEventListener.java:285) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.AbstractSaveEventListener.performSave(AbstractSaveEventListener.java:215) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.AbstractSaveEventListener.saveWithGeneratedId(AbstractSaveEventListener.java:133) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.DefaultPersistEventListener.entityIsTransient(DefaultPersistEventListener.java:145) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:89) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:73) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:49) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:138) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:689) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at org.hibernate.internal.SessionImpl.persist(SessionImpl.java:672) ~[hibernate-core-7.2.4.Final.jar:7.2.4.Final]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.orm.jpa.ExtendedEntityManagerCreator$ExtendedEntityManagerInvocationHandler.invoke(ExtendedEntityManagerCreator.java:362) ~[spring-orm-7.0.5.jar:7.0.5]
+	at jdk.proxy4/jdk.proxy4.$Proxy132.persist(Unknown Source) ~[na:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.orm.jpa.SharedEntityManagerCreator$SharedEntityHandlerInvocationHandler.invokeMethod(SharedEntityManagerCreator.java:240) ~[spring-orm-7.0.5.jar:7.0.5]
+	at org.springframework.orm.jpa.SharedEntityManagerCreator$SharedEntityManagerInvocationHandler.invoke(SharedEntityManagerCreator.java:386) ~[spring-orm-7.0.5.jar:7.0.5]
+	at jdk.proxy4/jdk.proxy4.$Proxy132.persist(Unknown Source) ~[na:na]
+	at org.springframework.data.jpa.repository.support.SimpleJpaRepository.save(SimpleJpaRepository.java:664) ~[spring-data-jpa-4.0.3.jar:4.0.3]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker$RepositoryFragmentMethodInvoker.lambda$new$0(RepositoryMethodInvoker.java:278) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:169) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.invoke(RepositoryComposition.java:545) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.data.repository.core.support.RepositoryComposition.invoke(RepositoryComposition.java:290) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.data.repository.core.support.RepositoryFactorySupport$ImplementationMethodExecutionInterceptor.invoke(RepositoryFactorySupport.java:690) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:171) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:146) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:69) ~[spring-data-commons-4.0.3.jar:4.0.3]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:133) ~[spring-tx-7.0.5.jar:7.0.5]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:371) ~[spring-tx-7.0.5.jar:7.0.5]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:130) ~[spring-tx-7.0.5.jar:7.0.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:135) ~[spring-tx-7.0.5.jar:7.0.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.data.jpa.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:166) ~[spring-data-jpa-4.0.3.jar:4.0.3]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:222) ~[spring-aop-7.0.5.jar:7.0.5]
+	at jdk.proxy4/jdk.proxy4.$Proxy137.save(Unknown Source) ~[na:na]
+	at com.artezo.service.serviceImpl.ProductServiceImpl.createProduct(ProductServiceImpl.java:132) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:133) ~[spring-tx-7.0.5.jar:7.0.5]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:371) ~[spring-tx-7.0.5.jar:7.0.5]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:130) ~[spring-tx-7.0.5.jar:7.0.5]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:179) ~[spring-aop-7.0.5.jar:7.0.5]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:719) ~[spring-aop-7.0.5.jar:7.0.5]
+	at com.artezo.service.serviceImpl.ProductServiceImpl$$SpringCGLIB$$0.createProduct(<generated>) ~[classes/:na]
+	at com.artezo.controller.ProductController.createProduct(ProductController.java:156) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:252) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:184) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:934) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:853) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:86) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:963) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1000) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:903) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:649) ~[tomcat-embed-core-11.0.18.jar:6.1]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874) ~[spring-webmvc-7.0.5.jar:7.0.5]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710) ~[tomcat-embed-core-11.0.18.jar:6.1]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53) ~[tomcat-embed-websocket-11.0.18.jar:11.0.18]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.5.jar:7.0.5]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1779) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57) ~[tomcat-embed-core-11.0.18.jar:11.0.18]
+	at java.base/java.lang.Thread.run(Thread.java:1447) ~[na:na]
+
+2026-03-04T16:38:37.913+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={multipart}
+2026-03-04T16:38:37.924+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.webmvc.autoconfigure.error.BasicErrorController#error(HttpServletRequest)
+2026-03-04T16:38:37.935+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T16:38:37.937+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Wed Mar 04 16:38:37 IST 2026, status=500, error=Internal Server Error, trace=org.springfr (truncated)...]
+2026-03-04T16:38:37.975+05:30 DEBUG 19664 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 500
+2026-03-04T16:41:08.101+05:30  INFO 19664 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T16:41:08.106+05:30  INFO 19664 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T16:41:08.109+05:30  INFO 19664 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:41:08.114+05:30  INFO 19664 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T16:41:08.120+05:30  INFO 19664 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T16:41:14.450+05:30  INFO 20368 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 20368 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T16:41:14.454+05:30  INFO 20368 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T16:41:14.551+05:30  INFO 20368 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T16:41:14.552+05:30  INFO 20368 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T16:41:14.552+05:30  INFO 20368 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T16:41:15.761+05:30  INFO 20368 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T16:41:15.844+05:30  INFO 20368 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 70 ms. Found 4 JPA repository interfaces.
+2026-03-04T16:41:16.808+05:30  INFO 20368 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T16:41:16.829+05:30  INFO 20368 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T16:41:16.830+05:30  INFO 20368 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T16:41:16.895+05:30  INFO 20368 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2342 ms
+2026-03-04T16:41:17.221+05:30  INFO 20368 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T16:41:17.289+05:30  INFO 20368 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T16:41:17.954+05:30  INFO 20368 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T16:41:17.993+05:30  INFO 20368 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T16:41:18.184+05:30  INFO 20368 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@b9fd14e
+2026-03-04T16:41:18.186+05:30  INFO 20368 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T16:41:18.277+05:30  INFO 20368 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T16:41:19.508+05:30  INFO 20368 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T16:41:20.351+05:30  INFO 20368 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T16:41:20.484+05:30  INFO 20368 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T16:41:20.970+05:30  INFO 20368 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T16:41:20.990+05:30  WARN 20368 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T16:41:21.220+05:30 DEBUG 20368 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 17 mappings in 'requestMappingHandlerMapping'
+2026-03-04T16:41:21.252+05:30 DEBUG 20368 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T16:41:21.255+05:30  INFO 20368 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 7.611 seconds (process running for 8.594)
+2026-03-04T16:41:31.939+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-04T16:41:31.939+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-03-04T16:41:31.943+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2026-03-04T16:41:31.946+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2026-03-04T16:41:32.008+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 2 RequestBodyAdvice, 1 ResponseBodyAdvice
+2026-03-04T16:41:32.079+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2026-03-04T16:41:32.087+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@13bbe24f
+2026-03-04T16:41:32.091+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@5bd8a5e8
+2026-03-04T16:41:32.092+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2026-03-04T16:41:32.092+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Completed initialization in 152 ms
+2026-03-04T16:41:32.106+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : POST "/api/products/create-product", parameters={multipart}
+2026-03-04T16:41:32.447+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#createProduct(CreateProductRequestDto, MultipartFile, List, List, List, MultipartFile, List, List)
+2026-03-04T16:41:32.580+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] .m.m.a.RequestPartMethodArgumentResolver : Read "application/json" to [com.artezo.dto.request.CreateProductRequestDto@6ae74ae6]
+2026-03-04T16:41:32.591+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] c.artezo.controller.ProductController    : Creating product: name = Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants = true
+2026-03-04T16:41:32.713+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] c.a.s.serviceImpl.ProductServiceImpl     : Creating product → name: Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants: true
+2026-03-04T16:41:33.700+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] c.a.s.serviceImpl.ProductServiceImpl     : Product created → id: 1, strId: PRD00001
+2026-03-04T16:41:33.965+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] c.a.s.serviceImpl.ProductServiceImpl     : Saved 3 installation steps for product 1
+2026-03-04T16:41:33.981+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for root SKU: ART-WPLATE-GLD, stock: 150
+2026-03-04T16:41:33.986+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for variant SKU: ART-WPLATE-GLD, stock: 150
+2026-03-04T16:41:33.993+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-2] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for variant SKU: ART-WPLATE-BLK, stock: 85
+2026-03-04T16:41:34.420+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T16:41:34.422+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.ProductResponseDto@49b4f179]
+2026-03-04T16:41:34.476+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2026-03-04T16:42:26.026+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/product-video", parameters={}
+2026-03-04T16:42:26.027+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#getProductVideo(Long, String, HttpServletRequest)
+2026-03-04T16:42:26.033+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-3] c.artezo.controller.ProductController    : Streaming product video for productId 1
+2026-03-04T16:42:26.131+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T16:42:26.132+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T16:42:26.145+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T16:42:33.709+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/product-video", parameters={}
+2026-03-04T16:42:33.710+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#getProductVideo(Long, String, HttpServletRequest)
+2026-03-04T16:42:33.710+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-4] c.artezo.controller.ProductController    : Streaming product video for productId 1
+2026-03-04T16:42:33.715+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T16:42:33.716+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T16:42:33.726+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T17:11:26.655+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1", parameters={}
+2026-03-04T17:11:26.657+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#getProductById(Long)
+2026-03-04T17:11:26.658+05:30  INFO 20368 --- [Artezo] [http-nio-8085-exec-7] c.artezo.controller.ProductController    : Fetching product by id: 1
+2026-03-04T17:11:26.753+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T17:11:26.753+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-7] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.ProductResponseDto@7a5b1ffc]
+2026-03-04T17:11:26.757+05:30 DEBUG 20368 --- [Artezo] [http-nio-8085-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T17:17:38.891+05:30  INFO 20368 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T17:17:38.896+05:30  INFO 20368 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T17:17:38.898+05:30  INFO 20368 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T17:17:38.902+05:30  INFO 20368 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T17:17:38.905+05:30  INFO 20368 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-03-04T17:17:45.262+05:30  INFO 11496 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Starting ArtezoApplication using Java 24.0.2 with PID 11496 (C:\Artezo_Project\artezo_backend_v1.0\target\classes started by admim in C:\Artezo_Project\artezo_backend_v1.0)
+2026-03-04T17:17:45.267+05:30  INFO 11496 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : No active profile set, falling back to 1 default profile: "default"
+2026-03-04T17:17:45.346+05:30  INFO 11496 --- [Artezo] [restartedMain] o.s.b.devtools.restart.ChangeableUrls    : The Class-Path manifest attribute in C:\Users\admim\.m2\repository\io\github\cdimascio\java-dotenv\5.2.2\java-dotenv-5.2.2.jar referenced one or more files that do not exist: file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/kotlin-stdlib-common-1.4.0.jar,file:/C:/Users/admim/.m2/repository/io/github/cdimascio/java-dotenv/5.2.2/annotations-13.0.jar
+2026-03-04T17:17:45.347+05:30  INFO 11496 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-04T17:17:45.347+05:30  INFO 11496 --- [Artezo] [restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-04T17:17:46.677+05:30  INFO 11496 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-04T17:17:46.767+05:30  INFO 11496 --- [Artezo] [restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 75 ms. Found 4 JPA repository interfaces.
+2026-03-04T17:17:47.618+05:30  INFO 11496 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8085 (http)
+2026-03-04T17:17:47.639+05:30  INFO 11496 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-04T17:17:47.640+05:30  INFO 11496 --- [Artezo] [restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.18]
+2026-03-04T17:17:47.705+05:30  INFO 11496 --- [Artezo] [restartedMain] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 2357 ms
+2026-03-04T17:17:48.023+05:30  INFO 11496 --- [Artezo] [restartedMain] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-03-04T17:17:48.095+05:30  INFO 11496 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.4.Final
+2026-03-04T17:17:48.725+05:30  INFO 11496 --- [Artezo] [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-04T17:17:48.765+05:30  INFO 11496 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-04T17:17:48.984+05:30  INFO 11496 --- [Artezo] [restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@59c7379
+2026-03-04T17:17:48.986+05:30  INFO 11496 --- [Artezo] [restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-04T17:17:49.072+05:30  INFO 11496 --- [Artezo] [restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mysql://localhost:3306/artezo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true]
+	Database driver: MySQL Connector/J
+	Database dialect: MySQLDialect
+	Database version: 8.0.41
+	Default catalog/schema: artezo_db/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-04T17:17:50.328+05:30  INFO 11496 --- [Artezo] [restartedMain] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-04T17:17:51.191+05:30  INFO 11496 --- [Artezo] [restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T17:17:51.301+05:30  INFO 11496 --- [Artezo] [restartedMain] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-04T17:17:51.707+05:30  INFO 11496 --- [Artezo] [restartedMain] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8085 (http) with context path '/'
+2026-03-04T17:17:51.727+05:30  WARN 11496 --- [Artezo] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-04T17:17:51.967+05:30 DEBUG 11496 --- [Artezo] [restartedMain] s.w.s.m.m.a.RequestMappingHandlerMapping : 17 mappings in 'requestMappingHandlerMapping'
+2026-03-04T17:17:52.006+05:30 DEBUG 11496 --- [Artezo] [restartedMain] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2026-03-04T17:17:52.010+05:30  INFO 11496 --- [Artezo] [restartedMain] com.artezo.ArtezoApplication             : Started ArtezoApplication in 7.479 seconds (process running for 12.039)
+2026-03-04T17:18:16.982+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-03-04T17:18:16.982+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-03-04T17:18:16.986+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2026-03-04T17:18:16.988+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2026-03-04T17:18:17.053+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 2 RequestBodyAdvice, 1 ResponseBodyAdvice
+2026-03-04T17:18:17.115+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
+2026-03-04T17:18:17.121+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@5977c211
+2026-03-04T17:18:17.124+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@24dacf7e
+2026-03-04T17:18:17.125+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2026-03-04T17:18:17.126+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 144 ms
+2026-03-04T17:18:17.136+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : POST "/api/products/create-product", parameters={multipart}
+2026-03-04T17:18:17.385+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#createProduct(CreateProductRequestDto, MultipartFile, List, List, List, MultipartFile, List, List)
+2026-03-04T17:18:17.535+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] .m.m.a.RequestPartMethodArgumentResolver : Read "application/json" to [com.artezo.dto.request.CreateProductRequestDto@10ac340c]
+2026-03-04T17:18:17.547+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] c.artezo.controller.ProductController    : Creating product: name = Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants = true
+2026-03-04T17:18:17.662+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Creating product → name: Artezo Golden Acrylic Premium Modern Light Switch Plate, hasVariants: true
+2026-03-04T17:18:18.737+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Product created → id: 1, strId: PRD00001
+2026-03-04T17:18:18.993+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Saved 3 installation steps for product 1
+2026-03-04T17:18:19.008+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for root SKU: ART-WPLATE-GLD, stock: 150
+2026-03-04T17:18:19.013+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for variant SKU: ART-WPLATE-GLD, stock: 150
+2026-03-04T17:18:19.020+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-1] c.a.s.serviceImpl.ProductServiceImpl     : Inventory synced for variant SKU: ART-WPLATE-BLK, stock: 85
+2026-03-04T17:18:19.417+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T17:18:19.417+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.ProductResponseDto@63598652]
+2026-03-04T17:18:19.461+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 201 CREATED
+2026-03-04T17:19:56.403+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1", parameters={}
+2026-03-04T17:19:56.404+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#getProductById(Long)
+2026-03-04T17:19:56.406+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-5] c.artezo.controller.ProductController    : Fetching product by id: 1
+2026-03-04T17:19:56.491+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-03-04T17:19:56.492+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.ProductResponseDto@2f84a206]
+2026-03-04T17:19:56.495+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T17:50:33.706+05:30  WARN 11496 --- [Artezo] [HikariPool-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=28m14s557ms483µs400ns).
+2026-03-04T17:59:04.931+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/products/1/product-video", parameters={}
+2026-03-04T17:59:04.932+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.ProductController#getProductVideo(Long, String, HttpServletRequest)
+2026-03-04T17:59:04.942+05:30  INFO 11496 --- [Artezo] [http-nio-8085-exec-8] c.artezo.controller.ProductController    : Streaming product video for productId 1
+2026-03-04T17:59:05.101+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Found 'Content-Type:video/mp4' in response
+2026-03-04T17:59:05.103+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-8] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [InputStream resource [resource loaded through InputStream]]
+2026-03-04T17:59:05.131+05:30 DEBUG 11496 --- [Artezo] [http-nio-8085-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-03-04T18:57:32.881+05:30  INFO 11496 --- [Artezo] [SpringApplicationShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-03-04T18:57:32.902+05:30  INFO 11496 --- [Artezo] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-03-04T18:57:32.920+05:30  INFO 11496 --- [Artezo] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-04T18:57:32.939+05:30  INFO 11496 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-03-04T18:57:32.950+05:30  INFO 11496 --- [Artezo] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
