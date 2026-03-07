@@ -1,13 +1,18 @@
 package com.artezo.controller;
 
 import com.artezo.dto.request.CreateProductRequestDto;
+import com.artezo.dto.request.HeroBannerRequestDto;
+import com.artezo.dto.request.InstallationStepRequestDto;
 import com.artezo.dto.response.ProductResponseDto;
+import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
+import com.artezo.exceptions.ProductNotFoundException;
 import com.artezo.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +22,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
+import java.util.stream.Collectors;
+import java.util.LinkedList;
+
 
 
 @RestController
@@ -36,29 +45,36 @@ public class ProductController {
     //                  CRUD ENDPOINTS (unchanged mostly)
     // ────────────────────────────────────────────────
 
+    @GetMapping("/get-by-productPrimeId/{productPrimeId}")
+    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long productPrimeId) {
+        log.info("Fetching product by productPrimeId: {}", productPrimeId);
+        return ResponseEntity.ok(productService.getProductById(productPrimeId));
+    }
+
+    @GetMapping("/get-product-by-productStrId/{productStrId}")
+    public ResponseEntity<ProductResponseDto> getProductByStrId(@PathVariable String productStrId) {
+        log.info("Fetching product by strId: {}", productStrId);
+        return ResponseEntity.ok(productService.getProductByStrId(productStrId));
+    }
+
     @PostMapping(value = "/create-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(
             @RequestPart("productJsonData") CreateProductRequestDto request,
-
             // Main product images - optional
             @RequestPart(value = "mainImage", required = false) MultipartFile mainImage,
             @RequestPart(value = "mockupImages", required = false) List<MultipartFile> mockupImages,
-
             // Variant images - optional (indexed)
             @RequestPart(value = "variantsMainImages", required = false) List<MultipartFile> variantMainImages,
-
             // Hero banners images - optional (indexed)
             @RequestPart(value = "heroBannersImages", required = false) List<MultipartFile> heroBannerImages,
-
             // ─── NEW: Main product video (single file, optional) ───
             @RequestPart(value = "productVideo", required = false) MultipartFile productVideo,
-
             // Installation steps images & videos - optional (indexed)
             @RequestPart(value = "installationStepsImages", required = false) List<MultipartFile> stepImages,
             @RequestPart(value = "installationStepsVideos", required = false) List<MultipartFile> stepVideos) {
 
         log.info("Creating product: name = {}, hasVariants = {}",
-                request.getProductName(), request.isHasVariants());
+                request.getProductName(), request.getHasVariants());
 
         // ── Assign main image ──
         if (mainImage != null && !mainImage.isEmpty()) {
@@ -166,35 +182,140 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/get-by-productPrimeId/{productPrimeId}")
-    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long productPrimeId) {
-        log.info("Fetching product by productPrimeId: {}", productPrimeId);
-        return ResponseEntity.ok(productService.getProductById(productPrimeId));
-    }
-
-    @GetMapping("/get-product-by-productStrId/{productStrId}")
-    public ResponseEntity<ProductResponseDto> getProductByStrId(@PathVariable String productStrId) {
-        log.info("Fetching product by strId: {}", productStrId);
-        return ResponseEntity.ok(productService.getProductByStrId(productStrId));
-    }
-
     @PutMapping("/put-product/{productPrimeId}")
     public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long productPrimeId, @RequestBody CreateProductRequestDto request) {
         log.info("Full update product productPrimeId: {}", productPrimeId);
         return ResponseEntity.ok(productService.updateProduct(productPrimeId, request));
     }
 
-    @PatchMapping("/patch-product/{productPrimeId}")
-    public ResponseEntity<ProductResponseDto> patchProduct(@PathVariable Long productPrimeId, @RequestBody CreateProductRequestDto request) {
-        log.info("Patch product productPrimeId: {}", productPrimeId);
+
+    //-------------------------------------//
+    //           PATCH API                 //
+    //-------------------------------------//
+    @PatchMapping(value = "/patch-product/{productPrimeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductResponseDto> patchProduct(
+            @PathVariable Long productPrimeId,
+            @RequestPart(value = "productJsonData", required = false) CreateProductRequestDto request,
+            @RequestPart(value = "mainImage", required = false) MultipartFile mainImageFile,
+            @RequestPart(value = "mockupImages", required = false) List<MultipartFile> mockupImageFiles,
+            @RequestPart(value = "productVideo", required = false) MultipartFile productVideoFile,
+            @RequestPart(value = "variantsMainImages", required = false) List<MultipartFile> variantMainImages,
+            @RequestPart(value = "heroBannersImages", required = false) List<MultipartFile> heroBannerImages,
+            @RequestPart(value = "installationStepsImages", required = false) List<MultipartFile> stepImages,
+            @RequestPart(value = "installationStepsVideos", required = false) List<MultipartFile> stepVideos
+    ) throws IOException {
+        log.info("PATCH product {}", productPrimeId);
+
+        if (request == null) request = new CreateProductRequestDto();
+
+        // ── Core files ──
+        if (mainImageFile != null && !mainImageFile.isEmpty()) {
+            request.setMainImage(mainImageFile.getBytes());
+        }
+        if (mockupImageFiles != null && !mockupImageFiles.isEmpty()) {
+            List<byte[]> mockups = new ArrayList<>();
+            for (MultipartFile f : mockupImageFiles) {
+                if (!f.isEmpty()) mockups.add(f.getBytes());
+            }
+            request.setMockupImages(mockups);
+        }
+        if (productVideoFile != null && !productVideoFile.isEmpty()) {
+            request.setProductVideo(productVideoFile.getBytes());
+        }
+
+        // ── Variant images — index based (variants always sent in full) ──
+        if (variantMainImages != null && !variantMainImages.isEmpty()
+                && request.getVariants() != null) {
+            for (int i = 0; i < variantMainImages.size(); i++) {
+                MultipartFile f = variantMainImages.get(i);
+                if (f != null && !f.isEmpty() && i < request.getVariants().size()) {
+                    request.getVariants().get(i).setMainImage(f.getBytes());
+                }
+            }
+        }
+
+        // ── Hero banner images ──
+        // ✅ Queue approach: files arrive in same order as banners that had a new file
+        // file[0] → first banner in JSON, file[1] → second banner in JSON, etc.
+        // ── Hero banner images — file[i] maps to heroBanners[i] that had a file ──
+        if (heroBannerImages != null && request.getHeroBanners() != null) {
+            Queue<MultipartFile> bannerFileQueue = heroBannerImages.stream()
+                    .filter(f -> f != null && !f.isEmpty())
+                    .collect(Collectors.toCollection(LinkedList::new));
+
+            for (HeroBannerRequestDto banner : request.getHeroBanners()) {
+                if (bannerFileQueue.isEmpty()) break;
+                banner.setBannerImg(bannerFileQueue.poll().getBytes());
+            }
+        }
+
+// ── Step images — match file to step by step number using index marker ──
+        if (stepImages != null && request.getInstallationSteps() != null) {
+            // Frontend sends file only for steps that have new image
+            // We need to know WHICH steps have files — frontend must tell us via a hidden field
+            // Solution: frontend sets data-has-img="true" on blocks with files
+            // Then only those steps appear first in JSON — queue matches in order
+            Queue<MultipartFile> imgQueue = stepImages.stream()
+                    .filter(f -> f != null && !f.isEmpty())
+                    .collect(Collectors.toCollection(LinkedList::new));
+
+            // Only assign to steps that actually have a file marker
+            for (InstallationStepRequestDto step : request.getInstallationSteps()) {
+                if (imgQueue.isEmpty()) break;
+                if (Boolean.TRUE.equals(step.getHasNewImage())) { // ✅ only assign if flagged
+                    step.setStepImage(imgQueue.poll().getBytes());
+                }
+            }
+        }
+
+        if (stepVideos != null && request.getInstallationSteps() != null) {
+            Queue<MultipartFile> vidQueue = stepVideos.stream()
+                    .filter(f -> f != null && !f.isEmpty())
+                    .collect(Collectors.toCollection(LinkedList::new));
+
+            for (InstallationStepRequestDto step : request.getInstallationSteps()) {
+                if (vidQueue.isEmpty()) break;
+                if (Boolean.TRUE.equals(step.getHasNewVideo())) {
+                    step.setVideoFile(vidQueue.poll().getBytes());
+                }
+            }
+        }
+
         return ResponseEntity.ok(productService.patchProduct(productPrimeId, request));
     }
 
-    @DeleteMapping("/delete-by-productPrimeId/{productPrimeId}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long productPrimeId) {
-        log.info("Soft delete product productPrimeId: {}", productPrimeId);
-        productService.deleteProduct(productPrimeId);
-        return ResponseEntity.noContent().build();
+
+    @DeleteMapping(value = "/delete-by-productPrimeId/{productPrimeId}",
+            produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> deleteProduct(@PathVariable Long productPrimeId) {
+        log.info("Attempting soft delete for productPrimeId: {}", productPrimeId);
+
+        try {
+            productService.deleteProduct(productPrimeId);
+            String successMsg = "Product with ID " + productPrimeId + " deleted successfully";
+            log.info(successMsg);
+            return ResponseEntity.ok(successMsg);
+        }
+        catch (ProductNotFoundException e) {
+            String errorMsg = "Product not found with ID: " + productPrimeId;
+            log.warn(errorMsg);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMsg);
+        }
+        catch (IllegalStateException e) {
+            // Example: thrown when product is already deleted
+            String errorMsg = "Product with ID " + productPrimeId + " is already deleted";
+            log.warn(errorMsg);
+            return ResponseEntity.status(HttpStatus.GONE).body(errorMsg);
+            // or use HttpStatus.BAD_REQUEST if you prefer
+        }
+        catch (Exception e) {
+            String errorMsg = "Failed to delete product with ID " + productPrimeId + ": " + e.getMessage();
+            log.error("Delete failed for productPrimeId: {}", productPrimeId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while deleting the product");
+        } catch (ProductAlreadyDeletedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // ────────────────────────────────────────────────
@@ -223,7 +344,7 @@ public class ProductController {
                 .body(data);
     }
 
-    @GetMapping(value = "/{productId}/variant/{variantId}/main", produces = MediaType.ALL_VALUE)
+    @GetMapping(value = "/{productPrimeId}/variant/{variantId}/main", produces = MediaType.ALL_VALUE)
     public ResponseEntity<byte[]> getVariantMainImage(@PathVariable Long productPrimeId, @PathVariable String variantId) {
         byte[] data = productService.getVariantMainImageData(productPrimeId, variantId);
         if (data == null || data.length == 0) return ResponseEntity.notFound().build();
@@ -234,10 +355,40 @@ public class ProductController {
                 .body(data);
     }
 
+
+    // Hero Banner Image
+    @GetMapping("/{productPrimeId}/hero-banner/{bannerId}")
+    public ResponseEntity<byte[]> getHeroBannerImage(
+            @PathVariable Long productPrimeId,
+            @PathVariable String bannerId) {
+
+        byte[] imageData = productService.getHeroBannerImage(productPrimeId, bannerId);
+        if (imageData == null || imageData.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(imageData);
+    }
+
+    // Installation Step Image
+    @GetMapping("/{productPrimeId}/step/{step}/image")
+    public ResponseEntity<byte[]> getInstallationStepImage(
+            @PathVariable Long productPrimeId,
+            @PathVariable Integer step) {
+
+        byte[] imageData = productService.getInstallationStepImage(productPrimeId, step);
+        if (imageData == null || imageData.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(imageData);
+    }
+
     // ────────────────────────────────────────────────
     //          VIDEO STREAMING (Range support + URL in DTO)
     // ────────────────────────────────────────────────
-
 
     @GetMapping(value = "/{productPrimeId}/installation-video/{stepIndex}", produces = "video/mp4")
     public ResponseEntity<InputStreamResource> streamInstallationVideo(
@@ -351,5 +502,17 @@ public class ProductController {
         }
 
         return new ResponseEntity<>(new InputStreamResource(bis), headers, HttpStatus.OK);
+    }
+
+
+    @GetMapping("/get-all-active-products")
+    public ResponseEntity<Page<ProductResponseDto>> getAllActiveProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String sortBy,      // e.g. productName, currentSellingPrice
+            @RequestParam(defaultValue = "DESC") String sortDir  // ASC or DESC
+    ) {
+        Page<ProductResponseDto> products = productService.getAllActiveProducts(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(products);
     }
 }

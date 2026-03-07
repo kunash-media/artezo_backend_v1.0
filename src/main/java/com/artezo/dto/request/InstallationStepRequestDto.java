@@ -17,6 +17,9 @@ public class InstallationStepRequestDto {
     // Optional: if you want to support text-only steps or future extensions
     private String textContent;
 
+    private Boolean hasNewImage;
+    private Boolean hasNewVideo;
+
     public int getStep() {
         return step;
     }
@@ -71,5 +74,21 @@ public class InstallationStepRequestDto {
 
     public void setTextContent(String textContent) {
         this.textContent = textContent;
+    }
+
+    public Boolean getHasNewImage() {
+        return hasNewImage;
+    }
+
+    public void setHasNewImage(Boolean hasNewImage) {
+        this.hasNewImage = hasNewImage;
+    }
+
+    public Boolean getHasNewVideo() {
+        return hasNewVideo;
+    }
+
+    public void setHasNewVideo(Boolean hasNewVideo) {
+        this.hasNewVideo = hasNewVideo;
     }
 }

@@ -21,6 +21,7 @@ public class ProductResponseDto {
     private boolean hasVariants;
     private boolean isCustomizable;
     private boolean isExchange;              // returning as String "true"/"false" to match your payload example
+    private boolean underTrendCategory;
 
     // Currently selected variant root level
     private String currentSku;
@@ -56,6 +57,10 @@ public class ProductResponseDto {
 
     private String youtubeUrl;
     private boolean returnAvailable;
+
+    private Integer variantCount;
+
+    private String customFields;
 
     public Long getProductId() {
         return productId;
@@ -320,5 +325,29 @@ public class ProductResponseDto {
 
     public void setYoutubeUrl(String youtubeUrl) {
         this.youtubeUrl = youtubeUrl;
+    }
+
+    public Integer getVariantCount() {
+        return variantCount;
+    }
+
+    public void setVariantCount(Integer variantCount) {
+        this.variantCount = variantCount;
+    }
+
+    public boolean getUnderTrendCategory() {
+        return underTrendCategory;
+    }
+
+    public void setUnderTrendCategory(boolean underTrendCategory) {
+        this.underTrendCategory = underTrendCategory;
+    }
+
+    public String getCustomFields() {
+        return customFields;
+    }
+
+    public void setCustomFields(String customFields) {
+        this.customFields = customFields;
     }
 }

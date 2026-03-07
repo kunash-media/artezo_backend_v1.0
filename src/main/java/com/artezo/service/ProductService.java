@@ -2,7 +2,11 @@ package com.artezo.service;
 
 import com.artezo.dto.request.CreateProductRequestDto;
 import com.artezo.dto.response.ProductResponseDto;
+import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
+import com.artezo.exceptions.ProductNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -14,17 +18,17 @@ public interface ProductService {
     ProductCreateResult createProduct(CreateProductRequestDto request);
 
     // READ
-    ProductResponseDto getProductById(Long id);
+    ProductResponseDto getProductById(Long productPrimeId);
 
     ProductResponseDto getProductByStrId(String productStrId);
 
     // UPDATE
-    ProductResponseDto updateProduct(Long id, CreateProductRequestDto request);     // PUT - full replace
+    ProductResponseDto updateProduct(Long productPrimeId, CreateProductRequestDto request);     // PUT - full replace
 
-    ProductResponseDto patchProduct(Long id, CreateProductRequestDto request);      // PATCH - partial
+    ProductResponseDto patchProduct(Long productPrimeId, CreateProductRequestDto request);      // PATCH - partial
 
     // DELETE (soft)
-    void deleteProduct(Long id);
+    void deleteProduct(Long productPrimeId) throws ProductAlreadyDeletedException, ProductNotFoundException;
 
     // ────────────────────────────────────────────────
     //      Image data access methods (used by controller)
@@ -40,4 +44,14 @@ public interface ProductService {
     byte[] getInstallationVideoData(Long productId, int stepIndex);
 
     byte[] getProductVideoData(Long productId);
+
+
+    Page<ProductResponseDto> getAllActiveProducts(int page, int size, String sortBy, String sortDir);
+
+    // Hero Banner Image
+    byte[] getHeroBannerImage(Long productPrimeId, String bannerId);
+
+    // Installation Step Image
+
+    byte[]getInstallationStepImage(Long productId, Integer step);
 }

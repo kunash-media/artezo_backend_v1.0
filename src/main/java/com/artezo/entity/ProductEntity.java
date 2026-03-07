@@ -102,6 +102,9 @@ public class ProductEntity {
     @Column(name = "return_available", columnDefinition = "boolean default true")
     private boolean returnAvailable;
 
+    @Column(columnDefinition = "JSON")
+    private String customFields;
+
     public ProductEntity(){}
 
     public ProductEntity(Long productPrimeId, String productStrId, String productName, String brandName,
@@ -114,7 +117,7 @@ public class ProductEntity {
                          String description, String aboutItem, String specifications,
                          String additionalInfo, String heroBanners, String faq, String globalTags,
                          String addonKeys, List<ProductVariantEntity> variants, LocalDateTime createdAt,
-                         LocalDateTime updatedAt, boolean returnAvailable, String youtubeUrl) {
+                         LocalDateTime updatedAt, boolean returnAvailable, String youtubeUrl, String customFields) {
         this.productPrimeId = productPrimeId;
         this.productStrId = productStrId;
         this.productName = productName;
@@ -148,6 +151,7 @@ public class ProductEntity {
         this.updatedAt = updatedAt;
         this.returnAvailable = returnAvailable;
         this.youtubeUrl = youtubeUrl;
+        this.customFields = customFields;
     }
 
 
@@ -209,7 +213,7 @@ public class ProductEntity {
         isDeleted = deleted;
     }
 
-    public boolean isHasVariants() {
+    public boolean hasVariants() {
         return hasVariants;
     }
 
@@ -378,7 +382,7 @@ public class ProductEntity {
         this.updatedAt = updatedAt;
     }
 
-    public boolean isUnderTrendCategory() {
+    public boolean getUnderTrendCategory() {
         return underTrendCategory;
     }
 
@@ -432,5 +436,13 @@ public class ProductEntity {
 
     public void setYoutubeUrl(String youtubeUrl) {
         this.youtubeUrl = youtubeUrl;
+    }
+
+    public String getCustomFields() {
+        return customFields;
+    }
+
+    public void setCustomFields(String customFields) {
+        this.customFields = customFields;
     }
 }

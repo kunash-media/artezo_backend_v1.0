@@ -12,7 +12,9 @@ import com.artezo.entity.InstallationStepEntity;
 import com.artezo.entity.InventoryEntity;
 import com.artezo.entity.ProductEntity;
 import com.artezo.entity.ProductVariantEntity;
+import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
+import com.artezo.exceptions.ProductNotFoundException;
 import com.artezo.repository.InstallationStepRepository;
 import com.artezo.repository.InventoryRepository;
 import com.artezo.repository.ProductRepository;
@@ -22,14 +24,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,16 +58,16 @@ public class ProductServiceImpl implements ProductService {
     // ────────────────────────────────────────────────
     //      URL generators
     // ────────────────────────────────────────────────
-    private String mainImageUrl(Long productId) {
-        return "/api/products/" + productId + "/main";
+    private String mainImageUrl(Long productPrimeId) {
+        return "/api/products/" + productPrimeId + "/main";
     }
 
-    private String mockupImageUrl(Long productId, int index) {
-        return "/api/products/" + productId + "/mockup/" + index;
+    private String mockupImageUrl(Long productPrimeId, int index) {
+        return "/api/products/" + productPrimeId + "/mockup/" + index;
     }
 
-    private String variantMainImageUrl(Long productId, String variantId) {
-        return "/api/products/" + productId + "/variant/" + variantId + "/main";
+    private String variantMainImageUrl(Long productPrimeId, String variantId) {
+        return "/api/products/" + productPrimeId + "/variant/" + variantId + "/main";
     }
 
     // ────────────────────────────────────────────────
@@ -74,7 +77,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductCreateResult createProduct(CreateProductRequestDto request) {
         log.info("Creating product → name: {}, hasVariants: {}",
-                request.getProductName(), request.isHasVariants());
+                request.getProductName(), request.getHasVariants());
 
         // ─────── DUPLICATE CHECKS → return proper error instead of null ───────
         if (request.getProductName() != null && productRepository.existsByProductName(request.getProductName())) {
@@ -116,7 +119,7 @@ public class ProductServiceImpl implements ProductService {
         entity.setProductVideoData(request.getProductVideo());
 
         // Handle variants (temporarily without variantId)
-        if (Boolean.TRUE.equals(request.isHasVariants()) && request.getVariants() != null) {
+        if (Boolean.TRUE.equals(request.getHasVariants()) && request.getVariants() != null) {
             for (VariantRequestDto vReq : request.getVariants()) {
                 ProductVariantEntity variant = new ProductVariantEntity();
                 mapVariantToEntity(variant, vReq);
@@ -130,7 +133,7 @@ public class ProductServiceImpl implements ProductService {
         entity.setProductStrId(String.format("PRD%05d", count));
 
         ProductEntity saved = productRepository.save(entity);
-        log.info("Product created → id: {}, strId: {}", saved.getProductPrimeId(), saved.getProductStrId());
+        log.info("Product created → productPrimeId: {}, productStrId: {}", saved.getProductPrimeId(), saved.getProductStrId());
 
         // ─── AUTO-GENERATE variantIds AFTER save ───
         if (saved.getVariants() != null && !saved.getVariants().isEmpty()) {
@@ -156,25 +159,107 @@ public class ProductServiceImpl implements ProductService {
     }
 
     // Get product video
-    @Cacheable(value = "productVideos", key = "#productId")
+    @Cacheable(value = "productVideos", key = "#productPrimeId")
     @Override
-    public byte[] getProductVideoData(Long productId) {
-        return productRepository.findById(productId)
+    public byte[] getProductVideoData(Long productPrimeId) {
+        return productRepository.findById(productPrimeId)
                 .map(ProductEntity::getProductVideoData)
                 .orElse(null);
     }
 
+
+    @Override
+    public Page<ProductResponseDto> getAllActiveProducts(int page, int size, String sortBy, String sortDir) {
+        // Default page size = 8, clamp to reasonable values
+        int effectiveSize = (size <= 0 || size > 100) ? 10 : size;
+
+        // Default sort: productPrimeId DESC if nothing provided
+        Sort sort = Sort.by(
+                Sort.Direction.fromString(sortDir != null && !sortDir.isBlank() ? sortDir.toUpperCase() : "DESC"),
+                sortBy != null && !sortBy.isBlank() ? sortBy : "productPrimeId"
+        );
+
+        Pageable pageable = PageRequest.of(
+                Math.max(page, 0),
+                effectiveSize,
+                sort
+        );
+
+        // Fetch the page of active products
+        Page<ProductEntity> productPage = productRepository.findAllActiveProductsOrdered(pageable);
+
+        // Manual conversion: entity → DTO
+        return productPage.map(this::mapToListResponseDto);
+    }
+
+
+    /**
+     * Lightweight mapping for product list / catalog views.
+     * Skips: faq, specifications, additionalInfo, heroBanners, installationSteps,
+     *        globalTags, addonKeys, description, aboutItem, full variant details
+     */
+    private ProductResponseDto mapToListResponseDto(ProductEntity e) {
+        ProductResponseDto dto = new ProductResponseDto();
+
+        dto.setProductId(e.getProductPrimeId());
+        dto.setProductStrId(e.getProductStrId());
+        dto.setProductName(e.getProductName());
+        dto.setBrandName(e.getBrandName());
+        dto.setProductCategory(e.getProductCategory());
+        dto.setProductSubCategory(e.getProductSubCategory());
+
+        dto.setIsDeleted(e.getIsDeleted());
+        dto.setHasVariants(e.hasVariants());
+        dto.setIsCustomizable(e.getIsCustomizable());
+        dto.setIsExchange(e.getIsExchange());
+        dto.setReturnAvailable(e.getReturnAvailable());
+        dto.setUnderTrendCategory(e.getUnderTrendCategory());
+
+        dto.setCurrentSku(e.getCurrentSku());
+        dto.setSelectedColor(e.getSelectedColor());
+        dto.setCurrentSellingPrice(e.getCurrentSellingPrice());
+        dto.setCurrentMrpPrice(e.getCurrentMrpPrice());
+        dto.setCurrentStock(e.getCurrentStock());
+
+        if (e.getMainImageData() != null && e.getMainImageData().length > 0) {
+            dto.setMainImage(mainImageUrl(e.getProductPrimeId()));
+        }
+
+        dto.setYoutubeUrl(e.getYoutubeUrl());
+
+        // ✅ Added: lightweight variant stock for list view
+        if (e.hasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
+            List<VariantResponseDto> variantsDto = e.getVariants().stream()
+                    .map(v -> {
+                        VariantResponseDto vd = new VariantResponseDto();
+                        vd.setVariantId(v.getVariantId());
+                        vd.setTitleName(v.getTitleName());
+                        vd.setColor(v.getColor());
+                        vd.setSku(v.getSku());
+                        vd.setStock(v.getStock());
+                        vd.setPrice(v.getPrice());
+                        vd.setMrp(v.getMrp());
+                        return vd;
+                    })
+                    .collect(Collectors.toList());
+
+            dto.setAvailableVariants(variantsDto);
+            dto.setVariantCount(variantsDto.size());
+        }
+
+        return dto;
+    }
 
     // ────────────────────────────────────────────────
     //                  UPDATE FULL + INVENTORY SYNC
     // ────────────────────────────────────────────────
     @Override
     @Transactional
-    public ProductResponseDto updateProduct(Long id, CreateProductRequestDto request) {
-        log.info("Full update product id: {}", id);
+    public ProductResponseDto updateProduct(Long productPrimeId, CreateProductRequestDto request) {
+        log.info("Full update product productPrimeId: {}", productPrimeId);
 
-        ProductEntity entity = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found: " + id));
+        ProductEntity entity = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found: " + productPrimeId));
 
         mapBaseFieldsToEntity(entity, request);
 
@@ -187,7 +272,7 @@ public class ProductServiceImpl implements ProductService {
 
         // Replace variants → regenerate IDs after save
         entity.getVariants().clear();
-        if (Boolean.TRUE.equals(request.isHasVariants()) && request.getVariants() != null) {
+        if (Boolean.TRUE.equals(request.getHasVariants()) && request.getVariants() != null) {
             for (VariantRequestDto vReq : request.getVariants()) {
                 ProductVariantEntity variant = new ProductVariantEntity();
                 mapVariantToEntity(variant, vReq);
@@ -226,45 +311,116 @@ public class ProductServiceImpl implements ProductService {
     // ────────────────────────────────────────────────
     @Override
     @Transactional
-    public ProductResponseDto patchProduct(Long id, CreateProductRequestDto request) {
-        log.info("Partial patch product id: {}", id);
+    public ProductResponseDto patchProduct(Long productPrimeId, CreateProductRequestDto request) {
+        log.info("Partial patch product productPrimeId: {}", productPrimeId);
 
-        ProductEntity entity = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found: " + id));
+        ProductEntity entity = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found: " + productPrimeId));
 
+        // ── Basic fields ──
         if (request.getProductName() != null) entity.setProductName(request.getProductName());
         if (request.getBrandName() != null) entity.setBrandName(request.getBrandName());
         if (request.getProductCategory() != null) entity.setProductCategory(request.getProductCategory());
         if (request.getProductSubCategory() != null) entity.setProductSubCategory(request.getProductSubCategory());
+        if (request.getYoutubeUrl() != null) entity.setYoutubeUrl(request.getYoutubeUrl());
 
+        // ── Boolean flags — null-safe ──
+        if (request.getHasVariants() != null) entity.setHasVariants(request.getHasVariants());
+        if (request.getIsCustomizable() != null) entity.setIsCustomizable(request.getIsCustomizable());
+        if (request.getIsExchange() != null) entity.setIsExchange(request.getIsExchange());
+        if (request.getReturnAvailable() != null) entity.setReturnAvailable(request.getReturnAvailable());
+        if (request.getUnderTrendCategory() != null) entity.setUnderTrendCategory(request.getUnderTrendCategory());
+
+        // ── Pricing & stock ──
         if (request.getCurrentSku() != null) entity.setCurrentSku(request.getCurrentSku());
         if (request.getSelectedColor() != null) entity.setSelectedColor(request.getSelectedColor());
         if (request.getCurrentSellingPrice() != null) entity.setCurrentSellingPrice(request.getCurrentSellingPrice());
         if (request.getCurrentMrpPrice() != null) entity.setCurrentMrpPrice(request.getCurrentMrpPrice());
         if (request.getCurrentStock() != null) entity.setCurrentStock(request.getCurrentStock());
 
+        // ── Text lists ──
+        if (request.getDescription() != null) entity.setDescription(String.join("\n", request.getDescription()));
+        if (request.getAboutItem() != null) entity.setAboutItem(String.join("\n", request.getAboutItem()));
+
+        // ── JSON fields ──
+        if (request.getSpecifications() != null) {
+            try { entity.setSpecifications(objectMapper.writeValueAsString(request.getSpecifications())); }
+            catch (Exception ex) { log.error("Failed to serialize specifications", ex); }
+        }
+        if (request.getAdditionalInfo() != null) {
+            try { entity.setAdditionalInfo(objectMapper.writeValueAsString(request.getAdditionalInfo())); }
+            catch (Exception ex) { log.error("Failed to serialize additionalInfo", ex); }
+        }
+        if (request.getFaq() != null) {
+            try { entity.setFaq(objectMapper.writeValueAsString(request.getFaq())); }
+            catch (Exception ex) { log.error("Failed to serialize faq", ex); }
+        }
+        if (request.getGlobalTags() != null) {
+            try { entity.setGlobalTags(objectMapper.writeValueAsString(request.getGlobalTags())); }
+            catch (Exception ex) { log.error("Failed to serialize globalTags", ex); }
+        }
+        if (request.getAddonKeys() != null) {
+            try { entity.setAddonKeys(objectMapper.writeValueAsString(request.getAddonKeys())); }
+            catch (Exception ex) { log.error("Failed to serialize addonKeys", ex); }
+        }
+        if (request.getCategoryPath() != null && !request.getCategoryPath().isEmpty()) {
+            entity.setCategoryPath(request.getCategoryPath());
+        }
+
+        // ── Images ──
         if (request.getMainImage() != null) entity.setMainImageData(request.getMainImage());
         if (request.getMockupImages() != null) {
             entity.getMockupImageDataList().clear();
             entity.getMockupImageDataList().addAll(request.getMockupImages());
         }
+        if (request.getProductVideo() != null) entity.setProductVideoData(request.getProductVideo());
 
+        // ── Hero banners — merge by bannerId ──
         if (request.getHeroBanners() != null) {
             try {
-                String json = objectMapper.writeValueAsString(request.getHeroBanners());
-                entity.setHeroBanners(json);
+                List<HeroBannerRequestDto> existing = new ArrayList<>();
+                if (entity.getHeroBanners() != null && !"[]".equals(entity.getHeroBanners())) {
+                    existing = objectMapper.readValue(entity.getHeroBanners(),
+                            new TypeReference<List<HeroBannerRequestDto>>() {});
+                }
+                for (HeroBannerRequestDto incoming : request.getHeroBanners()) {
+                    Optional<HeroBannerRequestDto> match = existing.stream()
+                            .filter(b -> b.getBannerId() == incoming.getBannerId())
+                            .findFirst();
+                    if (match.isPresent()) {
+                        if (incoming.getImgDescription() != null) match.get().setImgDescription(incoming.getImgDescription());
+                        if (incoming.getBannerImg() != null) match.get().setBannerImg(incoming.getBannerImg());
+                    } else {
+                        existing.add(incoming);
+                    }
+                }
+                entity.setHeroBanners(objectMapper.writeValueAsString(existing));
             } catch (Exception ex) {
                 log.error("Patch hero banners failed", ex);
             }
         }
 
-        // Partial update for installation steps (only if provided)
+        // ── Installation steps — patch per step number ──
         if (request.getInstallationSteps() != null) {
-            installationStepRepository.deleteByProduct_ProductPrimeId(entity.getProductPrimeId());
-            saveInstallationSteps(entity, request);
+            for (InstallationStepRequestDto stepReq : request.getInstallationSteps()) {
+                Optional<InstallationStepEntity> existing = Optional.ofNullable(installationStepRepository
+                        .findByProduct_ProductPrimeIdAndStep(entity.getProductPrimeId(), stepReq.getStep()));
+
+                InstallationStepEntity stepEntity = existing.orElse(new InstallationStepEntity());
+                if (stepEntity.getId() == null) stepEntity.setProduct(entity);
+
+                stepEntity.setStep(stepReq.getStep());
+                if (stepReq.getTitle() != null) stepEntity.setTitle(stepReq.getTitle());
+                if (stepReq.getShortDescription() != null) stepEntity.setShortDescription(stepReq.getShortDescription());
+                if (stepReq.getShortNote() != null) stepEntity.setShortNote(stepReq.getShortNote());
+                if (stepReq.getStepImage() != null) stepEntity.setStepImageData(stepReq.getStepImage());
+                if (stepReq.getVideoFile() != null) stepEntity.setVideoData(stepReq.getVideoFile());
+
+                installationStepRepository.save(stepEntity);
+            }
         }
 
-        // ─── Variants in patch: full replace if provided ───
+        // ── Variants — full replace if provided ──
         if (request.getVariants() != null) {
             entity.getVariants().clear();
             for (VariantRequestDto vReq : request.getVariants()) {
@@ -277,19 +433,18 @@ public class ProductServiceImpl implements ProductService {
 
         ProductEntity saved = productRepository.save(entity);
 
-        // Regenerate variantIds if variants were changed or exist
-        if ((request.getVariants() != null || !entity.getVariants().isEmpty()) && saved.getVariants() != null) {
+        // ── Regenerate variantIds ──
+        if (saved.getVariants() != null && !saved.getVariants().isEmpty()) {
             for (ProductVariantEntity variant : saved.getVariants()) {
                 String color = variant.getColor() != null ? variant.getColor().trim() : "";
                 String colorPart = color.isEmpty() ? "DEFAULT" :
                         color.toUpperCase().replaceAll("[^A-Z0-9]", "");
-
-                String generatedId = String.format("VAR-%s-%d", colorPart, variant.getId());
-                variant.setVariantId(generatedId);
+                variant.setVariantId(String.format("VAR-%s-%d", colorPart, variant.getId()));
             }
             saved = productRepository.save(saved);
         }
 
+        // ── Inventory sync ──
         if (request.getCurrentStock() != null || request.getVariants() != null) {
             syncInventoryFromProduct(saved);
         }
@@ -353,9 +508,9 @@ public class ProductServiceImpl implements ProductService {
     //      Other methods
     // ────────────────────────────────────────────────
     @Override
-    public ProductResponseDto getProductById(Long id) {
-        ProductEntity entity = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+    public ProductResponseDto getProductById(Long productPrimeId) {
+        ProductEntity entity = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found with productPrimeId: " + productPrimeId));
         return mapToResponseDto(entity);
     }
 
@@ -367,30 +522,35 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProduct(Long id) {
-        ProductEntity entity = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found: " + id));
+    public void deleteProduct(Long productPrimeId) throws ProductAlreadyDeletedException, ProductNotFoundException {
+        ProductEntity entity = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + productPrimeId));
+
+        if (entity.getIsDeleted()) {
+            throw new ProductAlreadyDeletedException("Product with ID " + productPrimeId + " is already deleted");
+        }
+
         entity.setIsDeleted(true);
         productRepository.save(entity);
     }
 
     @Override
-    public byte[] getProductMainImageData(Long productId) {
-        return productRepository.findById(productId)
+    public byte[] getProductMainImageData(Long productPrimeId) {
+        return productRepository.findById(productPrimeId)
                 .map(ProductEntity::getMainImageData)
                 .orElse(null);
     }
 
     @Override
-    public List<byte[]> getProductMockupImagesData(Long productId) {
-        return productRepository.findById(productId)
+    public List<byte[]> getProductMockupImagesData(Long productPrimeId) {
+        return productRepository.findById(productPrimeId)
                 .map(ProductEntity::getMockupImageDataList)
                 .orElse(List.of());
     }
 
     @Override
-    public byte[] getVariantMainImageData(Long productId, String variantId) {
-        return productRepository.findById(productId)
+    public byte[] getVariantMainImageData(Long productPrimeId, String variantId) {
+        return productRepository.findById(productPrimeId)
                 .flatMap(p -> p.getVariants().stream()
                         .filter(v -> variantId.equals(v.getVariantId()))
                         .findFirst()
@@ -402,11 +562,11 @@ public class ProductServiceImpl implements ProductService {
     // ────────────────────────────────────────────────
     //              Get Product Video
     // ────────────────────────────────────────────────
-    @Cacheable(value = "installationVideos", key = "#productId + '-' + #stepIndex")
+    @Cacheable(value = "installationVideos", key = "#productPrimeId + '-' + #stepIndex")
     @Override
-    public byte[] getInstallationVideoData(Long productId, int stepIndex) {
+    public byte[] getInstallationVideoData(Long productPrimeId, int stepIndex) {
         InstallationStepEntity step = installationStepRepository
-                .findByProduct_ProductPrimeIdAndStep(productId, stepIndex);
+                .findByProduct_ProductPrimeIdAndStep(productPrimeId, stepIndex);
         return (step != null) ? step.getVideoData() : null;
     }
 
@@ -419,9 +579,11 @@ public class ProductServiceImpl implements ProductService {
         e.setBrandName(r.getBrandName());
         e.setProductCategory(r.getProductCategory());
         e.setProductSubCategory(r.getProductSubCategory());
-        e.setHasVariants(r.isHasVariants());
+        e.setHasVariants(r.getHasVariants());
         e.setIsCustomizable(r.getIsCustomizable());
         e.setIsExchange(r.getIsExchange());
+        e.setReturnAvailable(r.getReturnAvailable());
+        e.setUnderTrendCategory(r.getUnderTrendCategory());
 
         e.setCurrentSku(r.getCurrentSku());
         e.setSelectedColor(r.getSelectedColor());
@@ -520,7 +682,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setProductSubCategory(e.getProductSubCategory());
 
         dto.setIsDeleted(e.getIsDeleted());
-        dto.setHasVariants(e.isHasVariants());
+        dto.setHasVariants(e.hasVariants());
         dto.setIsCustomizable(e.getIsCustomizable());
         dto.setIsExchange(e.getIsExchange());
 
@@ -531,6 +693,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setCurrentStock(e.getCurrentStock());
         dto.setYoutubeUrl(e.getYoutubeUrl());
         dto.setReturnAvailable(e.getReturnAvailable());
+        dto.setUnderTrendCategory(e.getUnderTrendCategory());
 
         if (e.getMainImageData() != null && e.getMainImageData().length > 0) {
             dto.setMainImage(mainImageUrl(e.getProductPrimeId()));
@@ -551,7 +714,7 @@ public class ProductServiceImpl implements ProductService {
             dto.setMockupImages(mockupUrls);
         }
 
-        if (e.isHasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
+        if (e.hasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
             List<VariantResponseDto> variantsDto = e.getVariants().stream()
                     .map(v -> {
                         VariantResponseDto vd = new VariantResponseDto();
@@ -713,6 +876,42 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return dto;
+    }
+
+    public byte[] getHeroBannerImage(Long productPrimeId, String bannerId) {
+        ProductEntity product = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found: " + productPrimeId));
+
+        String heroBannersJson = product.getHeroBanners();
+        if (heroBannersJson == null || "[]".equals(heroBannersJson)) {
+            return null;
+        }
+
+        try {
+            List<HeroBannerRequestDto> banners = objectMapper.readValue(
+                    heroBannersJson,
+                    new TypeReference<List<HeroBannerRequestDto>>() {}
+            );
+
+            return banners.stream()
+                    .filter(b -> bannerId.equals(String.valueOf(b.getBannerId())))
+                    .map(HeroBannerRequestDto::getBannerImg)
+                    .filter(img -> img != null && img.length > 0)
+                    .findFirst()
+                    .orElse(null);
+
+        } catch (Exception ex) {
+            log.error("Failed to read hero banner image for product {} banner {}", productPrimeId, bannerId, ex);
+            return null;
+        }
+    }
+
+    public byte[] getInstallationStepImage(Long productPrimeId, Integer step) {
+        return installationStepRepository
+                .findByProduct_ProductPrimeIdAndStep(productPrimeId, step)
+                .map(InstallationStepEntity::getStepImageData)
+                .filter(img -> img != null && img.length > 0)
+                .orElse(null);
     }
 
 }

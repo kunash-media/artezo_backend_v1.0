@@ -13,10 +13,11 @@ public class CreateProductRequestDto {
     private String productCategory;
     private String productSubCategory;
 
-    private boolean hasVariants;
-    private boolean isCustomizable;
-    private boolean isExchange;           // boolean – frontend can send true/false
-    private boolean returnAvailable;
+    private Boolean hasVariants;
+    private Boolean isCustomizable;
+    private Boolean isExchange;           // boolean – frontend can send true/false
+    private Boolean returnAvailable;
+    private Boolean underTrendCategory;
 
     // Currently selected / default variant data (root level)
     private String currentSku;
@@ -53,6 +54,8 @@ public class CreateProductRequestDto {
     private List<String> categoryPath = new ArrayList<>();
     private String youtubeUrl;
 
+    private String customFields;
+
     public String getProductName() {
         return productName;
     }
@@ -85,29 +88,8 @@ public class CreateProductRequestDto {
         this.productSubCategory = productSubCategory;
     }
 
-    public boolean isHasVariants() {
-        return hasVariants;
-    }
 
-    public void setHasVariants(boolean hasVariants) {
-        this.hasVariants = hasVariants;
-    }
 
-    public boolean getIsCustomizable() {
-        return isCustomizable;
-    }
-
-    public void setIsCustomizable(boolean customizable) {
-        isCustomizable = customizable;
-    }
-
-    public boolean getIsExchange() {
-        return isExchange;
-    }
-
-    public void setIsExchange(boolean exchange) {
-        isExchange = exchange;
-    }
 
     public String getCurrentSku() {
         return currentSku;
@@ -287,11 +269,52 @@ public class CreateProductRequestDto {
         this.youtubeUrl = youtubeUrl;
     }
 
-    public boolean getReturnAvailable() {
+
+    public Boolean getIsCustomizable() {
+        return isCustomizable;
+    }
+
+    public void setIsCustomizable(Boolean customizable) {
+        isCustomizable = customizable;
+    }
+
+    public Boolean getIsExchange() {
+        return isExchange;
+    }
+
+    public void setIsExchange(Boolean exchange) {
+        isExchange = exchange;
+    }
+
+    public Boolean getHasVariants() {  // rename from hasVariants() to getHasVariants()
+        return hasVariants;
+    }
+
+    public void setHasVariants(Boolean hasVariants) {
+        this.hasVariants = hasVariants;
+    }
+
+    public Boolean getReturnAvailable() {
         return returnAvailable;
     }
 
-    public void setReturnAvailable(boolean returnAvailable) {
+    public void setReturnAvailable(Boolean returnAvailable) {
         this.returnAvailable = returnAvailable;
+    }
+
+    public Boolean getUnderTrendCategory() {
+        return underTrendCategory;
+    }
+
+    public void setUnderTrendCategory(Boolean underTrendCategory) {
+        this.underTrendCategory = underTrendCategory;
+    }
+
+    public String getCustomFields() {
+        return customFields;
+    }
+
+    public void setCustomFields(String customFields) {
+        this.customFields = customFields;
     }
 }
