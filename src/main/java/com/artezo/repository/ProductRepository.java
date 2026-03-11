@@ -5,8 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -37,5 +39,36 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     @Query(value = "SELECT * FROM product WHERE is_deleted = false", nativeQuery = true)
     Page<ProductEntity> findAllActiveNative(Pageable pageable);
+
+
+    //-----------------------------------------------------------//
+    // Suggestion query — Phase 2 (Redis powered, personalised)  //
+    //-----------------------------------------------------------//
+    @Query("SELECT p FROM ProductEntity p WHERE " +
+            "(p.productCategory IN :categories OR p.productSubCategory IN :subCategories) " +
+            "AND p.productPrimeId NOT IN :excludedIds " +
+            "AND p.isDeleted = false " +
+            "AND p.currentStock > 0 " +
+            "ORDER BY p.underTrendCategory DESC, p.currentStock DESC")
+    List<ProductEntity> findSuggestions(
+            @Param("categories") List<String> categories,
+            @Param("subCategories") List<String> subCategories,
+            @Param("excludedIds") List<Long> excludedIds,
+            Pageable pageable
+    );
+
+    // Fallback query — Phase 1 (no Redis data, new user)
+    @Query("SELECT p FROM ProductEntity p WHERE " +
+            "(p.productCategory = :category OR p.productSubCategory = :subCategory) " +
+            "AND p.productPrimeId != :excludeId " +
+            "AND p.isDeleted = false " +
+            "AND p.currentStock > 0 " +
+            "ORDER BY p.underTrendCategory DESC, p.currentStock DESC")
+    List<ProductEntity> findSuggestionsFallback(
+            @Param("category") String category,
+            @Param("subCategory") String subCategory,
+            @Param("excludeId") Long excludeId,
+            Pageable pageable
+    );
 
 }

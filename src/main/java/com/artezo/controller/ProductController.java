@@ -19,13 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.LinkedList;
-
 
 
 @RestController
@@ -41,14 +36,40 @@ public class ProductController {
         this.productService = productService;
     }
 
-    // ────────────────────────────────────────────────
-    //                  CRUD ENDPOINTS (unchanged mostly)
-    // ────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────
+    //          GET BY productPrimeId API for admin and web view
+    // ──────────────────────────────────────────────────────────
 
-    @GetMapping("/get-by-productPrimeId/{productPrimeId}")
+    //-------- for admin view product details ---------//
+    @GetMapping("/admin/get-by-productPrimeId/{productPrimeId}")
     public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long productPrimeId) {
         log.info("Fetching product by productPrimeId: {}", productPrimeId);
-        return ResponseEntity.ok(productService.getProductById(productPrimeId));
+        return ResponseEntity.ok(productService.getAdminViewProductById(productPrimeId));
+    }
+
+    //------ for web view product details  ------------//
+    @GetMapping("/get-by-productPrimeId/{productPrimeId}")
+    public ResponseEntity<?> getProductById(
+            @PathVariable Long productPrimeId,
+            @RequestParam(value = "userId", required = false) Long userId) {
+
+        log.info("GET /get-by-productPrimeId/{} | userId: {}", productPrimeId, userId);
+
+        try {
+            ProductResponseDto product = productService.getProductById(productPrimeId, userId);
+            return ResponseEntity.ok(product);
+
+        } catch (RuntimeException e) {
+            // Check if it's actually a not-found or something else
+            boolean isNotFound = e.getMessage() != null && e.getMessage().contains("not found");
+
+            return ResponseEntity.status(isNotFound ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "error", isNotFound ? "Product not found" : "Internal server error",
+                            "message", e.getMessage(),
+                            "productPrimeId", productPrimeId
+                    ));
+        }
     }
 
     @GetMapping("/get-product-by-productStrId/{productStrId}")
@@ -249,7 +270,7 @@ public class ProductController {
             }
         }
 
-// ── Step images — match file to step by step number using index marker ──
+        // ── Step images — match file to step by step number using index marker ──
         if (stepImages != null && request.getInstallationSteps() != null) {
             // Frontend sends file only for steps that have new image
             // We need to know WHICH steps have files — frontend must tell us via a hidden field
@@ -285,6 +306,9 @@ public class ProductController {
     }
 
 
+    //---------------------------------------//
+    //              Delete API               //
+    //---------------------------------------//
     @DeleteMapping(value = "/delete-by-productPrimeId/{productPrimeId}",
             produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> deleteProduct(@PathVariable Long productPrimeId) {
@@ -319,7 +343,7 @@ public class ProductController {
     }
 
     // ────────────────────────────────────────────────
-    //                  IMAGE SERVING (byte[] → fast for small files)
+    //    IMAGE SERVING (byte[] → fast for small files)
     // ────────────────────────────────────────────────
     @GetMapping(value = "/{productPrimeId}/main", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_GIF_VALUE})
     public ResponseEntity<byte[]> getMainImage(@PathVariable Long productPrimeId) {
@@ -387,7 +411,7 @@ public class ProductController {
     }
 
     // ────────────────────────────────────────────────
-    //          VIDEO STREAMING (Range support + URL in DTO)
+    //     VIDEO STREAMING (Range support + URL in DTO)
     // ────────────────────────────────────────────────
 
     @GetMapping(value = "/{productPrimeId}/installation-video/{stepIndex}", produces = "video/mp4")

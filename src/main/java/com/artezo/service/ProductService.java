@@ -17,8 +17,12 @@ public interface ProductService {
 
     ProductCreateResult createProduct(CreateProductRequestDto request);
 
-    // READ
-    ProductResponseDto getProductById(Long productPrimeId);
+
+    // get product by productPrimeId for admin
+    ProductResponseDto getAdminViewProductById(Long productPrimeId);
+
+    // get product by productPrimeId for web view
+    ProductResponseDto getProductById(Long productPrimeId, Long userId);
 
     ProductResponseDto getProductByStrId(String productStrId);
 

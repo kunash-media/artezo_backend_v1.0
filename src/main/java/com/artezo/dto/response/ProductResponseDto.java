@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class ProductResponseDto {
 
-    private Long productId;                 // internal prime id
+    private Long productPrimeId;                 // internal prime id
     private String productStrId;            // PRD0001, etc. (added for frontend convenience)
 
     private String productName;
@@ -60,14 +60,14 @@ public class ProductResponseDto {
 
     private Integer variantCount;
 
-    private String customFields;
+    private  Map<String, String> customFields;
 
-    public Long getProductId() {
-        return productId;
+    public Long getProductPrimeId() {
+        return productPrimeId;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setProductPrimeId(Long productPrimeId) {
+        this.productPrimeId = productPrimeId;
     }
 
     public String getProductStrId() {
@@ -118,7 +118,7 @@ public class ProductResponseDto {
         isDeleted = deleted;
     }
 
-    public boolean isHasVariants() {
+    public boolean getHasVariants() {
         return hasVariants;
     }
 
@@ -343,11 +343,11 @@ public class ProductResponseDto {
         this.underTrendCategory = underTrendCategory;
     }
 
-    public String getCustomFields() {
+    public  Map<String, String> getCustomFields() {
         return customFields;
     }
 
-    public void setCustomFields(String customFields) {
+    public void setCustomFields(Map<String, String> customFields) {
         this.customFields = customFields;
     }
 }

@@ -55,7 +55,7 @@ public class ProductEntity {
     @Column(name = "youtube_url")
     private String youtubeUrl;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_mockup_images", joinColumns = @JoinColumn(name = "product_id"))
     @Lob
     private List<byte[]> mockupImageDataList = new ArrayList<>();
@@ -213,7 +213,7 @@ public class ProductEntity {
         isDeleted = deleted;
     }
 
-    public boolean hasVariants() {
+    public boolean getHasVariants() {
         return hasVariants;
     }
 
@@ -286,13 +286,6 @@ public class ProductEntity {
         this.mainImageData = mainImageData;
     }
 
-//    public String getMainImageUrl() {
-//        return mainImageUrl;
-//    }
-
-//    public void setMainImageUrl(String mainImageUrl) {
-//        this.mainImageUrl = mainImageUrl;
-//    }
 
     public List<byte[]> getMockupImageDataList() {
         return mockupImageDataList;
@@ -302,13 +295,6 @@ public class ProductEntity {
         this.mockupImageDataList = mockupImageDataList;
     }
 
-//    public List<String> getMockupImageUrls() {
-//        return mockupImageUrls;
-//    }
-
-//    public void setMockupImageUrls(List<String> mockupImageUrls) {
-//        this.mockupImageUrls = mockupImageUrls;
-//    }
 
     public String getDescription() {
         return description;

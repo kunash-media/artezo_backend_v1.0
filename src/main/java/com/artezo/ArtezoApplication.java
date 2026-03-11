@@ -35,7 +35,6 @@ public class ArtezoApplication {
 
 		SpringApplication.run(ArtezoApplication.class, args);
 
-
 	}
 
 }

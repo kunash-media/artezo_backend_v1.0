@@ -19,6 +19,7 @@ import com.artezo.repository.InstallationStepRepository;
 import com.artezo.repository.InventoryRepository;
 import com.artezo.repository.ProductRepository;
 import com.artezo.service.ProductService;
+import com.artezo.service.RecentViewService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -33,30 +34,31 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final InstallationStepRepository installationStepRepository;
     private final InventoryRepository inventoryRepository;
+    private final RecentViewService recentViewService;
 
     private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ProductServiceImpl(
-            ProductRepository productRepository,
-            InstallationStepRepository installationStepRepository,
-            InventoryRepository inventoryRepository) {
+    public ProductServiceImpl(ProductRepository productRepository, InstallationStepRepository installationStepRepository, InventoryRepository inventoryRepository, RecentViewService recentViewService) {
         this.productRepository = productRepository;
         this.installationStepRepository = installationStepRepository;
         this.inventoryRepository = inventoryRepository;
+        this.recentViewService = recentViewService;
     }
 
     // ────────────────────────────────────────────────
-    //      URL generators
+    //             URL generators
     // ────────────────────────────────────────────────
     private String mainImageUrl(Long productPrimeId) {
         return "/api/products/" + productPrimeId + "/main";
@@ -71,7 +73,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     // ────────────────────────────────────────────────
-    //                  CREATE PRODUCT + INVENTORY SYNC
+    //            CREATE PRODUCT + INVENTORY SYNC
     // ────────────────────────────────────────────────
     @Override
     @Transactional
@@ -169,6 +171,14 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
+    public ProductResponseDto getAdminViewProductById(Long productPrimeId) {
+        ProductEntity entity = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found with productPrimeId: " + productPrimeId));
+        return mapToResponseDto(entity);
+    }
+
+    @Override
+    @Transactional
     public Page<ProductResponseDto> getAllActiveProducts(int page, int size, String sortBy, String sortDir) {
         // Default page size = 8, clamp to reasonable values
         int effectiveSize = (size <= 0 || size > 100) ? 10 : size;
@@ -201,7 +211,7 @@ public class ProductServiceImpl implements ProductService {
     private ProductResponseDto mapToListResponseDto(ProductEntity e) {
         ProductResponseDto dto = new ProductResponseDto();
 
-        dto.setProductId(e.getProductPrimeId());
+        dto.setProductPrimeId(e.getProductPrimeId());
         dto.setProductStrId(e.getProductStrId());
         dto.setProductName(e.getProductName());
         dto.setBrandName(e.getBrandName());
@@ -209,7 +219,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setProductSubCategory(e.getProductSubCategory());
 
         dto.setIsDeleted(e.getIsDeleted());
-        dto.setHasVariants(e.hasVariants());
+        dto.setHasVariants(e.getHasVariants());
         dto.setIsCustomizable(e.getIsCustomizable());
         dto.setIsExchange(e.getIsExchange());
         dto.setReturnAvailable(e.getReturnAvailable());
@@ -228,7 +238,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setYoutubeUrl(e.getYoutubeUrl());
 
         // ✅ Added: lightweight variant stock for list view
-        if (e.hasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
+        if (e.getHasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
             List<VariantResponseDto> variantsDto = e.getVariants().stream()
                     .map(v -> {
                         VariantResponseDto vd = new VariantResponseDto();
@@ -347,6 +357,12 @@ public class ProductServiceImpl implements ProductService {
             try { entity.setSpecifications(objectMapper.writeValueAsString(request.getSpecifications())); }
             catch (Exception ex) { log.error("Failed to serialize specifications", ex); }
         }
+
+        if (request.getCustomFields() != null) {
+            try { entity.setCustomFields(objectMapper.writeValueAsString(request.getCustomFields())); }
+            catch (Exception ex) { log.error("Failed to serialize customFields", ex); }
+        }
+
         if (request.getAdditionalInfo() != null) {
             try { entity.setAdditionalInfo(objectMapper.writeValueAsString(request.getAdditionalInfo())); }
             catch (Exception ex) { log.error("Failed to serialize additionalInfo", ex); }
@@ -505,14 +521,39 @@ public class ProductServiceImpl implements ProductService {
     }
 
     // ────────────────────────────────────────────────
-    //      Other methods
+    //      get product by productPrimeId
     // ────────────────────────────────────────────────
+//    @Override
+//    public ProductResponseDto getProductById(Long productPrimeId) {
+//        ProductEntity entity = productRepository.findById(productPrimeId)
+//                .orElseThrow(() -> new RuntimeException("Product not found with productPrimeId: " + productPrimeId));
+//        return mapToResponseDto(entity);
+//    }
+
     @Override
-    public ProductResponseDto getProductById(Long productPrimeId) {
+    @Transactional
+    public ProductResponseDto getProductById(Long productPrimeId, Long userId) {
+        log.info("Fetching product for productPrimeId: {} | userId: {}", productPrimeId, userId);
+
         ProductEntity entity = productRepository.findById(productPrimeId)
-                .orElseThrow(() -> new RuntimeException("Product not found with productPrimeId: " + productPrimeId));
-        return mapToResponseDto(entity);
+                .orElseThrow(() -> {
+                    log.warn("Product not found for productPrimeId: {}", productPrimeId);
+                    return new RuntimeException("Product not found with productPrimeId: " + productPrimeId);
+                });
+
+        ProductResponseDto response = mapToResponseDto(entity);
+
+        // Async Redis write — never blocks main response
+        CompletableFuture.runAsync(() -> recentViewService.recordView(userId, response))
+                .exceptionally(ex -> {
+                    log.error("Async recent view recording failed for productPrimeId: {} | reason: {}",
+                            productPrimeId, ex.getMessage());
+                    return null;
+                });
+
+        return response;
     }
+
 
     @Override
     public ProductResponseDto getProductByStrId(String productStrId) {
@@ -609,6 +650,15 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
+        if (r.getCustomFields() != null) {
+            try {
+                e.setCustomFields(mapper.writeValueAsString(r.getCustomFields()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize customFields", ex);
+                e.setCustomFields("{}");
+            }
+        }
+
         if (r.getAdditionalInfo() != null) {
             try {
                 e.setAdditionalInfo(mapper.writeValueAsString(r.getAdditionalInfo()));
@@ -674,7 +724,7 @@ public class ProductServiceImpl implements ProductService {
     private ProductResponseDto mapToResponseDto(ProductEntity e) {
         ProductResponseDto dto = new ProductResponseDto();
 
-        dto.setProductId(e.getProductPrimeId());
+        dto.setProductPrimeId(e.getProductPrimeId());
         dto.setProductStrId(e.getProductStrId());
         dto.setProductName(e.getProductName());
         dto.setBrandName(e.getBrandName());
@@ -682,7 +732,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setProductSubCategory(e.getProductSubCategory());
 
         dto.setIsDeleted(e.getIsDeleted());
-        dto.setHasVariants(e.hasVariants());
+        dto.setHasVariants(e.getHasVariants());
         dto.setIsCustomizable(e.getIsCustomizable());
         dto.setIsExchange(e.getIsExchange());
 
@@ -714,7 +764,7 @@ public class ProductServiceImpl implements ProductService {
             dto.setMockupImages(mockupUrls);
         }
 
-        if (e.hasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
+        if (e.getHasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
             List<VariantResponseDto> variantsDto = e.getVariants().stream()
                     .map(v -> {
                         VariantResponseDto vd = new VariantResponseDto();
@@ -806,6 +856,21 @@ public class ProductServiceImpl implements ProductService {
             }
         } else {
             dto.setFaq(new HashMap<>());
+        }
+
+        if (e.getCustomFields() != null && !"{}".equals(e.getCustomFields()) && !"null".equals(e.getCustomFields())) {
+            try {
+                Map<String, String> customFieldsMap = objectMapper.readValue(
+                        e.getCustomFields(),
+                        new TypeReference<Map<String, String>>() {}
+                );
+                dto.setCustomFields(customFieldsMap);
+            } catch (Exception ex) {
+                log.error("Failed to deserialize customFields JSON", ex);
+                dto.setCustomFields(new HashMap<>());
+            }
+        } else {
+            dto.setCustomFields(new HashMap<>());
         }
 
 

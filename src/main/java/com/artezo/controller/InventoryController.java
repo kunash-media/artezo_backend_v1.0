@@ -1,9 +1,14 @@
 package com.artezo.controller;
 
+import com.artezo.dto.request.InventoryDTO;
 import com.artezo.entity.InventoryEntity;
 import com.artezo.repository.InventoryRepository;
 import com.artezo.service.InventoryService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,23 +25,36 @@ public class InventoryController {
         this.inventoryRepository = inventoryRepository;
     }
 
-    // GET single by SKU
-    @GetMapping("/{sku}")
-    public ResponseEntity<InventoryEntity> getInventory(@PathVariable String sku) {
+    // GET single by SKU - Now returns DTO
+    @GetMapping("/get-by-sku/{sku}")
+    public ResponseEntity<InventoryDTO> getInventory(@PathVariable String sku) {
         log.info("Fetching inventory for SKU: {}", sku);
         return ResponseEntity.ok(inventoryService.getBySku(sku));
     }
 
     // PATCH - update stock
-    @PatchMapping("/{sku}/stock")
-    public ResponseEntity<InventoryEntity> updateStock(
+    @PatchMapping("/patch-by-sku/{sku}/stock")
+    public ResponseEntity<InventoryDTO> updateStock(
             @PathVariable String sku,
-            @RequestBody Integer newStock) {
+            @RequestParam("availableStock") Integer newStock) {
 
         log.info("Updating stock for SKU: {} to {}", sku, newStock);
         inventoryService.updateStock(sku, newStock);
         return ResponseEntity.ok(inventoryService.getBySku(sku));
     }
+
+
+    @GetMapping("/get-all-inventories")
+    public ResponseEntity<Page<InventoryDTO>> getAllInventories(
+            @PageableDefault(size = 10, sort = "sku", direction = Sort.Direction.ASC) Pageable pageable) {
+
+        log.info("Fetching all inventories with pagination: page={}, size={}",
+                pageable.getPageNumber(), pageable.getPageSize());
+
+        Page<InventoryDTO> inventories = inventoryService.getAllInventories(pageable);
+        return ResponseEntity.ok(inventories);
+    }
+
 
     // POST - create new inventory entry (manual / rare)
     @PostMapping
@@ -46,7 +64,7 @@ public class InventoryController {
         return ResponseEntity.ok(saved);
     }
 
-    // DELETE - remove inventory entry (careful - usually soft delete or archive)
+    // DELETE - remove inventory entry
     @DeleteMapping("/{sku}")
     public ResponseEntity<Void> deleteInventory(@PathVariable String sku) {
         log.warn("Deleting inventory for SKU: {}", sku);
