@@ -3,6 +3,7 @@ package com.artezo.controller;
 import com.artezo.dto.request.CreateProductRequestDto;
 import com.artezo.dto.request.HeroBannerRequestDto;
 import com.artezo.dto.request.InstallationStepRequestDto;
+import com.artezo.dto.response.BulkUploadResponse;
 import com.artezo.dto.response.ProductResponseDto;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
@@ -538,5 +539,31 @@ public class ProductController {
     ) {
         Page<ProductResponseDto> products = productService.getAllActiveProducts(page, size, sortBy, sortDir);
         return ResponseEntity.ok(products);
+    }
+
+    //==================================================//
+    //          Bulk Uploading API                      //
+    //==================================================//
+    @PostMapping(value = "/bulk-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BulkUploadResponse> bulkUploadProducts(
+            @RequestPart("excelFile") MultipartFile excelFile,
+            @RequestPart(value = "productImages", required = false) List<MultipartFile> images) {
+
+        log.info("Bulk product upload request received");
+
+        try {
+            BulkUploadResponse response = productService.bulkCreateProducts(excelFile, images);
+            log.info("Bulk upload completed → uploaded: {}, skipped: {}",
+                    response.getUploadedCount(), response.getSkippedCount());
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid input for bulk upload: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+
+        } catch (Exception e) {
+            log.error("Unexpected error during bulk upload: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

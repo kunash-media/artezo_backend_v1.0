@@ -54,7 +54,7 @@ public class CreateProductRequestDto {
     private List<String> categoryPath = new ArrayList<>();
     private String youtubeUrl;
 
-    private  Map<String, String> customFields;
+    private String customFields;
 
     public String getProductName() {
         return productName;
@@ -310,11 +310,11 @@ public class CreateProductRequestDto {
         this.underTrendCategory = underTrendCategory;
     }
 
-    public  Map<String, String> getCustomFields() {
+    public String getCustomFields() {
         return customFields;
     }
 
-    public void setCustomFields(Map<String, String> customFields) {
+    public void setCustomFields(String customFields) {
         this.customFields = customFields;
     }
 }

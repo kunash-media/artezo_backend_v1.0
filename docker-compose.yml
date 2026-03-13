@@ -8,7 +8,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data          # persists data across restarts
-    command: redis-server --requirepass yourStrongPassword123
+    command: redis-server --requirepass artezo@2026
     restart: always
 
   artezo-backend:
@@ -19,7 +19,7 @@ services:
     environment:
       - SPRING_REDIS_HOST=redis   # container name, not localhost
       - SPRING_REDIS_PORT=6379
-      - SPRING_REDIS_PASSWORD=yourStrongPassword123
+      - SPRING_REDIS_PASSWORD=artezo@2026
     depends_on:
       - redis
     restart: always

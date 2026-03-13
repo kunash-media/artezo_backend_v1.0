@@ -4,10 +4,7 @@ import com.artezo.dto.request.CreateProductRequestDto;
 import com.artezo.dto.request.HeroBannerRequestDto;
 import com.artezo.dto.request.InstallationStepRequestDto;
 import com.artezo.dto.request.VariantRequestDto;
-import com.artezo.dto.response.HeroBannerResponseDto;
-import com.artezo.dto.response.InstallationStepResponseDto;
-import com.artezo.dto.response.ProductResponseDto;
-import com.artezo.dto.response.VariantResponseDto;
+import com.artezo.dto.response.*;
 import com.artezo.entity.InstallationStepEntity;
 import com.artezo.entity.InventoryEntity;
 import com.artezo.entity.ProductEntity;
@@ -22,6 +19,11 @@ import com.artezo.service.ProductService;
 import com.artezo.service.RecentViewService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,7 +34,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -651,12 +657,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         if (r.getCustomFields() != null) {
-            try {
-                e.setCustomFields(mapper.writeValueAsString(r.getCustomFields()));
-            } catch (Exception ex) {
-                log.error("Failed to serialize customFields", ex);
-                e.setCustomFields("{}");
-            }
+            e.setCustomFields(r.getCustomFields()); // already a JSON string, set directly
         }
 
         if (r.getAdditionalInfo() != null) {
@@ -858,20 +859,7 @@ public class ProductServiceImpl implements ProductService {
             dto.setFaq(new HashMap<>());
         }
 
-        if (e.getCustomFields() != null && !"{}".equals(e.getCustomFields()) && !"null".equals(e.getCustomFields())) {
-            try {
-                Map<String, String> customFieldsMap = objectMapper.readValue(
-                        e.getCustomFields(),
-                        new TypeReference<Map<String, String>>() {}
-                );
-                dto.setCustomFields(customFieldsMap);
-            } catch (Exception ex) {
-                log.error("Failed to deserialize customFields JSON", ex);
-                dto.setCustomFields(new HashMap<>());
-            }
-        } else {
-            dto.setCustomFields(new HashMap<>());
-        }
+        dto.setCustomFields(e.getCustomFields());
 
 
         // Global tags
@@ -977,6 +965,611 @@ public class ProductServiceImpl implements ProductService {
                 .map(InstallationStepEntity::getStepImageData)
                 .filter(img -> img != null && img.length > 0)
                 .orElse(null);
+    }
+
+
+    //==================================================
+    //          Bulk Uploading
+    //==================================================
+
+
+    private static final String[] REQUIRED_COLUMNS = {
+            "product name", "category", "sku", "current stock"
+    };
+
+
+    @Transactional
+    public BulkUploadResponse bulkCreateProducts(MultipartFile excelFile,
+                                                 List<MultipartFile> images) {
+
+        log.info("╔══════════════════════════════════════════════════════════════╗");
+        log.info("║         BULK PRODUCT UPLOAD STARTED");
+        log.info("╚══════════════════════════════════════════════════════════════╝");
+
+        BulkUploadResponse response = new BulkUploadResponse();
+        List<String> skippedReasons = new ArrayList<>();
+        int uploadedCount = 0;
+        int skippedCount  = 0;
+
+        Map<String, MultipartFile> fileMap = buildFileMap(images);
+
+        try (InputStream is = excelFile.getInputStream();
+             Workbook workbook = new XSSFWorkbook(is)) {
+
+            Sheet sheet     = workbook.getSheetAt(0);
+            Row   headerRow = sheet.getRow(1);
+
+            if (headerRow == null) {
+                return failResponse(response, skippedReasons, "Excel file has no header row");
+            }
+
+            Map<String, Integer> col = buildColumnIndex(headerRow);
+            log.info("Detected {} columns: {}", col.size(), col.keySet());
+
+            List<String> missing = Arrays.stream(REQUIRED_COLUMNS)
+                    .filter(req -> !col.containsKey(req))
+                    .collect(Collectors.toList());
+            if (!missing.isEmpty()) {
+                return failResponse(response, skippedReasons,
+                        "Missing required column(s): " + String.join(", ", missing));
+            }
+
+            Iterator<Row> iterator = sheet.rowIterator();
+            iterator.next(); // skip section label row (row 1)
+            iterator.next(); // skip header row (row 2)
+
+            int rowNumber = 1;
+
+            while (iterator.hasNext()) {
+                Row row = iterator.next();
+                rowNumber++;
+
+                if (isRowBlank(row, col)) {
+                    log.debug("Skipping blank row {}", rowNumber);
+                    continue;
+                }
+
+                try {
+
+                    // ── MANDATORY ─────────────────────────────────────────────
+
+                    String productName = str(row, col, "product name");
+                    if (productName.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "Product name is empty");
+                        continue;
+                    }
+
+                    String category = str(row, col, "category");
+                    if (category.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "Category is empty — product: " + productName);
+                        continue;
+                    }
+
+                    String sku = str(row, col, "sku");
+                    if (sku.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "SKU is empty — product: " + productName);
+                        continue;
+                    }
+
+                    int currentStock = intVal(row, col, "current stock", -1);
+                    if (currentStock < 0) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber,
+                                "Invalid or missing 'current stock' for: " + productName
+                                        + " (must be a non-negative number)");
+                        continue;
+                    }
+
+                    log.info("Processing row {} → '{}' | SKU: {}", rowNumber, productName, sku);
+
+                    // ── DUPLICATE PRE-CHECKS ──────────────────────────────────
+                    // (createProduct() also checks, but pre-checking here gives
+                    //  a cleaner "Row N: ..." message in skippedReasons)
+
+                    if (productRepository.existsByProductName(productName)) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber,
+                                "Product name already exists: '" + productName + "'");
+                        continue;
+                    }
+                    if (productRepository.existsByCurrentSku(sku)) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber,
+                                "SKU already exists: '" + sku + "'");
+                        continue;
+                    }
+
+                    // ── BASIC OPTIONAL ────────────────────────────────────────
+
+                    String brand       = str(row, col, "brand");
+                    String subCategory = str(row, col, "sub category");
+                    String color       = str(row, col, "color");
+                    String youtubeUrl  = str(row, col, "youtube url");
+
+                    double sellingPrice = dbl(row, col, "selling price", 0.0);
+                    double mrpPrice     = dbl(row, col, "mrp price", 0.0);
+                    if (mrpPrice > 0 && mrpPrice < sellingPrice) {
+                        log.warn("Row {} → MRP ({}) < selling price ({}) for '{}' — auto-corrected",
+                                rowNumber, mrpPrice, sellingPrice, productName);
+                        mrpPrice = sellingPrice;
+                    }
+
+                    boolean hasVariants     = bool(row, col, "has variants",    false);
+                    boolean isCustomizable  = bool(row, col, "is customizable", false);
+                    boolean isExchange      = bool(row, col, "is exchange",      false);
+                    boolean underTrend      = bool(row, col, "under trend",      false);
+                    boolean returnAvailable = bool(row, col, "return available", true);
+
+                    // ── LIST<STRING> FIELDS  (semicolon → split → List<String>) ──
+                    // These match the DTO fields: List<String> description, aboutItem, etc.
+
+                    List<String> descriptionList = semicolonList(row, col, "description");
+                    List<String> aboutItemList   = semicolonList(row, col, "about item");
+                    List<String> globalTagsList  = semicolonList(row, col, "global tags");
+                    List<String> addonKeysList   = semicolonList(row, col, "addon keys");
+                    List<String> categoryPath    = semicolonList(row, col, "category path");
+
+                    // ── MAP<STRING,STRING> FIELDS  (raw JSON object in cell) ───
+                    // Cell value example: {"material":"Acrylic","weight":"250g"}
+                    // Parsed into Map<String,String> — matching DTO type exactly.
+                    // Invalid JSON → warn + null (row is NOT skipped).
+
+                    Map<String, String> specifications = parseJsonMap(str(row, col, "specifications"), "specifications", productName);
+                    Map<String, String> additionalInfo = parseJsonMap(str(row, col, "additional info"), "additional info", productName);
+                    Map<String, String> faq            = parseJsonMap(str(row, col, "faq"),             "faq",            productName);
+                    // Map<String, String> customFields   = parseJsonMap(str(row, col, "custom fields"),   "custom fields",  productName);
+                    String customFields = validatedJsonOrNull(str(row, col, "custom fields"), "custom fields", productName);
+
+                    // ── IMAGES ────────────────────────────────────────────────
+
+                    byte[]       mainImageBytes = resolveBytes(fileMap, str(row, col, "main image"),    "main image", productName, rowNumber);
+                    List<byte[]> mockupBytes    = resolveBytesListBySemicolon(fileMap,
+                            semicolonList(row, col, "mockup images"), "mockup", productName, rowNumber);
+
+                    // ── VARIANTS ──────────────────────────────────────────────
+
+                    List<VariantRequestDto> variantDtos = new ArrayList<>();
+                    if (hasVariants) {
+                        List<String> varSkus     = semicolonList(row, col, "variant skus");
+                        List<String> varColors   = semicolonList(row, col, "variant colors");
+                        List<String> varTitles   = semicolonList(row, col, "variant titles");
+                        List<String> varPrices   = semicolonList(row, col, "variant prices");
+                        List<String> varMrps     = semicolonList(row, col, "variant mrps");
+                        List<String> varStocks   = semicolonList(row, col, "variant stocks");
+                        List<String> varSizes    = semicolonList(row, col, "variant sizes");
+                        List<String> varMfgDates = semicolonList(row, col, "variant mfg dates");
+                        List<String> varExpDates = semicolonList(row, col, "variant exp dates");
+                        List<String> varImgNames = semicolonList(row, col, "variant images");
+
+                        if (varSkus.isEmpty()) {
+                            log.warn("Row {} → hasVariants=true but 'variant skus' is empty for '{}' — no variants built",
+                                    rowNumber, productName);
+                        } else {
+                            for (int i = 0; i < varSkus.size(); i++) {
+                                String vSku = varSkus.get(i).trim();
+                                if (vSku.isEmpty()) continue;
+
+                                double vPrice = parseDouble(safeGet(varPrices, i, "0"));
+                                double vMrp   = parseDouble(safeGet(varMrps,   i, "0"));
+                                int    vStock = parseInt(safeGet(varStocks,    i, "0"));
+
+                                if (vMrp > 0 && vMrp < vPrice) {
+                                    log.warn("Row {} → Variant '{}' MRP < price — auto-corrected", rowNumber, vSku);
+                                    vMrp = vPrice;
+                                }
+
+                                VariantRequestDto v = new VariantRequestDto();
+                                v.setSku(vSku);
+                                v.setColor(safeGet(varColors,   i, color));   // fallback to root color
+                                v.setTitleName(safeGet(varTitles, i, ""));
+                                v.setSize(safeGet(varSizes,      i, "Standard"));
+                                v.setMfgDate(parseLocalDate(safeGet(varMfgDates, i, null)));
+                                v.setExpDate(parseLocalDate(safeGet(varExpDates,  i, null)));
+                                v.setPrice(vPrice > 0 ? vPrice : null);
+                                v.setMrp(vMrp > 0 ? vMrp : null);
+                                v.setStock(vStock);
+
+                                String vImgName = safeGet(varImgNames, i, "");
+                                if (!vImgName.isEmpty()) {
+                                    v.setMainImage(resolveBytes(fileMap, vImgName,
+                                            "variant[" + i + "] image", productName, rowNumber));
+                                }
+
+                                variantDtos.add(v);
+                                log.debug("Row {} → Variant: sku={}, color={}, stock={}", rowNumber, vSku, v.getColor(), vStock);
+                            }
+                        }
+                    }
+
+                    // ── HERO BANNERS ──────────────────────────────────────────
+
+                    List<HeroBannerRequestDto> bannerDtos  = new ArrayList<>();
+                    List<String> bannerDescs    = semicolonList(row, col, "banner descriptions");
+                    List<String> bannerImgNames = semicolonList(row, col, "banner images");
+
+                    for (int i = 0; i < bannerDescs.size(); i++) {
+                        HeroBannerRequestDto banner = new HeroBannerRequestDto();
+                        banner.setBannerId(i + 1);
+                        banner.setImgDescription(bannerDescs.get(i));
+                        String bImg = safeGet(bannerImgNames, i, "");
+                        if (!bImg.isEmpty()) {
+                            banner.setBannerImg(resolveBytes(fileMap, bImg,
+                                    "banner[" + i + "] image", productName, rowNumber));
+                        }
+                        bannerDtos.add(banner);
+                    }
+
+                    // ── INSTALLATION STEPS ────────────────────────────────────
+
+                    List<InstallationStepRequestDto> stepDtos = new ArrayList<>();
+                    List<String> stepTitles   = semicolonList(row, col, "step titles");
+                    List<String> stepDescs    = semicolonList(row, col, "step descriptions");
+                    List<String> stepNotes    = semicolonList(row, col, "step notes");
+                    List<String> stepImgNames = semicolonList(row, col, "step images");
+                    List<String> stepVidNames = semicolonList(row, col, "step videos");
+
+                    for (int i = 0; i < stepTitles.size(); i++) {
+                        InstallationStepRequestDto step = new InstallationStepRequestDto();
+                        step.setStep(i + 1);
+                        step.setTitle(stepTitles.get(i));
+                        step.setShortDescription(safeGet(stepDescs, i, ""));
+                        step.setShortNote(safeGet(stepNotes,        i, ""));
+                        String sImg = safeGet(stepImgNames, i, "");
+                        if (!sImg.isEmpty()) {
+                            step.setStepImage(resolveBytes(fileMap, sImg,
+                                    "step[" + i + "] image", productName, rowNumber));
+                        }
+                        String sVid = safeGet(stepVidNames, i, "");
+                        if (!sVid.isEmpty()) {
+                            step.setVideoFile(resolveBytes(fileMap, sVid,
+                                    "step[" + i + "] video", productName, rowNumber));
+                        }
+                        stepDtos.add(step);
+                    }
+
+                    // ── BUILD DTO ─────────────────────────────────────────────
+
+                    CreateProductRequestDto dto = new CreateProductRequestDto();
+
+                    // Mandatory
+                    dto.setProductName(productName);
+                    dto.setProductCategory(category);
+                    dto.setCurrentSku(sku);
+                    dto.setCurrentStock(currentStock);
+
+                    // Basic optional
+                    dto.setProductSubCategory(nullIfEmpty(subCategory));
+                    dto.setBrandName(nullIfEmpty(brand));
+                    dto.setCurrentSellingPrice(sellingPrice > 0 ? sellingPrice : null);
+                    dto.setCurrentMrpPrice(mrpPrice > 0 ? mrpPrice : null);
+                    dto.setSelectedColor(nullIfEmpty(color));
+                    dto.setYoutubeUrl(nullIfEmpty(youtubeUrl));
+
+                    // Flags
+                    dto.setHasVariants(hasVariants);
+                    dto.setIsCustomizable(isCustomizable);
+                    dto.setIsExchange(isExchange);
+                    dto.setUnderTrendCategory(underTrend);
+                    dto.setReturnAvailable(returnAvailable);
+
+                    // List<String> fields — set directly, no JSON conversion needed here.
+                    // mapBaseFieldsToEntity() in ProductServiceImpl handles serialization.
+                    dto.setDescription(descriptionList.isEmpty()  ? null : descriptionList);
+                    dto.setAboutItem(aboutItemList.isEmpty()       ? null : aboutItemList);
+                    dto.setGlobalTags(globalTagsList.isEmpty()     ? null : globalTagsList);
+                    dto.setAddonKeys(addonKeysList.isEmpty()       ? null : addonKeysList);
+                    dto.setCategoryPath(categoryPath.isEmpty()     ? null : categoryPath);
+
+                    // Map<String, String> fields — set directly, no JSON conversion needed here.
+                    // mapBaseFieldsToEntity() handles objectMapper.writeValueAsString() internally.
+                    dto.setSpecifications(specifications);
+                    dto.setAdditionalInfo(additionalInfo);
+                    dto.setFaq(faq);
+                    dto.setCustomFields(customFields);
+
+                    // Images
+                    dto.setMainImage(mainImageBytes);
+                    dto.setMockupImages(mockupBytes.isEmpty() ? null : mockupBytes);
+                    dto.setProductVideo(null); // video not supported in bulk
+
+                    // Variants / banners / steps
+                    dto.setVariants(variantDtos.isEmpty()    ? null : variantDtos);
+                    dto.setHeroBanners(bannerDtos.isEmpty()  ? null : bannerDtos);
+                    dto.setInstallationSteps(stepDtos.isEmpty() ? null : stepDtos);
+
+                    // ── DELEGATE ──────────────────────────────────────────────
+                    // productStrId is auto-generated inside createProduct() → PRD%05d
+                    ProductCreateResult result = createProduct(dto);
+
+                    if (result.isSuccess()) {
+                        uploadedCount++;
+                        log.info("→ SUCCESS: '{}' created (row {})", productName, rowNumber);
+                    } else {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber,
+                                productName + " — " + result.getErrorMessage());
+                        log.warn("→ SKIPPED: '{}' (row {}) — {}", productName, rowNumber, result.getErrorMessage());
+                    }
+
+                } catch (Exception e) {
+                    skippedCount++;
+                    String rawName = str(row, col, "product name");
+                    addSkip(skippedReasons, rowNumber,
+                            (rawName.isEmpty() ? "Unknown product" : rawName)
+                                    + " — " + cleanError(e));
+                    log.error("→ ERROR row {}: {}", rowNumber, e.getMessage(), e);
+                }
+
+            } // end row loop
+
+        } catch (Exception e) {
+            String msg = "Cannot read the uploaded Excel file: "
+                    + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName())
+                    + ". Please make sure it is a valid .xlsx file and try again.";
+            skippedReasons.add(msg);
+            response.setSkippedReasons(skippedReasons);
+            response.setMessage("Upload failed — could not read Excel file");
+            log.error("CRITICAL: bulk upload aborted", e);
+            return response;
+        }
+
+        log.info("╔══════════════════════════════════════════════════════════════╗");
+        log.info("║  BULK UPLOAD FINISHED → uploaded: {}, skipped: {}", uploadedCount, skippedCount);
+        log.info("╚══════════════════════════════════════════════════════════════╝");
+
+        response.setUploadedCount(uploadedCount);
+        response.setSkippedCount(skippedCount);
+        response.setSkippedReasons(skippedReasons);
+
+        if (uploadedCount == 0 && skippedCount > 0) {
+            response.setMessage("No products were uploaded — please review the issues listed below");
+        } else if (skippedCount > 0) {
+            response.setMessage("Upload completed — " + uploadedCount + " product(s) added, " + skippedCount + " skipped");
+        } else {
+            response.setMessage("All " + uploadedCount + " product(s) uploaded successfully");
+        }
+
+        return response;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  FILE HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    private Map<String, MultipartFile> buildFileMap(List<MultipartFile> files) {
+        Map<String, MultipartFile> map = new HashMap<>();
+        if (files == null || files.isEmpty()) {
+            log.info("No files provided in this bulk request");
+            return map;
+        }
+        for (MultipartFile file : files) {
+            String name = file.getOriginalFilename();
+            if (name != null && !name.trim().isEmpty()) {
+                map.put(normalizeKey(name), file);
+            }
+        }
+        log.info("Prepared {} file(s) for lookup", map.size());
+        return map;
+    }
+
+    private byte[] resolveBytes(Map<String, MultipartFile> fileMap, String filename,
+                                String label, String productName, int rowNumber) {
+        if (filename == null || filename.trim().isEmpty()) return null;
+        MultipartFile file = fileMap.get(normalizeKey(filename));
+        if (file == null) {
+            log.warn("Row {} → {} not found in upload: '{}' for '{}'", rowNumber, label, filename, productName);
+            return null;
+        }
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            log.warn("Row {} → Could not read {} '{}' for '{}': {}", rowNumber, label, filename, productName, e.getMessage());
+            return null;
+        }
+    }
+
+    private List<byte[]> resolveBytesListBySemicolon(Map<String, MultipartFile> fileMap,
+                                                     List<String> names, String label,
+                                                     String productName, int rowNumber) {
+        List<byte[]> result = new ArrayList<>();
+        for (String name : names) {
+            byte[] b = resolveBytes(fileMap, name, label, productName, rowNumber);
+            if (b != null) result.add(b);
+        }
+        return result;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  COLUMN / ROW HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    private Map<String, Integer> buildColumnIndex(Row headerRow) {
+        Map<String, Integer> colIndex = new HashMap<>();
+        for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+            String h = getCellStr(headerRow.getCell(i))
+                    .trim().toLowerCase().replaceAll("\\s+", " ").replaceAll("[^a-z0-9 ]", "");
+            if (!h.isEmpty()) colIndex.put(h, i);
+        }
+        return colIndex;
+    }
+
+    private boolean isRowBlank(Row row, Map<String, Integer> col) {
+        return col.values().stream()
+                .allMatch(idx -> getCellStr(row.getCell(idx)).trim().isEmpty());
+    }
+
+    private String str(Row row, Map<String, Integer> col, String key) {
+        Integer idx = col.get(key);
+        return idx == null ? "" : getCellStr(row.getCell(idx)).trim();
+    }
+
+    private int intVal(Row row, Map<String, Integer> col, String key, int def) {
+        String v = str(row, col, key).replaceAll("[^0-9-]", "");
+        if (v.isEmpty()) return def;
+        try { return Integer.parseInt(v); } catch (NumberFormatException e) { return def; }
+    }
+
+    private double dbl(Row row, Map<String, Integer> col, String key, double def) {
+        String v = str(row, col, key).replaceAll("[^0-9.-]", "");
+        if (v.isEmpty()) return def;
+        try { return Double.parseDouble(v); } catch (NumberFormatException e) { return def; }
+    }
+
+    private boolean bool(Row row, Map<String, Integer> col, String key, boolean def) {
+        Integer idx = col.get(key);
+        if (idx == null) return def;
+        Cell cell = row.getCell(idx);
+        if (cell == null) return def;
+        try {
+            switch (cell.getCellType()) {
+                case BOOLEAN: return cell.getBooleanCellValue();
+                case NUMERIC: return cell.getNumericCellValue() == 1.0;
+                case STRING: {
+                    String s = cell.getStringCellValue().trim().toLowerCase();
+                    if (s.isEmpty()) return def;
+                    return "true".equals(s) || "yes".equals(s) || "1".equals(s);
+                }
+                default: return def;
+            }
+        } catch (Exception e) { return def; }
+    }
+
+    private List<String> semicolonList(Row row, Map<String, Integer> col, String key) {
+        String val = str(row, col, key);
+        if (val.isEmpty()) return new ArrayList<>();
+        return Arrays.stream(val.split(";"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private String getCellStr(Cell cell) {
+        if (cell == null) return "";
+        try {
+            switch (cell.getCellType()) {
+                case STRING:  return cell.getStringCellValue().trim();
+                case NUMERIC: {
+                    double d = cell.getNumericCellValue();
+                    return (d == Math.floor(d) && !Double.isInfinite(d))
+                            ? String.valueOf((long) d) : String.valueOf(d);
+                }
+                case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
+                case FORMULA: return cell.getCellFormula();
+                default:      return "";
+            }
+        } catch (Exception e) { return ""; }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  JSON MAP PARSER
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Parse a raw JSON object string from an Excel cell into Map<String, String>.
+     *
+     * Example cell value:  {"material":"Acrylic","weight":"250g"}
+     * Returns:             Map {material=Acrylic, weight=250g}
+     *
+     * Blank cell   → returns null  (field is optional, no error)
+     * Invalid JSON → warns + returns null  (row is NOT skipped)
+     *
+     * Works for: specifications, additionalInfo, faq, customFields
+     * which are all Map<String, String> in CreateProductRequestDto.
+     */
+    private Map<String, String> parseJsonMap(String raw, String fieldName, String productName) {
+        if (raw == null || raw.trim().isEmpty()) return null;
+        try {
+            return objectMapper.readValue(raw.trim(),
+                    new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            log.warn("Invalid JSON map in '{}' for '{}' — field skipped. Raw value: {}",
+                    fieldName, productName, raw);
+            return null;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  MISC HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    private String normalizeKey(String name) {
+        if (name == null) return "";
+        return name.trim()
+                .toLowerCase()
+                .replaceAll("\\s+", "-")
+                .replaceAll("_", "-")
+                .replaceAll("-+", "-")
+                .replaceFirst("\\.[^.]*$", ""); // strip extension
+    }
+
+    private String nullIfEmpty(String s) {
+        return (s == null || s.isEmpty()) ? null : s;
+    }
+
+    private String validatedJsonOrNull(String raw, String fieldName, String productName) {
+        if (raw == null || raw.trim().isEmpty()) return null;
+        try {
+            objectMapper.readTree(raw);
+            return raw.trim();
+        } catch (Exception e) {
+            log.warn("Invalid JSON in '{}' for '{}' — field skipped. Raw: {}", fieldName, productName, raw);
+            return null;
+        }
+    }
+
+    private String safeGet(List<String> list, int index, String fallback) {
+        if (list == null || index >= list.size()) return fallback;
+        String val = list.get(index);
+        return (val == null || val.trim().isEmpty()) ? fallback : val.trim();
+    }
+
+    private LocalDate parseLocalDate(String s) {
+        if (s == null || s.trim().isEmpty()) return null;
+        try {
+            return LocalDate.parse(s.trim()); // expects YYYY-MM-DD
+        } catch (Exception e) {
+            log.warn("Invalid date format '{}' — expected YYYY-MM-DD, field skipped", s);
+            return null;
+        }
+    }
+
+    private double parseDouble(String s) {
+        if (s == null || s.trim().isEmpty()) return 0.0;
+        try { return Double.parseDouble(s.replaceAll("[^0-9.-]", "")); }
+        catch (NumberFormatException e) { return 0.0; }
+    }
+
+    private int parseInt(String s) {
+        if (s == null || s.trim().isEmpty()) return 0;
+        try { return Integer.parseInt(s.replaceAll("[^0-9-]", "")); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
+    private String cleanError(Exception e) {
+        if (e instanceof IllegalArgumentException || e instanceof IllegalStateException) {
+            return e.getMessage();
+        }
+        String msg = e.getMessage();
+        if (msg == null || msg.trim().isEmpty()) {
+            return "Unexpected error (" + e.getClass().getSimpleName() + ")";
+        }
+        return msg.length() > 200 ? msg.substring(0, 200) + "…" : msg;
+    }
+
+    private void addSkip(List<String> reasons, int rowNumber, String detail) {
+        reasons.add("Row " + rowNumber + ": " + detail);
+    }
+
+    private BulkUploadResponse failResponse(BulkUploadResponse response,
+                                            List<String> reasons, String msg) {
+        reasons.add(msg);
+        response.setSkippedReasons(reasons);
+        response.setMessage("Upload failed — " + msg);
+        log.error("Bulk upload aborted: {}", msg);
+        return response;
     }
 
 }

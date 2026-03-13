@@ -1,12 +1,14 @@
 package com.artezo.service;
 
 import com.artezo.dto.request.CreateProductRequestDto;
+import com.artezo.dto.response.BulkUploadResponse;
 import com.artezo.dto.response.ProductResponseDto;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
 import com.artezo.exceptions.ProductNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -58,4 +60,7 @@ public interface ProductService {
     // Installation Step Image
 
     byte[]getInstallationStepImage(Long productId, Integer step);
+
+
+    public BulkUploadResponse bulkCreateProducts(MultipartFile excelFile, List<MultipartFile> images);
 }

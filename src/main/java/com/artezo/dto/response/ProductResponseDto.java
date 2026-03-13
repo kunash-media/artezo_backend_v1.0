@@ -60,7 +60,7 @@ public class ProductResponseDto {
 
     private Integer variantCount;
 
-    private  Map<String, String> customFields;
+    private String customFields;
 
     public Long getProductPrimeId() {
         return productPrimeId;
@@ -343,11 +343,11 @@ public class ProductResponseDto {
         this.underTrendCategory = underTrendCategory;
     }
 
-    public  Map<String, String> getCustomFields() {
+    public String getCustomFields() {
         return customFields;
     }
 
-    public void setCustomFields(Map<String, String> customFields) {
+    public void setCustomFields(String customFields) {
         this.customFields = customFields;
     }
 }
