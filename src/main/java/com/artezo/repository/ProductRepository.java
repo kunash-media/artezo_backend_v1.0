@@ -72,4 +72,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     );
 
     boolean existsByCurrentSku(String sku);
+
+    boolean existsByHsnCode(String hsnCode);
 }

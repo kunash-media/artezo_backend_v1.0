@@ -236,6 +236,10 @@ public class ProductServiceImpl implements ProductService {
         dto.setCurrentSellingPrice(e.getCurrentSellingPrice());
         dto.setCurrentMrpPrice(e.getCurrentMrpPrice());
         dto.setCurrentStock(e.getCurrentStock());
+        dto.setWeight(e.getWeight());
+        dto.setLength(e.getLength());
+        dto.setBreadth(e.getBreadth());
+        dto.setHeight(e.getHeight());
 
         if (e.getMainImageData() != null && e.getMainImageData().length > 0) {
             dto.setMainImage(mainImageUrl(e.getProductPrimeId()));
@@ -637,6 +641,11 @@ public class ProductServiceImpl implements ProductService {
         e.setCurrentSellingPrice(r.getCurrentSellingPrice());
         e.setCurrentMrpPrice(r.getCurrentMrpPrice());
         e.setCurrentStock(r.getCurrentStock());
+        e.setHsnCode(r.getHsnCode());
+        e.setWeight(r.getWeight());
+        e.setLength(r.getLength());
+        e.setBreadth(r.getBreadth());
+        e.setHeight(r.getHeight());
 
         if (r.getDescription() != null) {
             e.setDescription(String.join("\n", r.getDescription()));
@@ -719,6 +728,10 @@ public class ProductServiceImpl implements ProductService {
         v.setMfgDate(r.getMfgDate());
         v.setExpDate(r.getExpDate());
         v.setSize(r.getSize());
+        v.setWeight(r.getWeight());
+        v.setBreadth(r.getBreadth());
+        v.setHeight(r.getHeight());
+        v.setLength(r.getLength());
         // variantId is NOT set here anymore — generated later
     }
 
@@ -745,6 +758,11 @@ public class ProductServiceImpl implements ProductService {
         dto.setYoutubeUrl(e.getYoutubeUrl());
         dto.setReturnAvailable(e.getReturnAvailable());
         dto.setUnderTrendCategory(e.getUnderTrendCategory());
+        dto.setHsnCode(e.getHsnCode());
+        dto.setBreadth(e.getBreadth());
+        dto.setLength(e.getLength());
+        dto.setHeight(e.getHeight());
+        dto.setWeight(e.getWeight());
 
         if (e.getMainImageData() != null && e.getMainImageData().length > 0) {
             dto.setMainImage(mainImageUrl(e.getProductPrimeId()));
@@ -974,7 +992,8 @@ public class ProductServiceImpl implements ProductService {
 
 
     private static final String[] REQUIRED_COLUMNS = {
-            "product name", "category", "sku", "current stock"
+            "product name", "category", "sku", "current stock",
+            "hsn code", "weight", "length", "breadth", "height"
     };
 
 
@@ -1054,6 +1073,50 @@ public class ProductServiceImpl implements ProductService {
                         continue;
                     }
 
+                    // ── HSN CODE (mandatory) ───────────────────────────────────
+                    String hsnCode = str(row, col, "hsn code");
+                    if (hsnCode.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "HSN code is empty — product: " + productName);
+                        continue;
+                    }
+
+                    // ── ROOT LEVEL DIMENSIONS (mandatory) ─────────────────────
+                    // Parsed as Double — used for no-variant products directly,
+                    // and as fallback for variant products if variant dimension is 0.
+
+                    String weightStr = str(row, col, "weight");
+                    if (weightStr.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "weight is empty — product: " + productName);
+                        continue;
+                    }
+                    Double rootWeight = parseDouble(weightStr);
+
+                    String lengthStr = str(row, col, "length");
+                    if (lengthStr.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "length is empty — product: " + productName);
+                        continue;
+                    }
+                    Double rootLength = parseDouble(lengthStr);
+
+                    String breadthStr = str(row, col, "breadth");
+                    if (breadthStr.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "breadth is empty — product: " + productName);
+                        continue;
+                    }
+                    Double rootBreadth = parseDouble(breadthStr);
+
+                    String heightStr = str(row, col, "height");
+                    if (heightStr.isEmpty()) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber, "height is empty — product: " + productName);
+                        continue;
+                    }
+                    Double rootHeight = parseDouble(heightStr);
+
                     int currentStock = intVal(row, col, "current stock", -1);
                     if (currentStock < 0) {
                         skippedCount++;
@@ -1079,6 +1142,13 @@ public class ProductServiceImpl implements ProductService {
                         skippedCount++;
                         addSkip(skippedReasons, rowNumber,
                                 "SKU already exists: '" + sku + "'");
+                        continue;
+                    }
+
+                    if (productRepository.existsByHsnCode(hsnCode)) {
+                        skippedCount++;
+                        addSkip(skippedReasons, rowNumber,
+                                "HSN code already exists: '" + hsnCode + "'");
                         continue;
                     }
 
@@ -1120,7 +1190,6 @@ public class ProductServiceImpl implements ProductService {
                     Map<String, String> specifications = parseJsonMap(str(row, col, "specifications"), "specifications", productName);
                     Map<String, String> additionalInfo = parseJsonMap(str(row, col, "additional info"), "additional info", productName);
                     Map<String, String> faq            = parseJsonMap(str(row, col, "faq"),             "faq",            productName);
-                    // Map<String, String> customFields   = parseJsonMap(str(row, col, "custom fields"),   "custom fields",  productName);
                     String customFields = validatedJsonOrNull(str(row, col, "custom fields"), "custom fields", productName);
 
                     // ── IMAGES ────────────────────────────────────────────────
@@ -1142,6 +1211,11 @@ public class ProductServiceImpl implements ProductService {
                         List<String> varSizes    = semicolonList(row, col, "variant sizes");
                         List<String> varMfgDates = semicolonList(row, col, "variant mfg dates");
                         List<String> varExpDates = semicolonList(row, col, "variant exp dates");
+                        List<String> varWeight   = semicolonList(row, col, "variant weight");
+                        List<String> varLength   = semicolonList(row, col, "variant length");
+                        List<String> varBreadth  = semicolonList(row, col, "variant breadth");
+                        List<String> varHeight   = semicolonList(row, col, "variant height");
+
                         List<String> varImgNames = semicolonList(row, col, "variant images");
 
                         if (varSkus.isEmpty()) {
@@ -1152,9 +1226,18 @@ public class ProductServiceImpl implements ProductService {
                                 String vSku = varSkus.get(i).trim();
                                 if (vSku.isEmpty()) continue;
 
-                                double vPrice = parseDouble(safeGet(varPrices, i, "0"));
-                                double vMrp   = parseDouble(safeGet(varMrps,   i, "0"));
-                                int    vStock = parseInt(safeGet(varStocks,    i, "0"));
+                                double vPrice  = parseDouble(safeGet(varPrices,  i, "0"));
+                                double vMrp    = parseDouble(safeGet(varMrps,    i, "0"));
+                                int    vStock  = parseInt(safeGet(varStocks,     i, "0"));
+
+                                // ── VARIANT DIMENSIONS ────────────────────────────
+                                // Parse each variant's own value.
+                                // If 0 or missing → fall back to root-level dimension
+                                // so Shiprocket always gets a valid non-zero value.
+                                double vWeight  = parseDouble(safeGet(varWeight,  i, "0"));
+                                double vLength  = parseDouble(safeGet(varLength,  i, "0"));
+                                double vBreadth = parseDouble(safeGet(varBreadth, i, "0"));
+                                double vHeight  = parseDouble(safeGet(varHeight,  i, "0"));
 
                                 if (vMrp > 0 && vMrp < vPrice) {
                                     log.warn("Row {} → Variant '{}' MRP < price — auto-corrected", rowNumber, vSku);
@@ -1172,6 +1255,13 @@ public class ProductServiceImpl implements ProductService {
                                 v.setMrp(vMrp > 0 ? vMrp : null);
                                 v.setStock(vStock);
 
+                                // ✅ FIXED: set parsed Double with root-level fallback
+                                // (previously was incorrectly setting List<String> here)
+                                v.setWeight(vWeight   > 0 ? vWeight   : rootWeight);
+                                v.setLength(vLength   > 0 ? vLength   : rootLength);
+                                v.setBreadth(vBreadth > 0 ? vBreadth  : rootBreadth);
+                                v.setHeight(vHeight   > 0 ? vHeight   : rootHeight);
+
                                 String vImgName = safeGet(varImgNames, i, "");
                                 if (!vImgName.isEmpty()) {
                                     v.setMainImage(resolveBytes(fileMap, vImgName,
@@ -1179,7 +1269,9 @@ public class ProductServiceImpl implements ProductService {
                                 }
 
                                 variantDtos.add(v);
-                                log.debug("Row {} → Variant: sku={}, color={}, stock={}", rowNumber, vSku, v.getColor(), vStock);
+                                log.debug("Row {} → Variant: sku={}, color={}, stock={}, weight={}, dims={}x{}x{}",
+                                        rowNumber, vSku, v.getColor(), vStock,
+                                        v.getWeight(), v.getLength(), v.getBreadth(), v.getHeight());
                             }
                         }
                     }
@@ -1255,6 +1347,15 @@ public class ProductServiceImpl implements ProductService {
                     dto.setUnderTrendCategory(underTrend);
                     dto.setReturnAvailable(returnAvailable);
 
+                    // ── SHIPPING FIELDS (mandatory for Shiprocket) ────────────
+                    // Root-level dimensions: used directly when hasVariants=false,
+                    // also stored as product-level fallback when hasVariants=true.
+                    dto.setHsnCode(hsnCode);
+                    dto.setWeight(rootWeight);
+                    dto.setLength(rootLength);
+                    dto.setBreadth(rootBreadth);
+                    dto.setHeight(rootHeight);
+
                     // List<String> fields — set directly, no JSON conversion needed here.
                     // mapBaseFieldsToEntity() in ProductServiceImpl handles serialization.
                     dto.setDescription(descriptionList.isEmpty()  ? null : descriptionList);
@@ -1276,8 +1377,8 @@ public class ProductServiceImpl implements ProductService {
                     dto.setProductVideo(null); // video not supported in bulk
 
                     // Variants / banners / steps
-                    dto.setVariants(variantDtos.isEmpty()    ? null : variantDtos);
-                    dto.setHeroBanners(bannerDtos.isEmpty()  ? null : bannerDtos);
+                    dto.setVariants(variantDtos.isEmpty()       ? null : variantDtos);
+                    dto.setHeroBanners(bannerDtos.isEmpty()     ? null : bannerDtos);
                     dto.setInstallationSteps(stepDtos.isEmpty() ? null : stepDtos);
 
                     // ── DELEGATE ──────────────────────────────────────────────
@@ -1334,7 +1435,6 @@ public class ProductServiceImpl implements ProductService {
 
         return response;
     }
-
     // ═══════════════════════════════════════════════════════════════════════
     //  FILE HELPERS
     // ═══════════════════════════════════════════════════════════════════════

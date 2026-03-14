@@ -105,6 +105,13 @@ public class ProductEntity {
     @Column(columnDefinition = "JSON")
     private String customFields;
 
+    private String hsnCode;
+
+    private Double weight;
+    private Double length;
+    private Double breadth;
+    private Double height;
+
     public ProductEntity(){}
 
     public ProductEntity(Long productPrimeId, String productStrId, String productName, String brandName,
@@ -117,7 +124,8 @@ public class ProductEntity {
                          String description, String aboutItem, String specifications,
                          String additionalInfo, String heroBanners, String faq, String globalTags,
                          String addonKeys, List<ProductVariantEntity> variants, LocalDateTime createdAt,
-                         LocalDateTime updatedAt, boolean returnAvailable, String youtubeUrl, String customFields) {
+                         LocalDateTime updatedAt, boolean returnAvailable, String youtubeUrl, String customFields,  String hsnCode,
+                         Double weight, Double length, Double breadth, Double height) {
         this.productPrimeId = productPrimeId;
         this.productStrId = productStrId;
         this.productName = productName;
@@ -152,6 +160,11 @@ public class ProductEntity {
         this.returnAvailable = returnAvailable;
         this.youtubeUrl = youtubeUrl;
         this.customFields = customFields;
+        this.hsnCode = hsnCode;
+        this.weight = weight;
+        this.length = length;
+        this.breadth = breadth;
+        this.height = height;
     }
 
 
@@ -430,5 +443,45 @@ public class ProductEntity {
 
     public void setCustomFields(String customFields) {
         this.customFields = customFields;
+    }
+
+    public String getHsnCode() {
+        return hsnCode;
+    }
+
+    public void setHsnCode(String hsnCode) {
+        this.hsnCode = hsnCode;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public void setLength(Double length) {
+        this.length = length;
+    }
+
+    public Double getBreadth() {
+        return breadth;
+    }
+
+    public void setBreadth(Double breadth) {
+        this.breadth = breadth;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
     }
 }

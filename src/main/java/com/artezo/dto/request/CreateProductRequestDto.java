@@ -8,6 +8,7 @@ import java.util.Map;
 
 public class CreateProductRequestDto {
 
+
     private String productName;
     private String brandName;
     private String productCategory;
@@ -55,6 +56,12 @@ public class CreateProductRequestDto {
     private String youtubeUrl;
 
     private String customFields;
+
+    private String hsnCode;
+    private Double weight;
+    private Double length;
+    private Double breadth;
+    private Double height;
 
     public String getProductName() {
         return productName;
@@ -316,5 +323,45 @@ public class CreateProductRequestDto {
 
     public void setCustomFields(String customFields) {
         this.customFields = customFields;
+    }
+
+    public String getHsnCode() {
+        return hsnCode;
+    }
+
+    public void setHsnCode(String hsnCode) {
+        this.hsnCode = hsnCode;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public void setLength(Double length) {
+        this.length = length;
+    }
+
+    public Double getBreadth() {
+        return breadth;
+    }
+
+    public void setBreadth(Double breadth) {
+        this.breadth = breadth;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
     }
 }

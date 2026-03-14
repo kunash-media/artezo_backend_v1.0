@@ -19,6 +19,11 @@ public class VariantResponseDto {
     private String size;
     private List<String> couponAvailable;
 
+    private Double weight;
+    private Double length;
+    private Double breadth;
+    private Double height;
+
     public String getVariantId() {
         return variantId;
     }
@@ -121,5 +126,37 @@ public class VariantResponseDto {
 
     public void setCouponAvailable(List<String> couponAvailable) {
         this.couponAvailable = couponAvailable;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public void setLength(Double length) {
+        this.length = length;
+    }
+
+    public Double getBreadth() {
+        return breadth;
+    }
+
+    public void setBreadth(Double breadth) {
+        this.breadth = breadth;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
     }
 }

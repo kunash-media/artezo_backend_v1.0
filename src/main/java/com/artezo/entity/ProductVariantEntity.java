@@ -42,14 +42,16 @@ public class ProductVariantEntity {
     @Column(columnDefinition = "JSON")
     private String couponAvailable;     // JSON array
 
+    private Double weight;       // in kg  e.g. 0.5
+    private Double length;       // in cm  e.g. 20.0
+    private Double breadth;      // in cm  e.g. 15.0
+    private Double height;       // in cm  e.g. 5.0
+
 
     public ProductVariantEntity(){}
 
 
-    public ProductVariantEntity(Long id, ProductEntity product, String variantId, String titleName,
-                                String color, String sku, Double price, Double mrp, Integer stock,
-                                byte[] mainImageData, String mainImageStrUrl, List<byte[]> mockupImageDataList,
-                                LocalDate mfgDate, LocalDate expDate, String size, String couponAvailable) {
+    public ProductVariantEntity(Long id, ProductEntity product, String variantId, String titleName, String color, String sku, Double price, Double mrp, Integer stock, byte[] mainImageData, String mainImageStrUrl, List<byte[]> mockupImageDataList, LocalDate mfgDate, LocalDate expDate, String size, String couponAvailable, Double weight, Double length, Double breadth, Double height) {
         this.id = id;
         this.product = product;
         this.variantId = variantId;
@@ -66,6 +68,10 @@ public class ProductVariantEntity {
         this.expDate = expDate;
         this.size = size;
         this.couponAvailable = couponAvailable;
+        this.weight = weight;
+        this.length = length;
+        this.breadth = breadth;
+        this.height = height;
     }
 
     public Long getId() {
@@ -194,5 +200,37 @@ public class ProductVariantEntity {
 
     public void setCouponAvailable(String couponAvailable) {
         this.couponAvailable = couponAvailable;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public void setLength(Double length) {
+        this.length = length;
+    }
+
+    public Double getBreadth() {
+        return breadth;
+    }
+
+    public void setBreadth(Double breadth) {
+        this.breadth = breadth;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
     }
 }
