@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class OrderEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = true)
     private String orderStrId;          // ORD-20250314-0001
 
     @CreationTimestamp
@@ -142,6 +144,15 @@ public class OrderEntity {
 
     @Enumerated(EnumType.STRING)
     private OrderFlow orderFlow;        // BUY_NOW, CART
+
+
+    // OrderEntity.java — add this method
+    @PostPersist
+    private void generateOrderStrId() {
+        this.orderStrId = "ORD-" +
+                LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) +
+                "-" + this.orderId;
+    }
 
 
     public OrderEntity() {

@@ -98,7 +98,8 @@ public class OrderController {
 
     // ── GET /api/orders/get-all-orders?page=0&size=10 ─────────────────────
     // User facing — returns only logged-in user's orders (filtered by X-User-Id)
-    @GetMapping("/get-all-orders")
+    // JWT replacement with userId
+    @GetMapping("/user/user-all-orders")
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getMyOrders(
             @RequestHeader("X-User-Id") Long userId,
             @RequestParam(defaultValue = "0")  int page,
@@ -113,7 +114,7 @@ public class OrderController {
     //==========================================================
     // ── GET /api/admin/orders?page=0&size=10 ──────────────────────────────
     // Admin orders table — ALL orders across ALL users, newest first
-    @GetMapping("/orders")
+    @GetMapping("/admin/get-all-orders")
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getAllOrders(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -128,7 +129,7 @@ public class OrderController {
 
     // ── GET /api/admin/orders/user/{userId}?page=0&size=10 ────────────────
     // Admin customer detail — ALL orders of ONE specific user
-    @GetMapping("/orders/user/{userId}")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getOrdersByUserId(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0")  int page,

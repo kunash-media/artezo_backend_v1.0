@@ -1,9 +1,11 @@
 package com.artezo.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 
 @Entity
 @Table(name = "admin_table")
+@Builder
 public class AdminEntity {
 
     @Id

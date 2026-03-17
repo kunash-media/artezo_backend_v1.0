@@ -4,7 +4,10 @@ package com.artezo.service.serviceImpl;
 import com.artezo.dto.request.InventoryDTO;
 import com.artezo.dto.request.InventoryProductDTO;
 import com.artezo.entity.InventoryEntity;
+import com.artezo.entity.ProductEntity;
+import com.artezo.entity.ProductVariantEntity;
 import com.artezo.repository.InventoryRepository;
+import com.artezo.repository.ProductRepository;
 import com.artezo.service.InventoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -16,11 +19,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class InventoryServiceImpl implements InventoryService {
 
+    private final ProductRepository productRepository;
     private final InventoryRepository inventoryRepository;
 
-    public InventoryServiceImpl(InventoryRepository inventoryRepository) {
+    public InventoryServiceImpl(InventoryRepository inventoryRepository, ProductRepository productRepository) {
         this.inventoryRepository = inventoryRepository;
+        this.productRepository = productRepository;
     }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -33,14 +39,37 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public void updateStock(String sku, Integer newAvailableStock) {
+    public void updateStock(String sku, Integer newAvailableStock, Integer rootStock) {
         InventoryEntity inv = inventoryRepository.findBySku(sku)
                 .orElseThrow(() -> new RuntimeException("Inventory not found for SKU: " + sku));
 
+        // ── Update InventoryEntity ────────────────────────────────
         inv.setAvailableStock(newAvailableStock);
-        inv.setTotalStock(newAvailableStock); // simplistic - adjust if you have reserved
+        inv.setTotalStock(newAvailableStock);
         inventoryRepository.save(inv);
-        log.info("Stock updated → SKU: {}, new available: {}", sku, newAvailableStock);
+        log.info("Inventory updated → SKU: {}, availableStock: {}", sku, newAvailableStock);
+
+        if (inv.getProduct() != null) {
+            ProductEntity product = inv.getProduct();
+
+            // ── Update variant stock ──────────────────────────────
+            product.getVariants().stream()
+                    .filter(v -> v.getSku().equals(sku))
+                    .findFirst()
+                    .ifPresent(variant -> {
+                        variant.setStock(newAvailableStock);
+                        log.info("Variant stock synced → SKU: {}, stock: {}", sku, newAvailableStock);
+                    });
+
+            // ── Update root product stock if rootStock param provided
+            if (rootStock != null) {
+                product.setCurrentStock(rootStock);
+                log.info("Root product stock synced → productStrId: {}, stock: {}",
+                        product.getProductStrId(), rootStock);
+            }
+
+            productRepository.save(product);
+        }
     }
 
 
@@ -64,11 +93,12 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     private InventoryDTO convertToDTO(InventoryEntity inventory) {
+
+        InventoryProductDTO productDTO = new InventoryProductDTO();
         InventoryDTO dto = new InventoryDTO();
+
         dto.setInventoryId(inventory.getInventoryId());
         dto.setSku(inventory.getSku());
-        dto.setAvailableStock(inventory.getAvailableStock());
-        dto.setTotalStock(inventory.getTotalStock());
         dto.setLowStockThreshold(inventory.getLowStockThreshold());
         dto.setCreatedAt(inventory.getCreatedAt());
         dto.setUpdatedAt(inventory.getUpdatedAt());
@@ -76,16 +106,17 @@ public class InventoryServiceImpl implements InventoryService {
         // Convert product if exists (this happens within the transaction)
         if (inventory.getProduct() != null) {
 
-            InventoryProductDTO productDTO = new InventoryProductDTO();
             productDTO.setProductPrimeId(inventory.getProduct().getProductPrimeId());
             productDTO.setProductStrId(inventory.getProduct().getProductStrId());
             productDTO.setTitle(inventory.getProduct().getProductName());
             productDTO.setCurrentSku(inventory.getProduct().getCurrentSku());
             productDTO.setProductCategory(inventory.getProduct().getProductCategory());
             productDTO.setProductSubCategory(inventory.getProduct().getProductSubCategory());
+            productDTO.setCurrentStock(inventory.getProduct().getCurrentStock());
 
             // find variant based on SKU
             String inventorySku = inventory.getSku();
+            boolean isVariant = false;
 
             inventory.getProduct().getVariants()
                     .stream()
@@ -93,10 +124,26 @@ public class InventoryServiceImpl implements InventoryService {
                     .findFirst()
                     .ifPresent(variant -> {
                         productDTO.setVariantTitle(variant.getTitleName());
+                        productDTO.setVariantId(variant.getVariantId());    // ← ADD
+                        productDTO.setVariantStock(variant.getStock());     // ← ADD variant's own stock
+
                     });
+
+            // ✅ Set flag — if sku matches any variant it's variant stock, else root
+            productDTO.setIsVariantStock(
+                    inventory.getProduct().getVariants()
+                            .stream()
+                            .anyMatch(v -> v.getSku().equals(inventorySku))
+            );
+
             dto.setProduct(productDTO);
 
         }
+
+        // ✅ Calculate AFTER productDTO is fully populated
+        int totalStock = (productDTO.getVariantStock() != null ? productDTO.getVariantStock() : 0)
+                + (productDTO.getCurrentStock() != null ? productDTO.getCurrentStock() : 0);
+        dto.setTotalStock(totalStock);
 
         return dto;
     }

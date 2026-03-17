@@ -20,13 +20,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,8 +31,6 @@ public class OrderServiceImpl implements OrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
 
-    private static final DateTimeFormatter ORDER_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
-    private static final AtomicInteger dailySequence = new AtomicInteger(0);
 
     private final OrderRepository   orderRepository;
     private final ProductRepository productRepository;
@@ -91,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. Build OrderEntity
         OrderEntity order = new OrderEntity();
-        order.setOrderStrId(generateOrderStrId());
+//        order.setOrderStrId(generateOrderStrId());
         order.setUser(user);
         order.setOrderStatus(OrderStatus.PENDING);
         order.setPaymentStatus(PaymentStatus.PENDING);          // ✅ always PENDING on create
@@ -196,7 +191,7 @@ public class OrderServiceImpl implements OrderService {
         OrderItemEntity item = buildOrderItem(product, itemReq);
 
         OrderEntity order = new OrderEntity();
-        order.setOrderStrId(generateOrderStrId());
+//        order.setOrderStrId(generateOrderStrId());
         order.setUser(user);
         order.setOrderStatus(OrderStatus.CONFIRMED);
         order.setPaymentStatus(PaymentStatus.PAID);
@@ -398,6 +393,7 @@ public class OrderServiceImpl implements OrderService {
     // ────────────────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long userId, String orderStrId) {
         OrderEntity order = getOrderAndValidateOwner(userId, orderStrId);
         return mapToOrderResponse(order);
@@ -408,6 +404,7 @@ public class OrderServiceImpl implements OrderService {
     // ────────────────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getOrdersByUser(Long userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return orderRepository
@@ -420,6 +417,7 @@ public class OrderServiceImpl implements OrderService {
     // ────────────────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getOrdersByUserId(Long userId, int page, int size) {
         if (!userRepository.existsById(userId)) {
             throw new OrderException("User not found: " + userId, "USER_NOT_FOUND");
@@ -435,6 +433,7 @@ public class OrderServiceImpl implements OrderService {
     // ────────────────────────────────────────────────────────────────────────
 
     @Override
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getAllOrders(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return orderRepository
@@ -516,11 +515,7 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
-    private String generateOrderStrId() {
-        String datePart = LocalDate.now().format(ORDER_DATE_FORMAT);
-        int seq = dailySequence.incrementAndGet();
-        return String.format("ORD-%s-%04d", datePart, seq);
-    }
+
 
     private double orZero(Double value) {
         return value != null ? value : 0.0;

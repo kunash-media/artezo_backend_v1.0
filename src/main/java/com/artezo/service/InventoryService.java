@@ -8,7 +8,7 @@ public interface InventoryService {
 
     InventoryDTO getBySku(String sku);
 
-    void updateStock(String sku, Integer newAvailableStock);
+    public void updateStock(String sku, Integer newAvailableStock, Integer rootStock);
 
     boolean hasEnoughStock(String sku, Integer requiredQuantity);
 

@@ -10,8 +10,13 @@ public class InventoryProductDTO {
     private String productCategory;
     private String productSubCategory;
 
-   private String variantTitle;
+    private String variantTitle;
+    private Integer variantStock;
+    private Integer currentStock;       // ← ADD THIS
 
+    // InventoryProductDTO
+    private boolean isVariantStock;     // true = variant stock, false = root product stock
+    private String variantId;           // which variant this inventory belongs to
     // Add any other product fields you need
 
     public InventoryProductDTO(){}
@@ -70,5 +75,37 @@ public class InventoryProductDTO {
 
     public void setVariantTitle(String variantTitle) {
         this.variantTitle = variantTitle;
+    }
+
+    public Integer getCurrentStock() {
+        return currentStock;
+    }
+
+    public void setCurrentStock(Integer currentStock) {
+        this.currentStock = currentStock;
+    }
+
+    public boolean getIsVariantStock() {
+        return isVariantStock;
+    }
+
+    public void setIsVariantStock(boolean variantStock) {
+        isVariantStock = variantStock;
+    }
+
+    public String getVariantId() {
+        return variantId;
+    }
+
+    public void setVariantId(String variantId) {
+        this.variantId = variantId;
+    }
+
+    public Integer getVariantStock() {
+        return variantStock;
+    }
+
+    public void setVariantStock(Integer variantStock) {
+        this.variantStock = variantStock;
     }
 }

@@ -5,9 +5,8 @@ import com.artezo.dto.request.ShiprocketReturnRequest;
 import com.artezo.dto.response.ShiprocketOrderResponse;
 import com.artezo.entity.OrderEntity;
 import com.artezo.entity.OrderItemEntity;
-import com.artezo.enum_status.OrderStatus;
 import com.artezo.enum_status.PaymentMethod;
-import com.artezo.enum_status.PaymentStatus;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +31,9 @@ public class ShiprocketService {
 
     @Value("${shiprocket.pickup-location}")
     private String pickupLocation;
+
+    @Value("${shiprocket.enabled:true}")
+    private boolean shiprocketEnabled;
 
     // ── Your warehouse details for return orders ──────────────────────────
     // Add these to application.properties:
@@ -72,7 +74,13 @@ public class ShiprocketService {
     // ────────────────────────────────────────────────────────────────────────
 
     public ShiprocketOrderResponse createOrder(OrderEntity order) {
+
         log.info("Creating Shiprocket order for: {}", order.getOrderStrId());
+
+        if (!shiprocketEnabled) {
+            log.info("Shiprocket disabled — skipping createOrder for: {}", order.getOrderStrId());
+            return mockOrderResponse(order);  // return fake response
+        }
 
         ShiprocketOrderRequest request = buildCreateOrderRequest(order);
 
@@ -103,6 +111,11 @@ public class ShiprocketService {
 
     public void cancelOrder(Long shiprocketOrderId) {
         log.info("Cancelling Shiprocket order ID: {}", shiprocketOrderId);
+
+        if (!shiprocketEnabled) {
+            log.info("Shiprocket disabled — skipping cancelOrder");
+            return;
+        }
 
         Map<String, Object> body = Map.of("ids", List.of(shiprocketOrderId));
 
@@ -162,6 +175,12 @@ public class ShiprocketService {
                                                    OrderEntity replacementOrder) {
         log.info("Initiating Shiprocket exchange for original order: {}", originalOrder.getOrderStrId());
 
+        if (!shiprocketEnabled) {
+            log.info("Shiprocket disabled — skipping exchangeOrder");
+            return new ShiprocketOrderResponse[]{ mockOrderResponse(originalOrder), mockOrderResponse(replacementOrder) };
+        }
+
+
         // Step 1 — Return old item from customer
         ShiprocketOrderResponse returnResponse = createReturnOrder(originalOrder);
 
@@ -181,6 +200,11 @@ public class ShiprocketService {
 
     public Map trackByAwb(String awbNumber) {
         log.info("Tracking shipment with AWB: {}", awbNumber);
+
+        if (!shiprocketEnabled) {
+            log.info("Shiprocket disabled — skipping track");
+            return Map.of("status", "MOCK_TRACKING", "message", "Shiprocket disabled for testing");
+        }
 
         try {
             return executeWithTokenRetry(() ->
@@ -383,5 +407,18 @@ public class ShiprocketService {
             authService.invalidateToken();
             return apiCall.get();  // retry once with fresh token
         }
+    }
+
+
+    // ── Mock response for testing — returns dummy SR ids ─────────────────────
+    private ShiprocketOrderResponse mockOrderResponse(OrderEntity order) {
+        ShiprocketOrderResponse mock = new ShiprocketOrderResponse();
+        mock.setOrderId(99999L);        // fake SR order id
+        mock.setShipmentId(88888L);     // fake SR shipment id
+        mock.setStatus("MOCK");
+        mock.setStatusCode(1);
+        mock.setAwbCode("");
+        mock.setCourierName("MOCK_COURIER");
+        return mock;
     }
 }
