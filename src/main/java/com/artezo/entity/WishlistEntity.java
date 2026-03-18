@@ -20,10 +20,6 @@ public class WishlistEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    // supports named wishlists like Myntra
     @Column(name = "name", nullable = false)
     @Builder.Default
     private String name = "My Wishlist";
@@ -31,6 +27,10 @@ public class WishlistEntity {
     @Column(name = "is_public", nullable = false)
     @Builder.Default
     private Boolean isPublic = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @OneToMany(mappedBy = "wishlist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
@@ -43,4 +43,6 @@ public class WishlistEntity {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // product removed — belongs on WishlistItemEntity, not here
 }

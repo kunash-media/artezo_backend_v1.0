@@ -2,12 +2,15 @@ package com.artezo.service.serviceImpl;
 
 import com.artezo.dto.request.AddToWishlistRequest;
 import com.artezo.dto.response.WishlistResponse;
+import com.artezo.entity.UserEntity;
 import com.artezo.entity.WishlistEntity;
 import com.artezo.entity.WishlistItemEntity;
+import com.artezo.repository.UserRepository;
 import com.artezo.repository.WishlistItemRepository;
 import com.artezo.repository.WishlistRepository;
 import com.artezo.service.WishlistService;
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,27 +18,42 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class WishlistServiceImpl implements WishlistService {
+
+    private static final Logger logger = LoggerFactory.getLogger(WishlistServiceImpl.class);
 
     private final WishlistRepository wishlistRepository;
     private final WishlistItemRepository wishlistItemRepository;
+    private final UserRepository userRepository;
+
+    public WishlistServiceImpl(WishlistRepository wishlistRepository,
+                               WishlistItemRepository wishlistItemRepository,
+                               UserRepository userRepository) {
+        this.wishlistRepository = wishlistRepository;
+        this.wishlistItemRepository = wishlistItemRepository;
+        this.userRepository = userRepository;
+    }
 
     @Override
     @Transactional
     public WishlistResponse addToWishlist(AddToWishlistRequest request) {
         String listName = request.getWishlistName() != null ? request.getWishlistName() : "My Wishlist";
+        logger.info("[WISHLIST] Adding item | userId={}, productId={}, wishlistName={}",
+                request.getUserId(), request.getProductId(), listName);
 
-        // get or create wishlist by name
         WishlistEntity wishlist = wishlistRepository
-                .findByUserIdAndName(request.getUserId(), listName)
-                .orElseGet(() -> wishlistRepository.save(
-                        WishlistEntity.builder()
-                                .userId(request.getUserId())
-                                .name(listName)
-                                .build()));
+                .findByUser_UserIdAndName(request.getUserId(), listName)
+                .orElseGet(() -> {
+                    UserEntity user = userRepository.findById(request.getUserId())
+                            .orElseThrow(() -> new RuntimeException("User not found: " + request.getUserId()));
+                    logger.info("[WISHLIST] Creating new wishlist '{}' for userId={}", listName, request.getUserId());
+                    return wishlistRepository.save(
+                            WishlistEntity.builder()
+                                    .user(user)
+                                    .name(listName)
+                                    .build());
+                });
 
-        // skip if already in wishlist
         boolean alreadyAdded = wishlistItemRepository.existsByWishlist_IdAndProductIdAndVariantId(
                 wishlist.getId(), request.getProductId(), request.getVariantId());
 
@@ -52,42 +70,68 @@ public class WishlistServiceImpl implements WishlistService {
                     .customFieldsJson(request.getCustomFieldsJson())
                     .build();
             wishlistItemRepository.save(item);
+            logger.info("[WISHLIST] Item added | productId={}", request.getProductId());
+        } else {
+            logger.info("[WISHLIST] Item already in wishlist | productId={}", request.getProductId());
         }
 
         return buildWishlistResponse(wishlist);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<WishlistResponse> getAllWishlists(Long userId) {
-        return wishlistRepository.findByUserId(userId).stream()
+        logger.info("[WISHLIST] Fetching all wishlists | userId={}", userId);
+        return wishlistRepository.findByUser_UserId(userId).stream()
                 .map(this::buildWishlistResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public WishlistResponse getWishlist(Long userId, String wishlistName) {
         String name = wishlistName != null ? wishlistName : "My Wishlist";
-        WishlistEntity wishlist = wishlistRepository.findByUserIdAndName(userId, name)
-                .orElseThrow(() -> new RuntimeException("Wishlist not found: " + name));
+        logger.info("[WISHLIST] Fetching wishlist | userId={}, name={}", userId, name);
+        WishlistEntity wishlist = wishlistRepository.findByUser_UserIdAndName(userId, name)
+                .orElseThrow(() -> new RuntimeException("Wishlist '" + name + "' not found for userId: " + userId));
         return buildWishlistResponse(wishlist);
     }
 
     @Override
     @Transactional
     public void removeItem(Long userId, Long productId, String variantId) {
-        wishlistRepository.findByUserId(userId).forEach(wishlist ->
+        logger.info("[WISHLIST] Removing item | userId={}, productId={}, variantId={}", userId, productId, variantId);
+        wishlistRepository.findByUser_UserId(userId).forEach(wishlist ->
                 wishlistItemRepository.deleteByWishlist_IdAndProductIdAndVariantId(
                         wishlist.getId(), productId, variantId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean isInWishlist(Long userId, Long productId, String variantId) {
-        return wishlistRepository.findByUserId(userId).stream()
+        return wishlistRepository.findByUser_UserId(userId).stream()
                 .anyMatch(w -> wishlistItemRepository.existsByWishlist_IdAndProductIdAndVariantId(
                         w.getId(), productId, variantId));
     }
 
-    // ─── Helper ──────────────────────────────────────────────────────────────
+    @Override
+    @Transactional
+    public void clearWishlist(Long userId, String wishlistName) {
+        String name = wishlistName != null ? wishlistName : "My Wishlist";
+        logger.info("[WISHLIST] Clearing wishlist | userId={}, name={}", userId, name);
+        WishlistEntity wishlist = wishlistRepository.findByUser_UserIdAndName(userId, name)
+                .orElseThrow(() -> new RuntimeException("Wishlist '" + name + "' not found for userId: " + userId));
+        wishlist.getItems().clear();
+        wishlistRepository.save(wishlist);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getWishlistCount(Long userId) {
+        return wishlistItemRepository.countByUserId(userId);
+    }
+
+    // ─── Helper ───────────────────────────────────────────────────────────────
 
     private WishlistResponse buildWishlistResponse(WishlistEntity wishlist) {
         List<WishlistItemEntity> items = wishlistItemRepository.findByWishlist_Id(wishlist.getId());
@@ -109,29 +153,11 @@ public class WishlistServiceImpl implements WishlistService {
 
         return WishlistResponse.builder()
                 .wishlistId(wishlist.getId())
-                .userId(wishlist.getUserId())
+                .userId(wishlist.getUser().getUserId())  // ← from UserEntity relation
                 .name(wishlist.getName())
                 .isPublic(wishlist.getIsPublic())
                 .items(itemResponses)
                 .totalItems(itemResponses.size())
                 .build();
     }
-
-
-    @Override
-    @Transactional
-    public void clearWishlist(Long userId, String wishlistName) {
-        String name = wishlistName != null ? wishlistName : "My Wishlist";
-        WishlistEntity wishlist = wishlistRepository.findByUserIdAndName(userId, name)
-                .orElseThrow(() -> new RuntimeException("Wishlist '" + name + "' not found for userId: " + userId));
-        wishlist.getItems().clear();
-        wishlistRepository.save(wishlist);
-    }
-
-    @Override
-    public int getWishlistCount(Long userId) {
-        return wishlistItemRepository.countByWishlistUserId(userId);
-        // counts across ALL wishlists of the user
-    }
-
 }

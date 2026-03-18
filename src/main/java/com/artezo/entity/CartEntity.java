@@ -11,8 +11,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "cart")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class CartEntity {
 
@@ -20,10 +22,6 @@ public class CartEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    // for guest users
     @Column(name = "session_id")
     private String sessionId;
 
@@ -31,6 +29,10 @@ public class CartEntity {
     @Column(name = "status", nullable = false)
     @Builder.Default
     private CartStatus status = CartStatus.ACTIVE;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default

@@ -20,7 +20,6 @@ public interface WishlistItemRepository extends JpaRepository<WishlistItemEntity
 
     void deleteByWishlist_IdAndProductIdAndVariantId(Long wishlistId, Long productId, String variantId);
 
-    @Query("SELECT COUNT(wi) FROM WishlistItemEntity wi WHERE wi.wishlist.userId = :userId")
-    int countByWishlistUserId(@Param("userId") Long userId);
-
+    @Query("SELECT COUNT(wi) FROM WishlistItemEntity wi WHERE wi.wishlist.user.userId = :userId")
+    int countByUserId(@Param("userId") Long userId);
 }
