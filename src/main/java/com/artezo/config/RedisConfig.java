@@ -6,6 +6,9 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+//import org.springframework.beans.factory.annotation.Value;
+//import org.springframework.boot.CommandLineRunner;
+
 @Configuration
 public class RedisConfig {
 
@@ -19,4 +22,18 @@ public class RedisConfig {
         template.setHashValueSerializer(new StringRedisSerializer());
         return template;
     }
+
+//    @Bean
+//    public CommandLineRunner redisDebug(
+//            @Value("${spring.data.redis.host}") String host,
+//            @Value("${spring.data.redis.port}") int port,
+//            @Value("${spring.data.redis.password}") String password) {
+//        return args -> {
+//            System.out.println("=== REDIS DEBUG ===");
+//            System.out.println("Host: " + host);
+//            System.out.println("Port: " + port);
+//            System.out.println("Password empty: " + password.isEmpty());
+//            System.out.println("===================");
+//        };
+//    }
 }

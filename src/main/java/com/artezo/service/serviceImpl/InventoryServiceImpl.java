@@ -113,6 +113,8 @@ public class InventoryServiceImpl implements InventoryService {
             productDTO.setProductCategory(inventory.getProduct().getProductCategory());
             productDTO.setProductSubCategory(inventory.getProduct().getProductSubCategory());
             productDTO.setCurrentStock(inventory.getProduct().getCurrentStock());
+            productDTO.setCurrentMrpPrice(inventory.getProduct().getCurrentMrpPrice());
+            productDTO.setCurrentSellingPrice(inventory.getProduct().getCurrentSellingPrice());
 
             // find variant based on SKU
             String inventorySku = inventory.getSku();
@@ -126,6 +128,8 @@ public class InventoryServiceImpl implements InventoryService {
                         productDTO.setVariantTitle(variant.getTitleName());
                         productDTO.setVariantId(variant.getVariantId());    // ← ADD
                         productDTO.setVariantStock(variant.getStock());     // ← ADD variant's own stock
+                        productDTO.setVariantMrpPrice(variant.getMrp());
+                        productDTO.setVariantSellingPrice(variant.getPrice());
 
                     });
 

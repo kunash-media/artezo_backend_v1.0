@@ -14,9 +14,20 @@ public class InventoryProductDTO {
     private Integer variantStock;
     private Integer currentStock;       // ← ADD THIS
 
+
     // InventoryProductDTO
     private boolean isVariantStock;     // true = variant stock, false = root product stock
     private String variantId;           // which variant this inventory belongs to
+
+    private Double currentSellingPrice;
+    private Double currentMrpPrice;
+
+
+    //variant prices
+    private Double variantSellingPrice;
+    private Double variantMrpPrice;
+
+
     // Add any other product fields you need
 
     public InventoryProductDTO(){}
@@ -107,5 +118,38 @@ public class InventoryProductDTO {
 
     public void setVariantStock(Integer variantStock) {
         this.variantStock = variantStock;
+    }
+
+    public Double getCurrentMrpPrice() {
+        return currentMrpPrice;
+    }
+
+    public void setCurrentMrpPrice(Double currentMrpPrice) {
+        this.currentMrpPrice = currentMrpPrice;
+    }
+
+    public Double getCurrentSellingPrice() {
+        return currentSellingPrice;
+    }
+
+    public void setCurrentSellingPrice(Double currentSellingPrice) {
+        this.currentSellingPrice = currentSellingPrice;
+    }
+
+
+    public Double getVariantMrpPrice() {
+        return variantMrpPrice;
+    }
+
+    public void setVariantMrpPrice(Double variantMrpPrice) {
+        this.variantMrpPrice = variantMrpPrice;
+    }
+
+    public Double getVariantSellingPrice() {
+        return variantSellingPrice;
+    }
+
+    public void setVariantSellingPrice(Double variantSellingPrice) {
+        this.variantSellingPrice = variantSellingPrice;
     }
 }

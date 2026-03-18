@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   redis:
@@ -7,22 +6,14 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data          # persists data across restarts
-    command: redis-server --requirepass artezo@2026
+      - redis_data:/data
+    command: redis-server --requirepass ${SPRING_REDIS_PASSWORD}
     restart: always
-
-  artezo-backend:
-    build: .
-    container_name: artezo-app
-    ports:
-      - "8085:8085"
-    environment:
-      - SPRING_REDIS_HOST=redis   # container name, not localhost
-      - SPRING_REDIS_PORT=6379
-      - SPRING_REDIS_PASSWORD=artezo@2026
-    depends_on:
-      - redis
-    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${SPRING_REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   redis_data:
