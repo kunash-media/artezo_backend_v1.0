@@ -10,6 +10,7 @@ import com.artezo.exceptions.OrderException;
 import com.artezo.repository.OrderRepository;
 import com.artezo.repository.ProductRepository;
 import com.artezo.repository.UserRepository;
+import com.artezo.service.EmailService;
 import com.artezo.service.OrderService;
 import com.artezo.service.ShiprocketService;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,15 +38,17 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final UserRepository    userRepository;
     private final ShiprocketService shiprocketService;
+    private final EmailService emailService;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             ProductRepository productRepository,
                             UserRepository userRepository,
-                            ShiprocketService shiprocketService) {
+                            ShiprocketService shiprocketService, EmailService emailService) {
         this.orderRepository   = orderRepository;
         this.productRepository = productRepository;
         this.userRepository    = userRepository;
         this.shiprocketService = shiprocketService;
+        this.emailService = emailService;
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -86,10 +90,9 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. Build OrderEntity
         OrderEntity order = new OrderEntity();
-//        order.setOrderStrId(generateOrderStrId());
         order.setUser(user);
         order.setOrderStatus(OrderStatus.PENDING);
-        order.setPaymentStatus(PaymentStatus.PENDING);          // ✅ always PENDING on create
+        order.setPaymentStatus(PaymentStatus.PENDING);
         order.setPaymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()));
         order.setPaymentMode(request.getPaymentMode() != null
                 ? PaymentMode.valueOf(request.getPaymentMode()) : null);
@@ -130,10 +133,11 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity savedOrder = orderRepository.save(order);
         log.info("Order saved to DB: {} — calling Shiprocket...", savedOrder.getOrderStrId());
 
-        // 6. Call Shiprocket simultaneously
+        // 6. Call Shiprocket + Send Email on Success
         try {
             ShiprocketOrderResponse srResponse = shiprocketService.createOrder(savedOrder);
 
+            // Update order with Shiprocket details
             savedOrder.setShiprocketOrderId(srResponse.getOrderId());
             savedOrder.setShiprocketShipmentId(srResponse.getShipmentId());
             savedOrder.setOrderStatus(OrderStatus.CONFIRMED);
@@ -145,25 +149,73 @@ public class OrderServiceImpl implements OrderService {
                 savedOrder.setCourierName(srResponse.getCourierName());
             }
 
-            // ✅ Mark PAID only if Razorpay payment id present
             if (request.getRazorpayPaymentId() != null) {
                 savedOrder.setPaymentStatus(PaymentStatus.PAID);
             }
 
             decreaseStock(savedOrder.getOrderItems());
             orderRepository.save(savedOrder);
+
             log.info("Order {} confirmed — SR Order ID: {}", savedOrder.getOrderStrId(), srResponse.getOrderId());
 
+            // ==================== SEND EMAIL ON SUCCESS ====================
+            sendOrderConfirmationEmail(savedOrder);
+
         } catch (Exception e) {
-            // SR failed — keep PENDING in DB, don't rollback
-            // Admin can manually retry SR sync from dashboard
             log.error("Shiprocket createOrder failed for {} — saved as PENDING: {}",
                     savedOrder.getOrderStrId(), e.getMessage());
+
             savedOrder.setOrderStatus(OrderStatus.PENDING);
             orderRepository.save(savedOrder);
         }
 
         return mapToOrderResponse(savedOrder);
+    }
+
+
+    private void sendOrderConfirmationEmail(OrderEntity savedOrder) {
+        try {
+            String customerEmail = savedOrder.getCustomerEmail();
+            String customerName  = savedOrder.getCustomerName();
+            String orderStrId    = savedOrder.getOrderStrId();
+            String mobile        = savedOrder.getCustomerPhone();
+
+            BigDecimal totalAmount = BigDecimal.valueOf(savedOrder.getFinalAmount());
+
+            // Convert entities to DTOs for email
+            List<OrderResponse.OrderItemResponse> orderItemsForEmail = savedOrder.getOrderItems().stream()
+                    .map(this::mapToOrderItemResponse)
+                    .collect(Collectors.toList());
+
+            emailService.sendOrderConfirmationEmail(
+                    customerEmail,
+                    customerName,
+                    orderStrId,
+                    totalAmount,
+                    orderItemsForEmail,
+                    mobile
+            );
+
+            log.info("Order confirmation email sent successfully to: {}", customerEmail);
+
+        } catch (Exception emailEx) {
+            log.error("Failed to send order confirmation email for order {}: {}",
+                    savedOrder.getOrderStrId(), emailEx.getMessage(), emailEx);
+            // Do NOT throw — email failure should not rollback the order
+        }
+    }
+
+    //Mail order item response
+    private OrderResponse.OrderItemResponse mapToOrderItemResponse(OrderItemEntity entity) {
+        OrderResponse.OrderItemResponse dto = new OrderResponse.OrderItemResponse();
+
+        dto.setProductName(entity.getProductName());
+        dto.setQuantity(entity.getQuantity());
+        dto.setSellingPrice(entity.getSellingPrice());
+        dto.setItemTotal(entity.getItemTotal());
+        // Add other fields if needed (color, sku, etc.)
+
+        return dto;
     }
 
     // ────────────────────────────────────────────────────────────────────────

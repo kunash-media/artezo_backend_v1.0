@@ -50,6 +50,7 @@ public class OtpServiceImpl implements OtpService {
     }
 
     @Override
+    @Transactional
     public void sendOtpEmail(String email) {
         // 1. Validate email — user first, admin fallback
         UserEntity userEntity = null;

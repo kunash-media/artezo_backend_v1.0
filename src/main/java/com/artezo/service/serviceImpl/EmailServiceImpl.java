@@ -1,5 +1,6 @@
 package com.artezo.service.serviceImpl;
 
+import com.artezo.dto.response.OrderResponse;
 import com.artezo.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -56,7 +57,9 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendOrderConfirmationEmail(String toEmail, String customerName, String orderId,
-                                           BigDecimal totalAmount, List<String> productNames, String mobile) {
+                                           BigDecimal totalAmount,
+                                           List<OrderResponse.OrderItemResponse> orderItems,
+                                           String mobile) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
@@ -65,10 +68,9 @@ public class EmailServiceImpl implements EmailService {
             helper.setTo(toEmail);
             helper.setSubject("Order Placed Successfully - Artezo");
 
-            String htmlContent = buildOrderConfirmationEmailTemplate(customerName, orderId, totalAmount, productNames, mobile);
+            String htmlContent = buildOrderConfirmationEmailTemplate(customerName, orderId, totalAmount, orderItems, mobile);
             helper.setText(htmlContent, true);
 
-            // Try to add logo, but don't fail if it doesn't exist
             addLogoIfExists(helper);
 
             mailSender.send(message);
@@ -154,19 +156,34 @@ public class EmailServiceImpl implements EmailService {
 
 
     private String buildOrderConfirmationEmailTemplate(String customerName, String orderId,
-                                                       BigDecimal totalAmount, List<String> productNames, String mobile) {
+                                                       BigDecimal totalAmount,
+                                                       List<OrderResponse.OrderItemResponse> orderItems,
+                                                       String mobile) {
 
-        // Build product details list in the requested format
         StringBuilder productDetailsList = new StringBuilder();
-        for (int i = 0; i < productNames.size(); i++) {
+
+        for (OrderResponse.OrderItemResponse item : orderItems) {
+            double unitPrice = item.getSellingPrice() != null ? item.getSellingPrice() : 0.0;
+            double subtotal = item.getItemTotal() != null ? item.getItemTotal() : 0.0;
+            int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
+
             productDetailsList.append("<div class='product-item'>")
                     .append("<div class='product-row'>")
-                    .append("<span class='product-label'>Product:</span>")
-                    .append("<span class='product-value'>").append(productNames.get(i)).append("</span>")
+                    .append("<span class='product-label'>Item</span>")
+                    .append("<span class='product-value'>").append(item.getProductName()).append("</span>")
                     .append("</div>")
                     .append("<div class='product-row'>")
-                    .append("<span class='product-label'>Quantity: </span>")
-                    .append("<span class='product-value'>1</span>")
+                    .append("<span class='product-label'>Quantity</span>")
+                    .append("<span class='product-value'>").append(quantity).append("</span>")
+                    .append("</div>")
+                    .append("<div class='product-row'>")
+                    .append("<span class='product-label'>Price</span>")
+                    .append("<span class='product-value'>₹").append(String.format("%.2f", unitPrice)).append("</span>")
+                    .append("</div>")
+                    .append("<div class='product-row'>")
+                    .append("<span class='product-label'>Subtotal</span>")
+                    .append("<span class='product-value' style='font-weight:700; color:#133F53;'>₹")
+                    .append(String.format("%.2f", subtotal)).append("</span>")
                     .append("</div>")
                     .append("</div>");
         }
@@ -178,97 +195,92 @@ public class EmailServiceImpl implements EmailService {
                 "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
                 "<title>Order Confirmation - Artezo</title>" +
                 "<style>" +
-                "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; color: #333; }" +
-                ".container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }" +
-                ".header { text-align: center; padding: 40px 30px 30px 30px; background-color: white; }" +
-                ".logo { max-width: 120px; height: auto; margin-bottom: 25px; }" +
-                ".company-name { font-size: 28px; font-weight: bold; color: #d35400; margin-bottom: 20px; display: none; }" +
-                ".title { font-size: 28px; font-weight: 600; color: #d35400; margin: 15px 0 10px 0; }" +
-                ".subtitle { font-size: 16px; color: #d35400; margin: 5px 0 20px 0; opacity: 0.8; }" +
-                ".content { padding: 0 30px; }" +
-                ".greeting { color: #666; font-size: 16px; margin: 20px 0; line-height: 1.6; }" +
-                ".customer-greeting { color: #666; font-size: 16px; margin: 15px 0; }" +
-                ".customer-name { color: #d35400; font-weight: 600; }" +
-                ".sparkle { color: #f39c12; }" +
-                ".order-section { background-color: #fff; border-left: 4px solid #d35400; padding: 25px; margin: 25px 0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }" +
-                ".order-title { font-size: 20px; font-weight: 600; color: #d35400; margin-bottom: 20px; text-decoration: underline; }" +
-                ".product-list { margin: 15px 0; }" +
-                ".product-item { background-color: #f8f9fa; padding: 15px; margin-bottom: 15px; border-radius: 8px; border-left: 3px solid #d35400; }" +
-                ".product-row { display: flex; justify-content: flex-start; align-items: center; margin-bottom: 8px; }" +
-                ".product-row:last-child { margin-bottom: 0; }" +
-                ".product-label { font-weight: 600; color: #d35400; min-width: 120px; font-size: 15px; }" +
-                ".product-value { color: #333; font-size: 15px; margin-left: 10px; }" +
-                ".total-section { background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }" +
-                ".total-amount { font-size: 22px; font-weight: 700; }" +
-                ".contact-section { background: linear-gradient(135deg, #fef9f3 0%, #fcf3e9 100%); padding: 25px; border-radius: 10px; margin: 25px 0; text-align: center; border: 1px solid #d35400; }" +
-                ".contact-text { font-size: 16px; color: #d35400; margin-bottom: 18px; font-weight: 500; }" +
-                ".mobile-number { font-weight: 700; color: #d35400; }" +
-                ".contact-link { display: inline-block; background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 15px; transition: all 0.3s ease; box-shadow: 0 3px 10px rgba(211, 84, 0, 0.3); }" +
-                ".contact-link:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(211, 84, 0, 0.4); }" +
-                ".divider { text-align: center; margin: 30px 0; color: #d35400; font-size: 24px; }" +
-                ".closing { text-align: center; margin: 30px 0; padding: 0 30px; }" +
-                ".happy-shopping { font-size: 20px; font-weight: 600; margin: 20px 0; color: #d35400; }" +
-                ".shopping-bag { color: #f39c12; }" +
-                ".party-emoji { color: #f39c12; }" +
-                ".contact-info { font-size: 15px; color: #666; margin: 15px 0; line-height: 1.5; }" +
-                ".footer { text-align: center; background-color: #f8f9fa; padding: 25px 30px; color: #6c757d; font-size: 12px; line-height: 1.4; }" +
-                ".footer p { margin: 5px 0; }" +
+                "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f8f5f0; color: #333; }" +
+                ".container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 25px rgba(0,0,0,0.08); }" +
+                ".header { text-align: center; padding: 50px 30px 35px 30px; background: linear-gradient(135deg, #133F53 0%, #1a4a63 100%); color: white; }" +
+                ".logo { max-width: 130px; height: auto; margin-bottom: 20px; }" +
+                ".company-name { font-size: 32px; font-weight: 700; color: #D89F34; margin-bottom: 15px; letter-spacing: 2px; }" +
+                ".title { font-size: 26px; font-weight: 600; color: #D89F34; margin: 10px 0; }" +
+                ".subtitle { font-size: 16px; color: #e0ae47; margin: 8px 0 0 0; }" +
+                ".content { padding: 0 35px; }" +
+                ".greeting { color: #555; font-size: 16px; margin: 25px 0; line-height: 1.7; }" +
+                ".customer-greeting { color: #444; font-size: 17px; margin: 20px 0 10px 0; }" +
+                ".customer-name { color: #133F53; font-weight: 600; }" +
+                ".order-section { background-color: #fff; border-left: 5px solid #D89F34; padding: 30px; margin: 30px 0; border-radius: 10px; box-shadow: 0 3px 12px rgba(0,0,0,0.06); }" +
+                ".order-title { font-size: 21px; font-weight: 600; color: #133F53; margin-bottom: 22px; border-bottom: 2px solid #e0ae47; padding-bottom: 12px; }" +
+                ".product-list { margin: 20px 0; }" +
+                ".product-item { background-color: #f9f6f0; padding: 20px; margin-bottom: 18px; border-radius: 12px; border-left: 5px solid #D89F34; }" +
+                ".product-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #e0ae47; }" +
+                ".product-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }" +
+                ".product-label { font-weight: 600; color: #133F53; font-size: 15px; min-width: 100px; }" +
+                ".product-value { color: #222; font-size: 15.5px; text-align: right; flex: 1; }" +
+                ".total-section { background: linear-gradient(135deg, #D89F34 0%, #e0ae47 100%); color: white; padding: 28px; border-radius: 12px; margin: 30px 0; text-align: center; }" +
+                ".total-amount { font-size: 24px; font-weight: 700; }" +
+                ".site-link { display: inline-block; padding: 14px 34px; background: linear-gradient(135deg, #133F53 0%, #1a4a63 100%); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15.2px; box-shadow: 0 4px 15px rgba(19,63,83,0.25); }" +
+                ".contact-section { background: linear-gradient(135deg, #f8f5f0 0%, #f0e9d8 100%); padding: 30px; border-radius: 12px; margin: 30px 0; text-align: center; border: 1px solid #D89F34; }" +
+                ".contact-text { font-size: 16px; color: #133F53; margin-bottom: 18px; font-weight: 500; }" +
+                ".mobile-number { font-weight: 700; color: #133F53; }" +
+                ".contact-link { display: inline-block; background: linear-gradient(135deg, #133F53 0%, #1a4a63 100%); color: white; padding: 15px 32px; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; }" +
+                ".divider { text-align: center; margin: 40px 0 25px 0; color: #D89F34; font-size: 28px; letter-spacing: 6px; }" +
+                ".closing { text-align: center; margin: 30px 0; color: #444; line-height: 1.6; }" +
+                ".happy-shopping { font-size: 21px; font-weight: 600; color: #133F53; margin-bottom: 12px; }" +
                 "@media (max-width: 600px) {" +
-                ".container { margin: 10px; }" +
-                ".header, .content, .closing { padding: 20px; }" +
-                ".title { font-size: 24px; }" +
-                ".product-row { flex-direction: column; align-items: flex-start; }" +
-                ".product-label { min-width: auto; margin-bottom: 5px; }" +
-                ".product-value { margin-left: 0; }" +
+                ".product-row { flex-direction: column; align-items: flex-start; text-align: left; }" +
+                ".product-value { text-align: left; margin-top: 4px; }" +
                 "}" +
                 "</style>" +
                 "</head>" +
                 "<body>" +
                 "<div class='container'>" +
+
                 "<div class='header'>" +
-                "<img src='cid:logo' alt='Pharmacy Logo' class='logo' onerror='this.style.display=\"none\"; document.querySelector(\".company-name\").style.display=\"block\";'>" +
-                "<div class='company-name'>Artezo</div>" +
+                "<img src='cid:logo' alt='Artezo Logo' class='logo' onerror='this.style.display=\"none\"; document.querySelector(\".company-name\").style.display=\"block\";'>" +
+                "<div class='company-name'>ARTEZO</div>" +
                 "<div class='title'>Order Placed Successfully!</div>" +
-                "<div class='subtitle'>Thank you for your order from Artezo!</div>" +
+                "<div class='subtitle'>Thank you for choosing Artezo</div>" +
                 "</div>" +
 
-                "<div class='content'>"+
-                "<div class='greeting'>"+
-                "We're dedicated to providing you with quality medications and personalized care! Your health and well-being are our priority. ✨"+
-                "</div>"+
-                "</div>"+
+                "<div class='content'>" +
+                "<div class='greeting'>" +
+                "We're thrilled to bring your artistic vision to life. Every piece is crafted with passion to beautify your space." +
+                "</div>" +
+                "</div>" +
 
                 "<div class='customer-greeting'>" +
                 "Hi <span class='customer-name'>" + customerName + "</span>," +
                 "</div>" +
 
                 "<div class='order-section'>" +
-                "<div class='order-title'>Order Details:</div>" +
-                "<div class='product-list'>" +
-                productDetailsList.toString() +
-                "</div>" +
+                "<div class='order-title'>Your Order Details</div>" +
+                "<div class='product-list'>" + productDetailsList + "</div>" +
                 "<div class='total-section'>" +
                 "<div class='total-amount'>Total Amount: ₹" + totalAmount.toPlainString() + "</div>" +
                 "</div>" +
                 "</div>" +
 
                 "<div class='contact-section'>" +
-                "<div class='contact-text'>For any queries about your order, please contact us at: <span class='mobile-number'>" + mobile + "</span></div>" +
-                "<a href='tel:" + mobile + "' class='contact-link'>Call Us Now</a>" +
-                "</div>" +
+                "<div class='contact-text'>For any queries or customization needs, reach us at:</div>" +
+                "<span class='mobile-number'>" + "+91 79016 55023" + "</span><br><br>" +
+                "<a href='tel:" + "+91 79016 55023" + "' class='contact-link'>Call Us Now</a>" +
                 "</div>" +
 
-                "<div class='divider'>•••</div>" +
+                "<div style='text-align:center; margin: 30px 0;'>" +
+                "<a href='https://artezo-7xs7.vercel.app/' class='site-link' target='_blank'>View Full Order Details on Website</a>" +
+                "</div>" +
+
+                "<div class='divider'>✧ ✧ ✧</div>" +
 
                 "<div class='closing'>" +
-                "<div class='happy-shopping'><span class='shopping-bag'>🛒</span> Wishing you health and wellness with every prescription! <span class='party-emoji'></span></div>" +
-                "<div class='contact-info'>If you have any questions, feel free to reach out anytime.</div>" +
+                "<div class='happy-shopping'><span class='shopping-bag'>🖼️</span> Thank you for trusting Artezo!</div>" +
+                "<div>We can't wait to see your space transformed with our art & decor.</div>" +
                 "</div>" +
 
                 "<div class='footer'>" +
-                "<p>&copy; 2025 Artezo. All rights reserved.</p>" +
+                "<p>&copy; 2026 Artezo. All rights reserved.</p>" +
+                "<p>Handcrafted with passion | Made for beautiful spaces</p>" +
                 "<p>This is an automated email, please do not reply.</p>" +
                 "</div>" +
+
                 "</div>" +
                 "</body>" +
                 "</html>";
