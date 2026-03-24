@@ -577,11 +577,40 @@ public class OrderServiceImpl implements OrderService {
                         ir.setDiscount(i.getDiscount());
                         ir.setItemTotal(i.getItemTotal());
                         ir.setItemStatus(i.getItemStatus() != null ? i.getItemStatus().name() : null);
+
+                        // ── PRODUCT IMAGE URL ─────────────────────────────────────────
+                        if (i.getProductStrId() != null) {
+                            productRepository.findByProductStrId(i.getProductStrId())
+                                    .ifPresent(product -> {
+                                        Long primeId = product.getProductPrimeId();
+                                        String variantId = i.getVariantId();
+
+                                        if (variantId != null && !variantId.isBlank()) {
+                                            // variant order — check if variant has main image
+                                            boolean variantHasImage = product.getVariants().stream()
+                                                    .filter(v -> variantId.equals(v.getVariantId()))
+                                                    .findFirst()
+                                                    .map(v -> v.getMainImageData() != null && v.getMainImageData().length > 0)
+                                                    .orElse(false);
+
+                                            if (variantHasImage) {
+                                                ir.setProductImageUrl("/api/products/" + primeId + "/variant/" + variantId + "/main");
+                                            } else {
+                                                // fallback to product main image
+                                                ir.setProductImageUrl("/api/products/" + primeId + "/main");
+                                            }
+                                        } else {
+                                            // non-variant order — use product main image
+                                            ir.setProductImageUrl("/api/products/" + primeId + "/main");
+                                        }
+                                    });
+                        }
+                        // ─────────────────────────────────────────────────────────────
+
                         return ir;
                     }).collect(Collectors.toList());
             res.setOrderItems(itemResponses);
         }
-
         return res;
     }
 

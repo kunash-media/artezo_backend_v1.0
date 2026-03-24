@@ -383,6 +383,9 @@ public class OrderResponse {
         private Double discount;
         private Double itemTotal;
         private String itemStatus;
+        private String productImageUrl;
+
+
         // getters and setters ...
 
 
@@ -480,6 +483,14 @@ public class OrderResponse {
 
         public void setItemStatus(String itemStatus) {
             this.itemStatus = itemStatus;
+        }
+
+        public String getProductImageUrl() {
+            return productImageUrl;
+        }
+
+        public void setProductImageUrl(String productImageUrl) {
+            this.productImageUrl = productImageUrl;
         }
     }
 }

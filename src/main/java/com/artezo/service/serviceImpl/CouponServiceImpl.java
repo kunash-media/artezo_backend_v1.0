@@ -3,10 +3,13 @@ package com.artezo.service.serviceImpl;
 import com.artezo.dto.request.CouponRequestDto;
 import com.artezo.dto.response.CouponResponseDto;
 import com.artezo.entity.CouponEntity;
+import com.artezo.entity.UserEntity;
 import com.artezo.repository.CouponRepository;
+import com.artezo.repository.UserRepository;
 import com.artezo.service.CouponService;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
@@ -17,10 +20,12 @@ public class CouponServiceImpl implements CouponService {
     private static final Logger LOGGER = Logger.getLogger(CouponServiceImpl.class.getName());
 
     private final CouponRepository couponRepository;
+    private final UserRepository userRepository;
 
-    public CouponServiceImpl(CouponRepository couponRepository) {
+    public CouponServiceImpl(CouponRepository couponRepository, UserRepository userRepository) {
         LOGGER.info("Initializing CouponServiceImpl");
         this.couponRepository = couponRepository;
+        this.userRepository = userRepository;
         LOGGER.info("CouponServiceImpl initialized successfully");
     }
 
@@ -28,14 +33,13 @@ public class CouponServiceImpl implements CouponService {
     public CouponResponseDto createCoupon(CouponRequestDto requestDto) {
         LOGGER.info("Creating new coupon with code: " + requestDto.getCouponCode());
 
-        LOGGER.fine("Checking if coupon code already exists: " + requestDto.getCouponCode());
         if (couponRepository.existsByCouponCode(requestDto.getCouponCode())) {
             LOGGER.warning("Coupon code already exists: " + requestDto.getCouponCode());
             throw new RuntimeException("Coupon with code " + requestDto.getCouponCode() + " already exists");
         }
 
-        LOGGER.fine("Creating new CouponEntity from request DTO");
         CouponEntity coupon = new CouponEntity();
+
         coupon.setCouponCode(requestDto.getCouponCode());
         coupon.setDescription(requestDto.getDescription());
         coupon.setDiscountType(requestDto.getDiscountType());
@@ -47,19 +51,29 @@ public class CouponServiceImpl implements CouponService {
         coupon.setUsageLimit(requestDto.getUsageLimit());
         coupon.setUsagePerCustomer(requestDto.getUsagePerCustomer());
         coupon.setUsedCount(0);
-        coupon.setIsActive(requestDto.getIsActive());
-        coupon.setExcludeSaleItems(requestDto.getExcludeSaleItems());
-        coupon.setFreeShipping(requestDto.getFreeShipping());
+        coupon.setIsActive(requestDto.getIsActive() != null ? requestDto.getIsActive() : true);
+        coupon.setExcludeSaleItems(requestDto.getExcludeSaleItems() != null ? requestDto.getExcludeSaleItems() : false);
+        coupon.setFreeShipping(requestDto.getFreeShipping() != null ? requestDto.getFreeShipping() : false);
+        coupon.setCouponUsed(false);
         coupon.setCreatedAt(LocalDateTime.now());
 
-        LOGGER.fine("Saving coupon to database");
+        // ✅ Set user if userId is provided
+        if (requestDto.getUserId() != null) {
+            UserEntity user = userRepository.findById(requestDto.getUserId())
+                    .orElseThrow(() -> {
+                        LOGGER.warning("User not found with ID: " + requestDto.getUserId());
+                        return new RuntimeException("User not found with ID: " + requestDto.getUserId());
+                    });
+            coupon.setUser(user);
+            LOGGER.fine("Linked coupon to userId: " + requestDto.getUserId());
+        } else {
+            LOGGER.fine("No userId provided — coupon created as global (not user-specific)");
+        }
+
         CouponEntity savedCoupon = couponRepository.save(coupon);
         LOGGER.info("Coupon created successfully with couponId: " + savedCoupon.getCouponId() + ", code: " + savedCoupon.getCouponCode());
 
-        CouponResponseDto response = convertToResponseDto(savedCoupon);
-        LOGGER.fine("Converted saved coupon to response DTO");
-
-        return response;
+        return convertToResponseDto(savedCoupon);
     }
 
     @Override
@@ -311,4 +325,27 @@ public class CouponServiceImpl implements CouponService {
 
         return response;
     }
+
+
+    public List<CouponResponseDto> getUserCoupons(Long userId) {
+        LOGGER.info("Fetching all coupons for userId: " + userId);
+
+        List<CouponEntity> coupons = couponRepository.findByUser_UserId(userId);
+
+        if (coupons.isEmpty()) {
+            LOGGER.warning("No coupons found for userId: " + userId);
+            return Collections.emptyList();
+        }
+
+        LOGGER.info("Found " + coupons.size() + " coupons for userId: " + userId);
+
+        List<CouponResponseDto> responseList = coupons.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+
+        LOGGER.fine("Successfully converted " + coupons.size() + " coupons to response DTOs");
+
+        return responseList;
+    }
+
 }

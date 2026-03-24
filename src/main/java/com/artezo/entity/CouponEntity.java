@@ -62,17 +62,22 @@ public class CouponEntity {
     @Column(name = "coupon_used")
     private Boolean couponUsed = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
+
+
     public CouponEntity() {
         LOGGER.fine("CouponEntity empty constructor called");
     }
 
-    public CouponEntity(String couponCode, String description, String discountType,
+    public CouponEntity(Long couponId, String couponCode, String description, String discountType,
                         Double discountValue, Double minOrderAmount, Double maxDiscountAmount,
                         LocalDateTime validFrom, LocalDateTime validTo, Integer usageLimit,
                         Integer usagePerCustomer, Integer usedCount, Boolean isActive,
                         Boolean excludeSaleItems, Boolean freeShipping, LocalDateTime createdAt,
-                        Boolean couponUsed) {
-        LOGGER.fine("CouponEntity parameterized constructor called for couponCode: " + couponCode);
+                        Boolean couponUsed, UserEntity user) {
+        this.couponId = couponId;
         this.couponCode = couponCode;
         this.description = description;
         this.discountType = discountType;
@@ -89,9 +94,8 @@ public class CouponEntity {
         this.freeShipping = freeShipping;
         this.createdAt = createdAt;
         this.couponUsed = couponUsed;
-        LOGGER.fine("CouponEntity created with couponCode: " + this.couponCode);
+        this.user = user;
     }
-
 
     public Long getCouponId() {
         return couponId;
@@ -256,5 +260,14 @@ public class CouponEntity {
 
     public void setCouponUsed(Boolean couponUsed) {
         this.couponUsed = couponUsed;
+    }
+
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 }

@@ -36,7 +36,7 @@ public class CouponController {
 
         CouponResponseDto createdCoupon = couponService.createCoupon(couponRequestDto);
 
-        LOGGER.info("Coupon created successfully with couponId: " + createdCoupon.getId() +
+        LOGGER.info("Coupon created successfully with couponId: " + createdCoupon.getCouponId() +
                 ", couponCode: " + createdCoupon.getCouponCode());
 
         return new ResponseEntity<>(createdCoupon, HttpStatus.CREATED);
@@ -51,6 +51,17 @@ public class CouponController {
         LOGGER.info("Returning " + coupons.size() + " coupons in response");
 
         return ResponseEntity.ok(coupons);
+    }
+
+    @GetMapping("/get-by-userId/{userId}")
+    public ResponseEntity<List<CouponResponseDto>> getUserCoupons(@PathVariable("userId") Long userId) {
+
+        LOGGER.info("Received request to fetch all coupons by userId:{}" + userId);
+
+        List<CouponResponseDto> userCoupons = couponService.getUserCoupons(userId);
+
+        return ResponseEntity.ok(userCoupons);
+
     }
 
     @GetMapping("/get-active-coupons/active")
@@ -81,7 +92,7 @@ public class CouponController {
 
         CouponResponseDto coupon = couponService.getCouponByCode(couponCode);
 
-        LOGGER.info("Returning coupon with couponCode: " + couponCode + ", couponId: " + coupon.getId());
+        LOGGER.info("Returning coupon with couponCode: " + couponCode + ", couponId: " + coupon.getCouponId());
 
         return ResponseEntity.ok(coupon);
     }

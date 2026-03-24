@@ -36,6 +36,12 @@ public class OrderEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;            // FK → your existing UserEntity
 
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private ProductEntity product;
+
     // ── ORDER STATUS ──────────────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)
@@ -556,5 +562,14 @@ public class OrderEntity {
 
     public void setOrderFlow(OrderFlow orderFlow) {
         this.orderFlow = orderFlow;
+    }
+
+
+    public ProductEntity getProduct() {
+        return product;
+    }
+
+    public void setProduct(ProductEntity product) {
+        this.product = product;
     }
 }

@@ -7,6 +7,7 @@ public class CouponRequestDto {
 
     private static final Logger LOGGER = Logger.getLogger(CouponRequestDto.class.getName());
 
+    private Long userId;
     private String couponCode;
     private String description;
     private String discountType;
@@ -26,13 +27,9 @@ public class CouponRequestDto {
         LOGGER.fine("CouponRequestDto empty constructor called");
     }
 
-    public CouponRequestDto(String code, String description, String discountType,
-                            Double discountValue, Double minOrderAmount, Double maxDiscountAmount,
-                            LocalDateTime validFrom, LocalDateTime validTo, Integer usageLimit,
-                            Integer usagePerCustomer, Boolean isActive, Boolean excludeSaleItems,
-                            Boolean freeShipping, Boolean couponUsed) {
-        LOGGER.fine("CouponRequestDto parameterized constructor called for code: " + couponCode);
-        this.couponCode = code;
+    public CouponRequestDto(Long userId, String couponCode, String description, String discountType, Double discountValue, Double minOrderAmount, Double maxDiscountAmount, LocalDateTime validFrom, LocalDateTime validTo, Integer usageLimit, Integer usagePerCustomer, Boolean isActive, Boolean excludeSaleItems, Boolean freeShipping, Boolean couponUsed) {
+        this.userId = userId;
+        this.couponCode = couponCode;
         this.description = description;
         this.discountType = discountType;
         this.discountValue = discountValue;
@@ -46,7 +43,14 @@ public class CouponRequestDto {
         this.excludeSaleItems = excludeSaleItems;
         this.freeShipping = freeShipping;
         this.couponUsed = couponUsed;
-        LOGGER.fine("CouponRequestDto created with code: " + this.couponCode);
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getCouponCode() {

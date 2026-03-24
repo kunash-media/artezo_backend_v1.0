@@ -37,4 +37,8 @@ public interface CouponRepository extends JpaRepository<CouponEntity, Long> {
         }
         LOGGER.info(logMessage.toString());
     }
+
+
+    List<CouponEntity> findByUser_UserId(Long userId);
+
 }

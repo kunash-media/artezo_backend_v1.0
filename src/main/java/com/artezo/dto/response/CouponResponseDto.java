@@ -29,12 +29,12 @@ public class CouponResponseDto {
         LOGGER.fine("CouponResponseDto empty constructor called");
     }
 
-    public CouponResponseDto(Long id, String code, String description, String discountType,
+    public CouponResponseDto(Long couponId, String couponCode, String description, String discountType,
                              Double discountValue, Double minOrderAmount, Double maxDiscountAmount,
                              LocalDateTime validFrom, LocalDateTime validTo, Integer usageLimit,
                              Integer usagePerCustomer, Integer usedCount, Boolean isActive,
                              Boolean excludeSaleItems, Boolean freeShipping, LocalDateTime createdAt, Boolean couponUsed) {
-        LOGGER.fine("CouponResponseDto parameterized constructor called for id: " + id + ", code: " + code);
+        LOGGER.fine("CouponResponseDto parameterized constructor called for couponId: " + couponId + ", couponCode: " + couponCode);
         this.couponId = couponId;
         this.couponCode = couponCode;
         this.description = description;
@@ -55,23 +55,21 @@ public class CouponResponseDto {
         LOGGER.fine("CouponResponseDto created for coupon: " + this.couponCode);
     }
 
-    public Long getId() {
-        LOGGER.finest("Getting id from response DTO for coupon: " + couponCode);
+    public Long getCouponId() {
         return couponId;
     }
 
-    public void setId(Long id) {
-        LOGGER.fine("Setting id in response DTO to: " + id + " for coupon: " + couponCode);
+    public void setCouponId(Long couponId) {
         this.couponId = couponId;
     }
 
     public String getCouponCode() {
-        LOGGER.finest("Getting code from response DTO");
+        LOGGER.finest("Getting couponCode from response DTO");
         return couponCode;
     }
 
     public void setCouponCode(String couponCode) {
-        LOGGER.fine("Setting code in response DTO to: " + couponCode);
+        LOGGER.fine("Setting couponCode in response DTO to: " + couponCode);
         this.couponCode = couponCode;
     }
 
