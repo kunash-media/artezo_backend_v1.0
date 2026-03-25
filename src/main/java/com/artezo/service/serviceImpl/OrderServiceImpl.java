@@ -3,10 +3,12 @@ package com.artezo.service.serviceImpl;
 import com.artezo.dto.request.BuyNowConfirmRequest;
 import com.artezo.dto.request.CreateOrderRequest;
 import com.artezo.dto.response.OrderResponse;
+import com.artezo.dto.response.OrderSummaryResponse;
 import com.artezo.dto.response.ShiprocketOrderResponse;
 import com.artezo.entity.*;
 import com.artezo.enum_status.*;
 import com.artezo.exceptions.OrderException;
+import com.artezo.exceptions.ResourceNotFoundException;
 import com.artezo.repository.OrderRepository;
 import com.artezo.repository.ProductRepository;
 import com.artezo.repository.UserRepository;
@@ -486,11 +488,74 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrderResponse> getAllOrders(int page, int size) {
+    public Page<OrderSummaryResponse> getAllOrders(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return orderRepository
                 .findAllByOrderByOrderDateDesc(pageable)
-                .map(this::mapToOrderResponse);
+                .map(this::mapToOrderSummaryResponse);
+    }
+
+
+
+    private OrderSummaryResponse mapToOrderSummaryResponse(OrderEntity order) {
+        OrderSummaryResponse res = new OrderSummaryResponse();
+        res.setOrderStrId(order.getOrderStrId());
+        res.setOrderDate(order.getOrderDate());
+        res.setOrderStatus(order.getOrderStatus() != null ? order.getOrderStatus().name() : null);
+        res.setPaymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null);
+        res.setPaymentMethod(order.getPaymentMethod() != null ? order.getPaymentMethod().name() : null);
+        res.setPaymentMode(order.getPaymentMode() != null ? order.getPaymentMode().name() : null);
+        res.setCustomerName(order.getCustomerName());
+        res.setCustomerPhone(order.getCustomerPhone());
+        res.setSubTotal(order.getSubTotal());
+        res.setDiscountAmount(order.getDiscountAmount());
+        res.setDiscountPercent(order.getDiscountPercent());
+        res.setTax(order.getTax());
+        res.setFinalAmount(order.getFinalAmount());
+        res.setCourierName(order.getCourierName());
+        res.setOrderNotes(order.getOrderNotes());
+        res.setReturnRequested(order.isReturnRequested());
+        res.setExchangeRequested(order.isExchangeRequested());
+
+        if (order.getOrderItems() != null) {
+            List<OrderSummaryResponse.OrderItemSummary> itemSummaries = order.getOrderItems()
+                    .stream().map(i -> {
+                        OrderSummaryResponse.OrderItemSummary ir = new OrderSummaryResponse.OrderItemSummary();
+                        ir.setProductName(i.getProductName());
+                        ir.setColor(i.getColor());
+                        ir.setQuantity(i.getQuantity());
+                        ir.setSellingPrice(i.getSellingPrice());
+                        ir.setItemTotal(i.getItemTotal());
+
+                        // Product image URL
+                        if (i.getProductStrId() != null) {
+                            productRepository.findByProductStrId(i.getProductStrId())
+                                    .ifPresent(product -> {
+                                        Long primeId = product.getProductPrimeId();
+                                        String variantId = i.getVariantId();
+
+                                        if (variantId != null && !variantId.isBlank()) {
+                                            boolean variantHasImage = product.getVariants().stream()
+                                                    .filter(v -> variantId.equals(v.getVariantId()))
+                                                    .findFirst()
+                                                    .map(v -> v.getMainImageData() != null && v.getMainImageData().length > 0)
+                                                    .orElse(false);
+
+                                            ir.setProductImageUrl(variantHasImage
+                                                    ? "/api/products/" + primeId + "/variant/" + variantId + "/main"
+                                                    : "/api/products/" + primeId + "/main");
+                                        } else {
+                                            ir.setProductImageUrl("/api/products/" + primeId + "/main");
+                                        }
+                                    });
+                        }
+                        return ir;
+                    }).collect(Collectors.toList());
+
+            res.setOrderItems(itemSummaries);
+        }
+
+        return res;
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -721,5 +786,14 @@ public class OrderServiceImpl implements OrderService {
             log.info("Stock increased — product: {}, variant: {}, qty: {}",
                     item.getProductStrId(), item.getVariantId(), item.getQuantity());
         }
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderByOrderId(String orderId) {
+        OrderEntity order = orderRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        return mapToOrderResponse(order);
     }
 }

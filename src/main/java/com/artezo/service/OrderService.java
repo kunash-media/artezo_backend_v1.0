@@ -3,6 +3,7 @@ package com.artezo.service;
 import com.artezo.dto.request.BuyNowConfirmRequest;
 import com.artezo.dto.request.CreateOrderRequest;
 import com.artezo.dto.response.OrderResponse;
+import com.artezo.dto.response.OrderSummaryResponse;
 import org.springframework.data.domain.Page;
 
 import java.util.Map;
@@ -69,5 +70,8 @@ public interface OrderService {
      * Admin — paginated ALL orders across ALL users, newest first.
      * Used in admin panel orders table.
      */
-    Page<OrderResponse> getAllOrders(int page, int size);
+    Page<OrderSummaryResponse> getAllOrders(int page, int size);
+
+    //get by orderId orderResponse
+    public OrderResponse getOrderByOrderId(String orderId);
 }

@@ -3,6 +3,7 @@ package com.artezo.controller;
 import com.artezo.dto.request.BuyNowConfirmRequest;
 import com.artezo.dto.request.CreateOrderRequest;
 import com.artezo.dto.response.OrderResponse;
+import com.artezo.dto.response.OrderSummaryResponse;
 import com.artezo.exceptions.ApiResponse;
 import com.artezo.service.OrderService;
 import jakarta.validation.Valid;
@@ -115,11 +116,11 @@ public class OrderController {
     // ── GET /api/admin/orders?page=0&size=10 ──────────────────────────────
     // Admin orders table — ALL orders across ALL users, newest first
     @GetMapping("/admin/get-all-orders")
-    public ResponseEntity<ApiResponse<Page<OrderResponse>>> getAllOrders(
+    public ResponseEntity<ApiResponse<Page<OrderSummaryResponse>>> getAllOrders(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<OrderResponse> orders = orderService.getAllOrders(page, size);
+        Page<OrderSummaryResponse> orders = orderService.getAllOrders(page, size);
         return ResponseEntity.ok(ApiResponse.success("All orders fetched successfully", orders));
     }
 
@@ -137,5 +138,11 @@ public class OrderController {
 
         Page<OrderResponse> orders = orderService.getOrdersByUserId(userId, page, size);
         return ResponseEntity.ok(ApiResponse.success("User orders fetched successfully", orders));
+    }
+
+
+    @GetMapping("/get-by-orderId/{orderId}")
+    public ResponseEntity<OrderResponse> getOrderByOrderStrId(@PathVariable String orderId) {
+        return ResponseEntity.ok(orderService.getOrderByOrderId(orderId));
     }
 }

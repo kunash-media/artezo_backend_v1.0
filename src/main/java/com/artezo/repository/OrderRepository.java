@@ -29,4 +29,6 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
     // Webhook lookup by AWB number
     Optional<OrderEntity> findByAwbNumber(String awbNumber);
+
+    Optional<OrderEntity>findByOrderId(String orderId);
 }
