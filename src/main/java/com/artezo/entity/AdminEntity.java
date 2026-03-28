@@ -39,10 +39,19 @@ public class AdminEntity {
     @Column(name = "admin_department")
     private String adminDepartment;
 
+
+    @Builder.Default
+    @Column(name = "admin_is_active", nullable = false)
+    private Boolean adminIsActive = true;
+
+    @Builder.Default
+    @Column(name = "admin_is_locked", nullable = false)
+    private Boolean adminIsLocked = false;
+
     public AdminEntity(){}
 
 
-    public AdminEntity(Long id, String adminId, String adminFirstName, String adminLastName, String adminMobileNumber, String adminAddress, String adminEmail, String adminRole, String adminPassword, String adminDepartment) {
+    public AdminEntity(Long id, String adminId, String adminFirstName, String adminLastName, String adminMobileNumber, String adminAddress, String adminEmail, String adminRole, String adminPassword, String adminDepartment, Boolean adminIsActive, Boolean adminIsLocked) {
         Id = id;
         this.adminId = adminId;
         this.adminFirstName = adminFirstName;
@@ -53,6 +62,8 @@ public class AdminEntity {
         this.adminRole = adminRole;
         this.adminPassword = adminPassword;
         this.adminDepartment = adminDepartment;
+        this.adminIsActive = adminIsActive;
+        this.adminIsLocked = adminIsLocked;
     }
 
     public Long getId() {
@@ -135,4 +146,19 @@ public class AdminEntity {
         this.adminDepartment = adminDepartment;
     }
 
+    public Boolean getAdminIsActive() {
+        return adminIsActive;
+    }
+
+    public void setAdminIsActive(Boolean adminIsActive) {
+        this.adminIsActive = adminIsActive;
+    }
+
+    public Boolean getAdminIsLocked() {
+        return adminIsLocked;
+    }
+
+    public void setAdminIsLocked(Boolean adminIsLocked) {
+        this.adminIsLocked = adminIsLocked;
+    }
 }

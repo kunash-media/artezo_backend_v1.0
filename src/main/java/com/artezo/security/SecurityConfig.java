@@ -8,14 +8,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
+@EnableMethodSecurity   // NEW: enables @PreAuthorize on controller methods
 public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
@@ -54,24 +58,38 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        logger.info("Configuring SecurityFilterChain - stateless JWT authentication");
+        logger.info("Configuring SecurityFilterChain - stateless JWT with cookie support");
 
         http
-                .csrf(csrf -> {
-                    csrf.disable();
-                    logger.debug("CSRF protection disabled (stateless API)");
-                })
+                // ── CHANGED: CSRF enabled now that we use cookies ──
+                // Frontend must read XSRF-TOKEN cookie and send as X-XSRF-TOKEN header
+//                .csrf(csrf -> {
+//                    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+//                    csrf
+//                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                            // CookieCsrfTokenRepository sets XSRF-TOKEN cookie (readable by JS)
+//                            // Frontend sends it back as X-XSRF-TOKEN header on state-changing requests
+//                            .csrfTokenRequestHandler(requestHandler)
+//                            // ── Exempt login & refresh from CSRF (they're pre-auth) ──
+//                            .ignoringRequestMatchers(
+//                                    "/api/admin/auth/login",
+//                                    "/api/admin/auth/refresh",
+//                                    "/api/admin/bootstrap"
+//
+//                            );
+//                    logger.debug("CSRF protection enabled with CookieCsrfTokenRepository");
+//                })
+                .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> {
                     auth
-                            .requestMatchers("/api/admin/auth/**").permitAll()
+                            .requestMatchers("/api/admin/bootstrap").permitAll()
+                            .requestMatchers("/api/admin/auth/**").permitAll()   // login, logout, refresh
                             .requestMatchers("/api/admin/**").authenticated()
                             .anyRequest().permitAll();
 
-                    logger.info("Authorization rules applied: " +
-                            "/api/admin/auth/** → permitAll, " +
-                            "/api/admin/** → authenticated, " +
-                            "all others → permitAll");
+                    logger.info("Authorization rules: /api/admin/auth/** → permitAll, " +
+                            "/api/admin/** → authenticated, others → permitAll");
                 })
 
                 .sessionManagement(session -> {
@@ -82,7 +100,7 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // Custom 401 response for unauthenticated requests
+        // ── Custom 401 response (unchanged) ──
         http.exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

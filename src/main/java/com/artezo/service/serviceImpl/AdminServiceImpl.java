@@ -59,6 +59,8 @@ public class AdminServiceImpl implements AdminService {
                 .adminAddress(dto.getAdminAddress() != null ? dto.getAdminAddress().trim() : null)
                 .adminRole(dto.getAdminRole().trim())
                 .adminPassword(passwordEncoder.encode(dto.getAdminPassword())) // ← in real app: encode this!
+                .adminIsActive(true)
+                .adminIsLocked(false)
                 .build();
 
         AdminEntity saved = adminRepository.save(entity);

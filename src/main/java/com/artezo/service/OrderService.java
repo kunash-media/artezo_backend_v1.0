@@ -74,4 +74,6 @@ public interface OrderService {
 
     //get by orderId orderResponse
     public OrderResponse getOrderByOrderId(String orderId);
+
+    OrderResponse patchOrder(Long orderId, Map<String, Object> fields);
 }

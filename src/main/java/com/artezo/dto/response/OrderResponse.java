@@ -8,6 +8,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderResponse {
 
+    private Long orderId;
     private String orderStrId;
     private LocalDateTime orderDate;
     private String orderStatus;
@@ -366,6 +367,14 @@ public class OrderResponse {
 
     public void setDeliveredAt(LocalDateTime deliveredAt) {
         this.deliveredAt = deliveredAt;
+    }
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
     }
 
     // ── Inner: Item Response ──────────────────────────────────────────────

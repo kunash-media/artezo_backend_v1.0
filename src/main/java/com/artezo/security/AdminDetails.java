@@ -36,14 +36,17 @@ public class AdminDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         String role = admin.getAdminRole();
 
+        // ADD THIS LINE temporarily
+        System.out.println(">>> ROLE FROM DB: [" + role + "] for user: " + admin.getAdminMobileNumber());
+
         if (role == null || role.trim().isEmpty()) {
-            logger.warn("Admin {} has no role defined → using fallback role: {}",
-                    admin.getAdminMobileNumber(), DEFAULT_ROLE);
             role = DEFAULT_ROLE;
         }
 
         String authority = "ROLE_" + role.trim().toUpperCase();
-        logger.debug("Granted authority to admin {}: {}", admin.getAdminMobileNumber(), authority);
+
+        // ADD THIS LINE temporarily
+        System.out.println(">>> GRANTED AUTHORITY: [" + authority + "]");
 
         return List.of(new SimpleGrantedAuthority(authority));
     }
@@ -54,23 +57,36 @@ public class AdminDetails implements UserDetails {
     }
 
     /**
-     * Returns the identifier used for login (mobile number in your case).
+     * Returns the identifier used for login (mobile number).
      */
     @Override
     public String getUsername() {
         return admin.getAdminMobileNumber();
-        // Alternative (if you ever switch to adminId):
-        // return admin.getAdminId();
     }
+
+    // ── CHANGED: all status methods now read from AdminEntity fields ──
+    // Make sure your AdminEntity has these boolean fields.
+    // If a field doesn't exist yet, add it with a default value of true in your entity/DB.
 
     @Override
     public boolean isAccountNonExpired() {
+        // Return true if AdminEntity has no account expiry tracking yet
+        // Future: return admin.getIsAccountNonExpired() != null && admin.getIsAccountNonExpired();
         return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        // CHANGED: reads from entity — lets you lock an admin without deleting them
+        // Requires a boolean field `adminIsLocked` (or similar) in AdminEntity
+        // Default to NOT locked (true = not locked) if field is null
+        Boolean isLocked = admin.getAdminIsLocked();
+        if (isLocked == null) return true;      // treat null as not locked
+        boolean nonLocked = !isLocked;
+        if (!nonLocked) {
+            logger.warn("Admin {} is locked", admin.getAdminMobileNumber());
+        }
+        return nonLocked;
     }
 
     @Override
@@ -80,13 +96,19 @@ public class AdminDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        // In future: return admin.getIsActive() != null && admin.getIsActive();
-        return true;
+        // CHANGED: reads from entity — disabled admins cannot log in
+        // Requires a boolean field `adminIsActive` in AdminEntity
+        Boolean isActive = admin.getAdminIsActive();
+        if (isActive == null) return true;      // treat null as active
+        if (!isActive) {
+            logger.warn("Admin {} is disabled (isActive = false)", admin.getAdminMobileNumber());
+        }
+        return isActive;
     }
 
-    // ────────────────────────────────────────────────
-    // Convenience getters for application logic
-    // ────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    //  Convenience getters (unchanged)
+    // ─────────────────────────────────────────────────────────────
 
     public AdminEntity getAdminEntity() {
         return admin;

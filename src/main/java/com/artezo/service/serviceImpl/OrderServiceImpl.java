@@ -499,6 +499,8 @@ public class OrderServiceImpl implements OrderService {
 
     private OrderSummaryResponse mapToOrderSummaryResponse(OrderEntity order) {
         OrderSummaryResponse res = new OrderSummaryResponse();
+
+        res.setOrderId(order.getOrderId());
         res.setOrderStrId(order.getOrderStrId());
         res.setOrderDate(order.getOrderDate());
         res.setOrderStatus(order.getOrderStatus() != null ? order.getOrderStatus().name() : null);
@@ -640,6 +642,8 @@ public class OrderServiceImpl implements OrderService {
 
     private OrderResponse mapToOrderResponse(OrderEntity order) {
         OrderResponse res = new OrderResponse();
+
+        res.setOrderId(order.getOrderId());
         res.setOrderStrId(order.getOrderStrId());
         res.setOrderDate(order.getOrderDate());
         res.setOrderStatus(order.getOrderStatus() != null ? order.getOrderStatus().name() : null);
@@ -795,5 +799,55 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = orderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         return mapToOrderResponse(order);
+    }
+
+
+    @Override
+    @Transactional
+    public OrderResponse patchOrder(Long orderId, Map<String, Object> fields) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        fields.forEach((key, value) -> {
+            switch (key) {
+                case "orderStatus"      -> order.setOrderStatus(OrderStatus.valueOf((String) value));
+                case "paymentStatus"    -> order.setPaymentStatus(PaymentStatus.valueOf((String) value));
+                case "paymentMethod"    -> order.setPaymentMethod(PaymentMethod.valueOf((String) value));
+                case "paymentMode"      -> order.setPaymentMode(PaymentMode.valueOf((String) value));
+                case "orderFlow"        -> order.setOrderFlow(OrderFlow.valueOf((String) value));
+                case "customerName"     -> order.setCustomerName((String) value);
+                case "customerPhone"    -> order.setCustomerPhone((String) value);
+                case "customerEmail"    -> order.setCustomerEmail((String) value);
+                case "shippingAddress1" -> order.setShippingAddress1((String) value);
+                case "shippingAddress2" -> order.setShippingAddress2((String) value);
+                case "shippingCity"     -> order.setShippingCity((String) value);
+                case "shippingState"    -> order.setShippingState((String) value);
+                case "shippingPincode"  -> order.setShippingPincode((String) value);
+                case "subTotal"         -> order.setSubTotal(((Number) value).doubleValue());
+                case "discountAmount"   -> order.setDiscountAmount(((Number) value).doubleValue());
+                case "discountPercent"  -> order.setDiscountPercent(((Number) value).doubleValue());
+                case "couponCode"       -> order.setCouponCode((String) value);
+                case "couponDiscount"   -> order.setCouponDiscount(((Number) value).doubleValue());
+                case "tax"              -> order.setTax(((Number) value).doubleValue());
+                case "convenienceFee"   -> order.setConvenienceFee(((Number) value).doubleValue());
+                case "shippingCharges"  -> order.setShippingCharges(((Number) value).doubleValue());
+                case "giftwrapCharges"  -> order.setGiftwrapCharges(((Number) value).doubleValue());
+                case "finalAmount"      -> order.setFinalAmount(((Number) value).doubleValue());
+                case "giftWrap"         -> order.setGiftWrap((Boolean) value);
+                case "orderNotes"       -> order.setOrderNotes((String) value);
+                case "awbNumber"        -> order.setAwbNumber((String) value);
+                case "courierName"      -> order.setCourierName((String) value);
+                case "shippingStatus"   -> order.setShippingStatus(ShippingStatus.valueOf((String) value));
+                case "returnRequested"  -> order.setReturnRequested((Boolean) value);
+                case "exchangeRequested"-> order.setExchangeRequested((Boolean) value);
+                case "returnReason"     -> order.setReturnReason((String) value);
+                case "exchangeReason"   -> order.setExchangeReason((String) value);
+                case "cancelledAt"      -> order.setCancelledAt(LocalDateTime.parse((String) value));
+                case "deliveredAt"      -> order.setDeliveredAt(LocalDateTime.parse((String) value));
+                default                 -> throw new IllegalArgumentException("Unknown or non-patchable field: " + key);
+            }
+        });
+
+        return mapToOrderResponse(orderRepository.save(order));
     }
 }

@@ -45,8 +45,8 @@ public class OrderEntity {
     // ── ORDER STATUS ──────────────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private OrderStatus orderStatus;    // PENDING, CONFIRMED, CANCELLED, RETURNED, EXCHANGED
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")  //support new enum in mysql column
+    private OrderStatus orderStatus;
 
     // ── PAYMENT ───────────────────────────────────────────────────────────────
 

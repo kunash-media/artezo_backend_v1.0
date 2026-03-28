@@ -6,6 +6,7 @@ import java.util.List;
 
 public class OrderSummaryResponse {
 
+    private Long orderId;
     private String orderStrId;
     private LocalDateTime orderDate;
     private String orderStatus;
@@ -175,6 +176,13 @@ public class OrderSummaryResponse {
         this.orderItems = orderItems;
     }
 
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
 
     public static class OrderItemSummary {
         private String productName;

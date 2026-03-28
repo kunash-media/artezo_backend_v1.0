@@ -141,8 +141,21 @@ public class OrderController {
     }
 
 
+    //========== get order by orderId =============//
     @GetMapping("/get-by-orderId/{orderId}")
     public ResponseEntity<OrderResponse> getOrderByOrderStrId(@PathVariable String orderId) {
         return ResponseEntity.ok(orderService.getOrderByOrderId(orderId));
     }
+
+
+    //========= patch order by orderId =============//
+
+    @PatchMapping("/patch-by-orderId/{orderId}")
+    public ResponseEntity<OrderResponse> patchOrder(
+            @PathVariable Long orderId,
+            @RequestBody Map<String, Object> fields) {
+        return ResponseEntity.ok(orderService.patchOrder(orderId, fields));
+    }
+
+
 }

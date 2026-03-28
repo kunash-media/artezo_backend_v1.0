@@ -23,7 +23,11 @@ public class JwtUtil {
     private String secret;
 
     @Value("${jwt.expiration}")
-    private Long expiration;
+    private Long expiration;                 // short-lived: e.g. 900000 (15 min)
+
+    // ── NEW: separate expiration for refresh token ──
+    @Value("${jwt.refresh-expiration}")
+    private Long refreshExpiration;          // long-lived: e.g. 604800000 (7 days)
 
     private SecretKey getSigningKey() {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
@@ -69,7 +73,6 @@ public class JwtUtil {
 
     /**
      * Parses and verifies all claims from the token.
-     * Throws specific JWT exceptions with appropriate logging.
      */
     private Claims extractAllClaims(String token) {
         try {
@@ -116,44 +119,56 @@ public class JwtUtil {
     }
 
     /**
-     * Generates a new JWT token for the given user.
+     * Generates a SHORT-LIVED access token (uses jwt.expiration).
+     * Same as before — no breaking change.
      */
     public String generateToken(UserDetails userDetails) {
-        Map<String, Object> claims = new HashMap<>();
+        return buildToken(userDetails, expiration, "access");
+    }
 
-        // Optional: include user roles/authorities in the token
-        // Uncomment when you want roles available in the token payload
-        /*
-        claims.put("roles", userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList()));
-        */
+    /**
+     * NEW: Generates a LONG-LIVED refresh token (uses jwt.refresh-expiration).
+     * Stored in HttpOnly cookie with restricted path.
+     */
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("type", "refresh");   // distinguish from access token
+        return buildToken(userDetails, refreshExpiration, "refresh", extraClaims);
+    }
 
+    /**
+     * Internal builder — shared by generateToken and generateRefreshToken.
+     */
+    private String buildToken(UserDetails userDetails, Long expiryMs, String tokenType) {
+        return buildToken(userDetails, expiryMs, tokenType, new HashMap<>());
+    }
+
+    private String buildToken(UserDetails userDetails, Long expiryMs, String tokenType,
+                              Map<String, Object> extraClaims) {
         String username = userDetails.getUsername();
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
+        Date expiryDate = new Date(now.getTime() + expiryMs);
 
         String token = Jwts.builder()
-                .claims(claims)
+                .claims(extraClaims)
                 .subject(username)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
 
-        logger.info("Generated JWT for user: {} | expires in {} ms (at {})",
-                username, expiration, expiryDate);
+        logger.info("Generated {} token for user: {} | expires at {}", tokenType, username, expiryDate);
 
-        // Safe logging of token prefix (never log full token!)
+        // Safe logging - never log full token
         String tokenPreview = token.length() > 20 ? token.substring(0, 20) + "..." : token;
-        logger.debug("Generated token preview: {}", tokenPreview);
+        logger.debug("Generated {} token preview: {}", tokenType, tokenPreview);
 
         return token;
     }
 
     /**
      * Validates if the token is valid and belongs to the given user.
-     * Returns true only if valid and not expired.
+     * Works for BOTH access and refresh tokens.
      */
     public boolean validateToken(String token, UserDetails userDetails) {
         try {
