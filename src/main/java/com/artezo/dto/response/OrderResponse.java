@@ -2,6 +2,7 @@ package com.artezo.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -61,6 +62,9 @@ public class OrderResponse {
     private String exchangeReason;
     private LocalDateTime cancelledAt;
     private LocalDateTime deliveredAt;
+
+    private Long totalOrdersCount;     // total number of orders placed by this customer
+    private BigDecimal totalSpent;
 
     // getters and setters ...
 
@@ -375,6 +379,22 @@ public class OrderResponse {
 
     public void setOrderId(Long orderId) {
         this.orderId = orderId;
+    }
+
+    public Long getTotalOrdersCount() {
+        return totalOrdersCount;
+    }
+
+    public void setTotalOrdersCount(Long totalOrdersCount) {
+        this.totalOrdersCount = totalOrdersCount;
+    }
+
+    public BigDecimal getTotalSpent() {
+        return totalSpent;
+    }
+
+    public void setTotalSpent(BigDecimal totalSpent) {
+        this.totalSpent = totalSpent;
     }
 
     // ── Inner: Item Response ──────────────────────────────────────────────

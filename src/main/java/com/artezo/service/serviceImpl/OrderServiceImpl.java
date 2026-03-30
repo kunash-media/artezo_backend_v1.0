@@ -5,6 +5,7 @@ import com.artezo.dto.request.CreateOrderRequest;
 import com.artezo.dto.response.OrderResponse;
 import com.artezo.dto.response.OrderSummaryResponse;
 import com.artezo.dto.response.ShiprocketOrderResponse;
+import com.artezo.dto.stats.orders.OrderStats;
 import com.artezo.entity.*;
 import com.artezo.enum_status.*;
 import com.artezo.exceptions.OrderException;
@@ -796,11 +797,19 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public OrderResponse getOrderByOrderId(String orderId) {
-        OrderEntity order = orderRepository.findByOrderId(orderId)
+        OrderEntity order = orderRepository.findByOrderId(orderId)  // or findByOrderStrId depending on your param
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
-        return mapToOrderResponse(order);
-    }
 
+        OrderResponse response = mapToOrderResponse(order);
+
+        // Fetch user stats (one extra query - very lightweight)
+        OrderStats stats = orderRepository.getOrderStatsByUserId(order.getUser().getUserId());
+
+        response.setTotalOrdersCount(stats.getTotalOrdersCount());
+        response.setTotalSpent(stats.getTotalSpent());
+
+        return response;
+    }
 
     @Override
     @Transactional

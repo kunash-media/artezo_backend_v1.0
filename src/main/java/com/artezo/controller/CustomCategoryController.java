@@ -18,7 +18,6 @@ import java.util.Map;
 public class CustomCategoryController {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomCategoryController.class);
-
     private final CustomCategoryService service;
 
     public CustomCategoryController(CustomCategoryService service) {

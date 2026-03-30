@@ -17,9 +17,14 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
-@EnableMethodSecurity   // NEW: enables @PreAuthorize on controller methods
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
@@ -56,35 +61,76 @@ public class SecurityConfig {
         return manager;
     }
 
+    // ── NEW: CORS registered inside Spring Security ──
+    // Spring Security intercepts OPTIONS preflight BEFORE Spring MVC,
+    // so CORS must live here — not just in CorsConfig.java (WebMvcConfigurer).
+    // You can now safely DELETE CorsConfig.java.
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://localhost:5501",
+                "http://127.0.0.1:5501",
+                "http://localhost:5502",
+                "http://127.0.0.1:5502",
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://localhost:8083",
+                "http://127.0.0.1:8083"
+        ));
+
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);  // required — sends HttpOnly cookies cross-origin
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);  // covers all paths
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         logger.info("Configuring SecurityFilterChain - stateless JWT with cookie support");
 
         http
-                // ── CHANGED: CSRF enabled now that we use cookies ──
-                // Frontend must read XSRF-TOKEN cookie and send as X-XSRF-TOKEN header
-//                .csrf(csrf -> {
-//                    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
-//                    csrf
-//                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-//                            // CookieCsrfTokenRepository sets XSRF-TOKEN cookie (readable by JS)
-//                            // Frontend sends it back as X-XSRF-TOKEN header on state-changing requests
-//                            .csrfTokenRequestHandler(requestHandler)
-//                            // ── Exempt login & refresh from CSRF (they're pre-auth) ──
-//                            .ignoringRequestMatchers(
-//                                    "/api/admin/auth/login",
-//                                    "/api/admin/auth/refresh",
-//                                    "/api/admin/bootstrap"
-//
-//                            );
-//                    logger.debug("CSRF protection enabled with CookieCsrfTokenRepository");
-//                })
-                .csrf(csrf -> csrf.disable())
+                // ── NEW: wire CORS bean into Spring Security filter chain ──
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                .csrf(csrf -> {
+                    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+                    csrf
+                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                            .csrfTokenRequestHandler(requestHandler)
+                            .ignoringRequestMatchers(
+                                    "/api/admin/auth/login",
+                                    "/api/admin/auth/refresh",
+                                    "/api/admin/bootstrap",
+                                    "/api/orders/**",
+                                    "/api/users/**",
+                                    "/api/v1/custom-categories/**",
+                                    "/api/inventory/**",
+                                    "/api/products/**",
+                                    "/api/v1/cart/**",
+                                    "/api/v1/wishlist/**",
+                                    "/api/otp/**",
+                                    "/api/shipping-addresses/**",
+                                    "/api/recent-users/**",
+                                    "/api/coupons/**"
+                            );
+                    logger.debug("CSRF protection enabled with CookieCsrfTokenRepository");
+                })
+
+                // ── Uncomment for quick Apidog/Postman testing, comment for production ──
+                // .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> {
                     auth
                             .requestMatchers("/api/admin/bootstrap").permitAll()
-                            .requestMatchers("/api/admin/auth/**").permitAll()   // login, logout, refresh
+                            .requestMatchers("/api/admin/auth/**").permitAll()
                             .requestMatchers("/api/admin/**").authenticated()
                             .anyRequest().permitAll();
 
@@ -100,14 +146,11 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // ── Custom 401 response (unchanged) ──
         http.exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");
-                    String message = "{\"error\":\"Unauthorized - Login required (JWT)\"}";
-                    response.getWriter().write(message);
-
+                    response.getWriter().write("{\"error\":\"Unauthorized - Login required (JWT)\"}");
                     logger.warn("Unauthorized access attempt - path: {}, message: {}",
                             request.getRequestURI(), authException.getMessage());
                 })

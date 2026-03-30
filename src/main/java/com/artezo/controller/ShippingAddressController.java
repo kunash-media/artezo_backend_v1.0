@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users/{userId}/addresses")
+@RequestMapping("/api/shipping-addresses")
 public class ShippingAddressController {
 
     private static final Logger log = LoggerFactory.getLogger(ShippingAddressController.class);

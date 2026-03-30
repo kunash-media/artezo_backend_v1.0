@@ -1,5 +1,6 @@
 package com.artezo.security;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,12 +27,17 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final AdminUserDetailsService adminUserDetailsService;
 
-    // ── Inject expiration so cookie maxAge matches token expiry ──
     @Value("${jwt.expiration}")
-    private Long accessTokenExpiration;   // e.g. 900000  (15 min in ms)
+    private Long accessTokenExpiration;
 
     @Value("${jwt.refresh-expiration}")
-    private Long refreshTokenExpiration;  // e.g. 604800000 (7 days in ms)
+    private Long refreshTokenExpiration;
+
+    // ── Toggle this in application.properties ──
+    // app.cookie.secure=false  → local dev (HTTP)
+    // app.cookie.secure=true   → production (HTTPS)
+    @Value("${app.cookie.secure:false}")
+    private boolean cookieSecure;
 
     public AuthController(AuthenticationManager authenticationManager,
                           JwtUtil jwtUtil,
@@ -43,15 +49,40 @@ public class AuthController {
     }
 
     // ─────────────────────────────────────────────────────────────
+    //  Cookie builder helper — single place to change cookie config
+    //
+    //  DEV  (app.cookie.secure=false): Lax + Secure=false  → works on localhost
+    //  PROD (app.cookie.secure=true):  Strict + Secure=true → works on HTTPS same-domain
+    // ─────────────────────────────────────────────────────────────
+    private ResponseCookie buildCookie(String name, String value, String path, long maxAgeMs) {
+        return ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSecure ? "Strict" : "Lax")
+                .path(path)
+                .maxAge(Duration.ofMillis(maxAgeMs))
+                .build();
+    }
+
+    private ResponseCookie clearCookie(String name, String path) {
+        return ResponseCookie.from(name, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite(cookieSecure ? "Strict" : "Lax")
+                .path(path)
+                .maxAge(0)
+                .build();
+    }
+
+    // ─────────────────────────────────────────────────────────────
     //  POST /api/admin/auth/login
-    //  CHANGED: token no longer returned in body → set as HttpOnly cookie
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request,
                                    HttpServletResponse response) {
 
-        String mobile = request.get("mobile");
-        String password = request.get("password"); // never log this!
+        String mobile   = request.get("mobile");
+        String password = request.get("password");
 
         logger.info("Login attempt for mobile: {}", mobile);
 
@@ -61,53 +92,34 @@ public class AuthController {
         }
 
         try {
-            logger.debug("Authenticating user: {}", mobile);
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(mobile, password)
             );
 
-            logger.debug("Authentication successful, loading user details for: {}", mobile);
             final UserDetails userDetails = adminUserDetailsService.loadUserByUsername(mobile);
-
-            // ── Generate access token (short-lived: 15 min) ──
-            final String accessToken = jwtUtil.generateToken(userDetails);
-
-            // ── Generate refresh token (long-lived: 7 days) ──
+            final String accessToken  = jwtUtil.generateToken(userDetails);
             final String refreshToken = jwtUtil.generateRefreshToken(userDetails);
 
-            // ── Set access token as HttpOnly cookie ──
-            ResponseCookie accessCookie = ResponseCookie.from("admin_token", accessToken)
-                    .httpOnly(true)                          // JS cannot read this
-                    .secure(true)                            // HTTPS only (set false in local dev)
-                    .sameSite("Strict")                      // CSRF protection
-                    .path("/")                               // Available to all paths
-                    .maxAge(Duration.ofMillis(accessTokenExpiration))
-                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE,
+                    buildCookie("admin_token",   accessToken,  "/", accessTokenExpiration).toString());
+            response.addHeader(HttpHeaders.SET_COOKIE,
+                    buildCookie("refresh_token", refreshToken, "/", refreshTokenExpiration).toString());
 
-            // ── Set refresh token as HttpOnly cookie (restricted path) ──
-            ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken)
-                    .httpOnly(true)
-                    .secure(true)
-                    .sameSite("Strict")
-                    .path("/api/admin/auth/refresh")         // Only sent to refresh endpoint
-                    .maxAge(Duration.ofMillis(refreshTokenExpiration))
-                    .build();
+            logger.info("Login successful for mobile: {} | Cookies set (secure={})", mobile, cookieSecure);
 
-            response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+            // cast to AdminDetails to get role
+            AdminDetails adminDetails = (AdminDetails) userDetails;
 
-            logger.info("Login successful for mobile: {} | Cookies set", mobile);
-
-            // ── Return only non-sensitive info in body (NO token!) ──
             return ResponseEntity.ok(Map.of(
                     "message", "Login successful",
-                    "mobile", mobile
+                    "mobile",  mobile,
+                    "adminId", adminDetails.getAdminId() != null ? adminDetails.getAdminId() : "",
+                    "role",    adminDetails.getRole()    != null ? adminDetails.getRole()    : ""
             ));
 
         } catch (BadCredentialsException e) {
             logger.warn("Login failed - invalid credentials for mobile: {}", mobile);
             return ResponseEntity.status(401).body("Invalid mobile or password");
-
         } catch (Exception e) {
             logger.error("Unexpected error during login for mobile: {}", mobile, e);
             return ResponseEntity.status(500).body("Authentication error - please try again later");
@@ -116,15 +128,13 @@ public class AuthController {
 
     // ─────────────────────────────────────────────────────────────
     //  POST /api/admin/auth/refresh
-    //  NEW: silently issues a new access token using the refresh token cookie
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(jakarta.servlet.http.HttpServletRequest request,
+    public ResponseEntity<?> refresh(HttpServletRequest request,
                                      HttpServletResponse response) {
 
         logger.info("Token refresh request received");
 
-        // ── Read refresh token from HttpOnly cookie ──
         String refreshToken = null;
         if (request.getCookies() != null) {
             for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
@@ -141,7 +151,6 @@ public class AuthController {
         }
 
         try {
-            // ── Validate refresh token and extract username ──
             String mobile = jwtUtil.extractUsername(refreshToken);
             UserDetails userDetails = adminUserDetailsService.loadUserByUsername(mobile);
 
@@ -150,18 +159,10 @@ public class AuthController {
                 return ResponseEntity.status(401).body("Refresh token invalid or expired");
             }
 
-            // ── Issue new short-lived access token ──
             String newAccessToken = jwtUtil.generateToken(userDetails);
 
-            ResponseCookie newAccessCookie = ResponseCookie.from("admin_token", newAccessToken)
-                    .httpOnly(true)
-                    .secure(true)
-                    .sameSite("Strict")
-                    .path("/")
-                    .maxAge(Duration.ofMillis(accessTokenExpiration))
-                    .build();
-
-            response.addHeader(HttpHeaders.SET_COOKIE, newAccessCookie.toString());
+            response.addHeader(HttpHeaders.SET_COOKIE,
+                    buildCookie("admin_token", newAccessToken, "/", accessTokenExpiration).toString());
 
             logger.info("Access token refreshed successfully for: {}", mobile);
             return ResponseEntity.ok(Map.of("message", "Token refreshed"));
@@ -174,33 +175,14 @@ public class AuthController {
 
     // ─────────────────────────────────────────────────────────────
     //  POST /api/admin/auth/logout
-    //  NEW: clears both cookies by setting maxAge to 0
     // ─────────────────────────────────────────────────────────────
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
 
         logger.info("Logout request received - clearing auth cookies");
 
-        // ── Expire access token cookie ──
-        ResponseCookie clearAccess = ResponseCookie.from("admin_token", "")
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .path("/")
-                .maxAge(0)           // Immediately expires
-                .build();
-
-        // ── Expire refresh token cookie ──
-        ResponseCookie clearRefresh = ResponseCookie.from("refresh_token", "")
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("Strict")
-                .path("/api/admin/auth/refresh")
-                .maxAge(0)
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, clearAccess.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, clearRefresh.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, clearCookie("admin_token",   "/").toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, clearCookie("refresh_token", "/").toString());
 
         logger.info("Logout successful - cookies cleared");
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));

@@ -46,7 +46,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────
     // GET /api/users/{userId}
     // ─────────────────────────────────────────────────────────────
-    @GetMapping("/{userId}")
+    @GetMapping("/get-user/{userId}")
     public ResponseEntity<?> getUserById(@PathVariable Long userId) {
         log.info("[Controller] GET /api/users/{} - getUserById called", userId);
         try {
@@ -62,7 +62,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────
     // GET /api/users?page=0&size=10&sort=createdAt,desc
     // ─────────────────────────────────────────────────────────────
-    @GetMapping
+    @GetMapping("/get-all-users")
     public ResponseEntity<?> getAllUsers(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size,
@@ -91,7 +91,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────
     // PATCH /api/users/{userId}
     // ─────────────────────────────────────────────────────────────
-    @PatchMapping("/{userId}")
+    @PatchMapping("/patch-user/{userId}")
     public ResponseEntity<?> patchUser(
             @PathVariable Long userId,
             @RequestBody UserPatchDTO dto) {
@@ -109,7 +109,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────
     // DELETE /api/users/{userId}
     // ─────────────────────────────────────────────────────────────
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/delete-user/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         log.info("[Controller] DELETE /api/users/{} - deleteUser called", userId);
         try {

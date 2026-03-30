@@ -1,9 +1,12 @@
 package com.artezo.repository;
 
+import com.artezo.dto.stats.orders.OrderStats;
 import com.artezo.entity.OrderEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -31,4 +34,12 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     Optional<OrderEntity> findByAwbNumber(String awbNumber);
 
     Optional<OrderEntity>findByOrderId(String orderId);
+
+    @Query("""
+        SELECT COUNT(o) as totalOrdersCount, 
+               COALESCE(SUM(o.finalAmount), 0) as totalSpent 
+        FROM OrderEntity o 
+        WHERE o.user.userId = :userId
+        """)
+    OrderStats getOrderStatsByUserId(@Param("userId") Long userId);
 }
