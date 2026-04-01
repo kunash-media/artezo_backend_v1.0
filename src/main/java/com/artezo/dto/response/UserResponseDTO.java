@@ -1,5 +1,7 @@
 package com.artezo.dto.response;
 
+import java.math.BigDecimal;
+
 public class UserResponseDTO {
 
     private Long userId;
@@ -10,6 +12,11 @@ public class UserResponseDTO {
     private String email;
     private String phone;
     private String createdAt;
+
+    private Long totalOrdersCount;     // total number of orders placed by this customer
+    private BigDecimal totalSpent;
+
+
 
     // Default shipping address snapshot (optional, returned on registration)
     private Long defaultShippingAddressId;
@@ -42,5 +49,21 @@ public class UserResponseDTO {
     public Long getDefaultShippingAddressId() { return defaultShippingAddressId; }
     public void setDefaultShippingAddressId(Long defaultShippingAddressId) {
         this.defaultShippingAddressId = defaultShippingAddressId;
+    }
+
+    public Long getTotalOrdersCount() {
+        return totalOrdersCount;
+    }
+
+    public void setTotalOrdersCount(Long totalOrdersCount) {
+        this.totalOrdersCount = totalOrdersCount;
+    }
+
+    public BigDecimal getTotalSpent() {
+        return totalSpent;
+    }
+
+    public void setTotalSpent(BigDecimal totalSpent) {
+        this.totalSpent = totalSpent;
     }
 }

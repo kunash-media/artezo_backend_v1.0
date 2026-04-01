@@ -75,31 +75,64 @@ public class ShiprocketService {
 
     public ShiprocketOrderResponse createOrder(OrderEntity order) {
 
-        log.info("Creating Shiprocket order for: {}", order.getOrderStrId());
+        log.info("╔══════════════════════════════════════════════════════╗");
+        log.info("║         SHIPROCKET — CREATE ORDER STARTED            ║");
+        log.info("╚══════════════════════════════════════════════════════╝");
+        log.info("► Order ID     : {}", order.getOrderStrId());
+        log.info("► Customer     : {} | {}", order.getCustomerName(), order.getCustomerPhone());
+        log.info("► Deliver To   : {}, {}, {} - {}", order.getShippingAddress1(),
+                order.getShippingCity(), order.getShippingState(), order.getShippingPincode());
+        log.info("► Payment      : {}", order.getPaymentMethod());
+        log.info("► Total Amount : ₹{}", order.getFinalAmount());
+        log.info("► Items Count  : {}", order.getOrderItems().size());
 
         if (!shiprocketEnabled) {
-            log.info("Shiprocket disabled — skipping createOrder for: {}", order.getOrderStrId());
-            return mockOrderResponse(order);  // return fake response
+            log.info("⚠ Shiprocket DISABLED — returning mock response");
+            return mockOrderResponse(order);
         }
 
         ShiprocketOrderRequest request = buildCreateOrderRequest(order);
 
         try {
-            ShiprocketOrderResponse response = executeWithTokenRetry(() ->
+            // ── Step 1: Get raw JSON first to debug mapping ──
+            log.info("──────────────────────────────────────────────────────");
+            log.info("► Calling Shiprocket API: POST /orders/create/adhoc");
+            log.info("──────────────────────────────────────────────────────");
+
+            String rawJson = executeWithTokenRetry(() ->
                     restClient.post()
                             .uri("/orders/create/adhoc")
                             .header("Authorization", authService.getBearerToken())
                             .body(request)
                             .retrieve()
-                            .body(ShiprocketOrderResponse.class)
+                            .body(String.class)
             );
 
-            log.info("Shiprocket order created — SR Order ID: {}, Shipment ID: {}",
-                    response.getOrderId(), response.getShipmentId());
+            log.info("► Shiprocket RAW Response: {}", rawJson);
+
+            // ── Step 2: Parse manually ──
+            com.fasterxml.jackson.databind.ObjectMapper mapper =
+                    new com.fasterxml.jackson.databind.ObjectMapper();
+            ShiprocketOrderResponse response =
+                    mapper.readValue(rawJson, ShiprocketOrderResponse.class);
+
+            log.info("──────────────────────────────────────────────────────");
+            log.info("✔ SHIPROCKET ORDER CREATED SUCCESSFULLY");
+            log.info("► SR Order ID    : {}", response.getOrderId());
+            log.info("► SR Shipment ID : {}", response.getShipmentId());
+            log.info("► SR Status      : {}", response.getStatus());
+            log.info("► AWB Code       : {}", response.getAwbCode());
+            log.info("► Courier        : {}", response.getCourierName());
+            log.info("╚══════════════════════════════════════════════════════╝");
+
             return response;
 
         } catch (Exception e) {
-            log.error("Failed to create Shiprocket order for {}: {}", order.getOrderStrId(), e.getMessage());
+            log.error("╔══════════════════════════════════════════════════════╗");
+            log.error("║      SHIPROCKET — CREATE ORDER FAILED                ║");
+            log.error("╚══════════════════════════════════════════════════════╝");
+            log.error("► Order ID : {}", order.getOrderStrId());
+            log.error("► Error    : {}", e.getMessage());
             throw new RuntimeException("Shiprocket createOrder failed: " + e.getMessage(), e);
         }
     }
@@ -289,7 +322,14 @@ public class ShiprocketService {
         req.setShippingCharges(order.getShippingCharges() != null ? order.getShippingCharges() : 0.0);
         req.setGiftwrapCharges(order.getGiftwrapCharges() != null ? order.getGiftwrapCharges() : 0.0);
         req.setTransactionCharges(order.getConvenienceFee() != null ? order.getConvenienceFee() : 0.0);
-        req.setTotalDiscount(order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0);
+
+        //req.setTotalDiscount(order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0);
+
+        //✅ FIX — combine both discounts
+        double totalDiscount = (order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0)
+                + (order.getCouponDiscount() != null ? order.getCouponDiscount() : 0.0);
+
+        req.setTotalDiscount(totalDiscount);
 
         // Order Items — map each OrderItemEntity → ShiprocketOrderItem
         List<ShiprocketOrderRequest.ShiprocketOrderItem> srItems = order.getOrderItems()

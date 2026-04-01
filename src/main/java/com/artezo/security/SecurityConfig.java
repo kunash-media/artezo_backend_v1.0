@@ -119,7 +119,8 @@ public class SecurityConfig {
                                     "/api/otp/**",
                                     "/api/shipping-addresses/**",
                                     "/api/recent-users/**",
-                                    "/api/coupons/**"
+                                    "/api/coupons/**",
+                                    "/api/reviews/**"
                             );
                     logger.debug("CSRF protection enabled with CookieCsrfTokenRepository");
                 })

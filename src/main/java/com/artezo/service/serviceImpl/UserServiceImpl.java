@@ -4,14 +4,15 @@ import com.artezo.bcrypt.BcryptEncoderConfig;
 import com.artezo.dto.request.UserPatchDTO;
 import com.artezo.dto.request.UserRegistrationDTO;
 import com.artezo.dto.response.UserResponseDTO;
+import com.artezo.dto.stats.orders.OrderStats;
 import com.artezo.entity.ShippingAddressEntity;
 import com.artezo.entity.UserEntity;
+import com.artezo.repository.OrderRepository;
 import com.artezo.repository.ShippingAddressRepository;
 import com.artezo.repository.UserRepository;
 import com.artezo.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,14 +23,18 @@ public class UserServiceImpl implements UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    @Autowired
-    private UserRepository userRepository;
 
-    @Autowired
-    private ShippingAddressRepository shippingAddressRepository;
+    private final UserRepository userRepository;
+    private final ShippingAddressRepository shippingAddressRepository;
+    private final BcryptEncoderConfig passwordEncoder;
+    private final OrderRepository orderRepository;
 
-    @Autowired
-    private BcryptEncoderConfig passwordEncoder;
+    public UserServiceImpl(UserRepository userRepository, ShippingAddressRepository shippingAddressRepository, BcryptEncoderConfig passwordEncoder, OrderRepository orderRepository) {
+        this.userRepository = userRepository;
+        this.shippingAddressRepository = shippingAddressRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.orderRepository = orderRepository;
+    }
 
     // ─────────────────────────────────────────────────────────────
     // REGISTER
@@ -91,14 +96,15 @@ public class UserServiceImpl implements UserService {
                     return new RuntimeException("User not found: " + userId);
                 });
 
-        // Fetch default address ID if available
         Long defaultAddressId = shippingAddressRepository
                 .findByUserAndIsDefaultTrue(user)
                 .map(ShippingAddressEntity::getShippingId)
                 .orElse(null);
 
+        OrderStats orderStats = orderRepository.getOrderStatsByUserId(userId); // add this
+
         log.info("[UserService] getUserById() - found userId={}", userId);
-        return buildResponse(user, defaultAddressId);
+        return buildUserWithOrderResponse(user, defaultAddressId, orderStats); // pass it in
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -201,6 +207,7 @@ public class UserServiceImpl implements UserService {
     // PRIVATE HELPER
     // ─────────────────────────────────────────────────────────────
     private UserResponseDTO buildResponse(UserEntity user, Long defaultAddressId) {
+
         UserResponseDTO response = new UserResponseDTO();
         response.setUserId(user.getUserId());
         response.setFirstName(user.getFirstName());
@@ -216,6 +223,31 @@ public class UserServiceImpl implements UserService {
         response.setPhone(user.getPhone());
         response.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
         response.setDefaultShippingAddressId(defaultAddressId);
+        return response;
+    }
+
+    private UserResponseDTO buildUserWithOrderResponse(UserEntity user, Long defaultAddressId, OrderStats orderStats) {
+
+        UserResponseDTO response = new UserResponseDTO();
+        response.setUserId(user.getUserId());
+        response.setFirstName(user.getFirstName());
+        response.setMiddleName(user.getMiddleName());
+        response.setLastName(user.getLastName());
+
+        String fullName = (user.getMiddleName() != null && !user.getMiddleName().isBlank())
+                ? user.getFirstName() + " " + user.getMiddleName() + " " + user.getLastName()
+                : user.getFirstName() + " " + user.getLastName();
+        response.setFullName(fullName);
+
+        response.setEmail(user.getEmail());
+        response.setPhone(user.getPhone());
+        response.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+        response.setDefaultShippingAddressId(defaultAddressId);
+
+        // order stats
+        response.setTotalOrdersCount(orderStats.getTotalOrdersCount());
+        response.setTotalSpent(orderStats.getTotalSpent());
+
         return response;
     }
 }

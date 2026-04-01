@@ -48,6 +48,10 @@ public class ShiprocketAuthService {
      */
     private String refreshToken() {
         log.info("Fetching new Shiprocket auth token...");
+        log.info("┌─────────────────────────────────────────────┐");
+        log.info("│   SHIPROCKET AUTH — Fetching new token...   │");
+        log.info("└─────────────────────────────────────────────┘");
+        log.info("► Email: {}", email);
 
         Map<String, String> body = Map.of(
                 "email", email,
