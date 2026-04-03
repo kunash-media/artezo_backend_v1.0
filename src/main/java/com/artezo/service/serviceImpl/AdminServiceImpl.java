@@ -59,6 +59,7 @@ public class AdminServiceImpl implements AdminService {
                 .adminAddress(dto.getAdminAddress() != null ? dto.getAdminAddress().trim() : null)
                 .adminRole(dto.getAdminRole().trim())
                 .adminPassword(passwordEncoder.encode(dto.getAdminPassword())) // ← in real app: encode this!
+                .adminDepartment(dto.getAdminDepartment())
                 .adminIsActive(true)
                 .adminIsLocked(false)
                 .build();
@@ -152,6 +153,11 @@ public class AdminServiceImpl implements AdminService {
             entity.setAdminPassword(passwordEncoder.encode(dto.getAdminPassword()));
         }
 
+        if (dto.getAdminDepartment() != null) {
+            entity.setAdminDepartment(dto.getAdminDepartment().trim());
+            changed = true;
+        }
+
         if (!changed) {
             logger.info("No fields changed for PATCH on adminId: {}", adminId);
             return mapToResponseDto(entity); // or throw exception — your choice
@@ -180,6 +186,7 @@ public class AdminServiceImpl implements AdminService {
                 .adminMobileNumber(entity.getAdminMobileNumber())
                 .adminAddress(entity.getAdminAddress())
                 .adminRole(entity.getAdminRole())
+                .adminDepartment(entity.getAdminDepartment())
                 .build();
     }
 }

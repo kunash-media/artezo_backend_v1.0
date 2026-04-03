@@ -15,8 +15,6 @@ import java.util.List;
 @Table(name = "orders")
 public class OrderEntity {
 
-    // ── IDENTITY ─────────────────────────────────────────────────────────────
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;

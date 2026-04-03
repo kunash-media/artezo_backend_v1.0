@@ -665,8 +665,17 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
+//        if (r.getCustomFields() != null) {
+//            e.setCustomFields(r.getCustomFields()); // already a JSON string, set directly
+//        }
+
         if (r.getCustomFields() != null) {
-            e.setCustomFields(r.getCustomFields()); // already a JSON string, set directly
+            try {
+                e.setCustomFields(objectMapper.writeValueAsString(r.getCustomFields()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize customFields", ex);
+                e.setCustomFields("[]");
+            }
         }
 
         if (r.getAdditionalInfo() != null) {
@@ -1190,7 +1199,11 @@ public class ProductServiceImpl implements ProductService {
                     Map<String, String> specifications = parseJsonMap(str(row, col, "specifications"), "specifications", productName);
                     Map<String, String> additionalInfo = parseJsonMap(str(row, col, "additional info"), "additional info", productName);
                     Map<String, String> faq            = parseJsonMap(str(row, col, "faq"),             "faq",            productName);
-                    String customFields = validatedJsonOrNull(str(row, col, "custom fields"), "custom fields", productName);
+
+                    // String customFields = validatedJsonOrNull(str(row, col, "custom fields"), "custom fields", productName);
+
+                    //FIX custom fields parsing
+                    List<Object> customFields = parseJsonList(str(row, col, "custom fields"), "custom fields", productName);
 
                     // ── IMAGES ────────────────────────────────────────────────
 
@@ -1586,6 +1599,23 @@ public class ProductServiceImpl implements ProductService {
                     new TypeReference<Map<String, String>>() {});
         } catch (Exception e) {
             log.warn("Invalid JSON map in '{}' for '{}' — field skipped. Raw value: {}",
+                    fieldName, productName, raw);
+            return null;
+        }
+    }
+
+
+    /**
+     * Parses a JSON array string from an Excel cell into List<Object>.
+     * Used for customFields which is a list of field descriptor objects.
+     * Returns null (not empty list) on blank/invalid so DTO stays clean.
+     */
+    private List<Object> parseJsonList(String raw, String fieldName, String productName) {
+        if (raw == null || raw.isBlank()) return null;
+        try {
+            return objectMapper.readValue(raw, new TypeReference<List<Object>>() {});
+        } catch (Exception ex) {
+            log.warn("Invalid JSON for '{}' on product '{}' — skipping field. Value: {}",
                     fieldName, productName, raw);
             return null;
         }

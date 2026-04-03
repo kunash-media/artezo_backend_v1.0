@@ -94,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
         // 4. Build OrderEntity
         OrderEntity order = new OrderEntity();
         order.setUser(user);
-        order.setOrderStatus(OrderStatus.PENDING);
+        order.setOrderStatus(OrderStatus.PLACED);
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setPaymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()));
         order.setPaymentMode(request.getPaymentMode() != null
@@ -143,7 +143,7 @@ public class OrderServiceImpl implements OrderService {
             // Update order with Shiprocket details
             savedOrder.setShiprocketOrderId(srResponse.getOrderId());
             savedOrder.setShiprocketShipmentId(srResponse.getShipmentId());
-            savedOrder.setOrderStatus(OrderStatus.CONFIRMED);
+            savedOrder.setOrderStatus(OrderStatus.PLACED);
 
             if (srResponse.getAwbCode() != null && !srResponse.getAwbCode().isEmpty()) {
                 savedOrder.setAwbNumber(srResponse.getAwbCode());
@@ -159,7 +159,7 @@ public class OrderServiceImpl implements OrderService {
             decreaseStock(savedOrder.getOrderItems());
             orderRepository.save(savedOrder);
 
-            log.info("Order {} confirmed — SR Order ID: {}", savedOrder.getOrderStrId(), srResponse.getOrderId());
+            log.info("Order {} placed — SR Order ID: {}", savedOrder.getOrderStrId(), srResponse.getOrderId());
 
             // ==================== SEND EMAIL ON SUCCESS ====================
             sendOrderConfirmationEmail(savedOrder);
@@ -248,7 +248,7 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = new OrderEntity();
 //        order.setOrderStrId(generateOrderStrId());
         order.setUser(user);
-        order.setOrderStatus(OrderStatus.CONFIRMED);
+        order.setOrderStatus(OrderStatus.PLACED);
         order.setPaymentStatus(PaymentStatus.PAID);
         order.setPaymentMethod(PaymentMethod.PREPAID);
         order.setPaymentMode(PaymentMode.RAZORPAY);

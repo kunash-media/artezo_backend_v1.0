@@ -216,7 +216,8 @@ public class EmailServiceImpl implements EmailService {
                 ".product-value { color: #222; font-size: 15.5px; text-align: right; flex: 1; }" +
                 ".total-section { background: linear-gradient(135deg, #D89F34 0%, #e0ae47 100%); color: white; padding: 28px; border-radius: 12px; margin: 30px 0; text-align: center; }" +
                 ".total-amount { font-size: 24px; font-weight: 700; }" +
-                ".site-link { display: inline-block; padding: 14px 34px; background: linear-gradient(135deg, #133F53 0%, #1a4a63 100%); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15.2px; box-shadow: 0 4px 15px rgba(19,63,83,0.25); }" +
+
+                ".site-link { color: #D89F34; text-decoration: none; font-weight: 600; font-size: 15.5px; } .site-link:hover { color: #b8822c; text-decoration: underline; }" +
                 ".contact-section { background: linear-gradient(135deg, #f8f5f0 0%, #f0e9d8 100%); padding: 30px; border-radius: 12px; margin: 30px 0; text-align: center; border: 1px solid #D89F34; }" +
                 ".contact-text { font-size: 16px; color: #133F53; margin-bottom: 18px; font-weight: 500; }" +
                 ".mobile-number { font-weight: 700; color: #133F53; }" +

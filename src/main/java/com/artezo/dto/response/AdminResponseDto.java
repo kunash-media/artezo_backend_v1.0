@@ -1,30 +1,31 @@
 package com.artezo.dto.response;
 
-
 import lombok.Builder;
 
 @Builder
 public class AdminResponseDto {
 
-
-    private String adminId;             // STDXXXX
+    private String adminId;
     private String adminFirstName;
     private String adminLastName;
     private String adminMobileNumber;
     private String adminAddress;
     private String adminRole;
+    private String adminDepartment;
 
 
     public AdminResponseDto(){}
 
     public AdminResponseDto(String adminId, String adminFirstName, String adminLastName,
-                            String adminMobileNumber, String adminAddress, String adminRole) {
+                            String adminMobileNumber, String adminAddress,
+                            String adminRole, String adminDepartment) {
         this.adminId = adminId;
         this.adminFirstName = adminFirstName;
         this.adminLastName = adminLastName;
         this.adminMobileNumber = adminMobileNumber;
         this.adminAddress = adminAddress;
         this.adminRole = adminRole;
+        this.adminDepartment = adminDepartment;
     }
 
     public String getAdminId() {
@@ -73,5 +74,13 @@ public class AdminResponseDto {
 
     public void setAdminRole(String adminRole) {
         this.adminRole = adminRole;
+    }
+
+    public String getAdminDepartment() {
+        return adminDepartment;
+    }
+
+    public void setAdminDepartment(String adminDepartment) {
+        this.adminDepartment = adminDepartment;
     }
 }

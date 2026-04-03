@@ -5,24 +5,25 @@ import lombok.Builder;
 @Builder
 public class AdminRequestDto {
 
-
     private String adminFirstName;      // required
     private String adminLastName;
     private String adminMobileNumber;   // should be unique
     private String adminAddress;
     private String adminRole;           // required (ADMIN, SUPER_ADMIN, etc.)
     private String adminPassword;
+    private String adminDepartment;
 
     public AdminRequestDto(){}
 
-    public AdminRequestDto(String adminFirstName, String adminLastName, String adminMobileNumber,
-                           String adminAddress, String adminRole, String adminPassword) {
+
+    public AdminRequestDto(String adminFirstName, String adminLastName, String adminMobileNumber, String adminAddress, String adminRole, String adminPassword, String adminDepartment) {
         this.adminFirstName = adminFirstName;
         this.adminLastName = adminLastName;
         this.adminMobileNumber = adminMobileNumber;
         this.adminAddress = adminAddress;
         this.adminRole = adminRole;
         this.adminPassword = adminPassword;
+        this.adminDepartment = adminDepartment;
     }
 
     public String getAdminFirstName() {
@@ -71,5 +72,13 @@ public class AdminRequestDto {
 
     public void setAdminPassword(String adminPassword) {
         this.adminPassword = adminPassword;
+    }
+
+    public String getAdminDepartment() {
+        return adminDepartment;
+    }
+
+    public void setAdminDepartment(String adminDepartment) {
+        this.adminDepartment = adminDepartment;
     }
 }

@@ -55,7 +55,7 @@ public class CreateProductRequestDto {
     private List<String> categoryPath = new ArrayList<>();
     private String youtubeUrl;
 
-    private String customFields;
+    private List<Object> customFields;
 
     private String hsnCode;
     private Double weight;
@@ -317,11 +317,12 @@ public class CreateProductRequestDto {
         this.underTrendCategory = underTrendCategory;
     }
 
-    public String getCustomFields() {
+
+    public List<Object> getCustomFields() {
         return customFields;
     }
 
-    public void setCustomFields(String customFields) {
+    public void setCustomFields(List<Object> customFields) {
         this.customFields = customFields;
     }
 
