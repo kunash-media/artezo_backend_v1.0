@@ -15,8 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -31,11 +30,14 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AdminUserDetailsService adminUserDetailsService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          AdminUserDetailsService adminUserDetailsService) {
+                          AdminUserDetailsService adminUserDetailsService, OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.adminUserDetailsService = adminUserDetailsService;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+
         logger.info("SecurityConfig bean initialized with JwtFilter and UserDetailsService");
     }
 
@@ -133,12 +135,20 @@ public class SecurityConfig {
                     auth
                             .requestMatchers("/api/admin/bootstrap").permitAll()
                             .requestMatchers("/api/admin/auth/**").permitAll()
+                            .requestMatchers("/api/users/auth/**").permitAll()
+//                            .requestMatchers("/api/users/**").authenticated()
                             .requestMatchers("/api/admin/**").authenticated()
                             .anyRequest().permitAll();
 
                     logger.info("Authorization rules: /api/admin/auth/** → permitAll, " +
                             "/api/admin/** → authenticated, others → permitAll");
                 })
+
+
+                //------ OAuth 2.0 ---------//
+                .oauth2Login(oauth -> oauth
+                        .successHandler(oAuth2SuccessHandler) // we will create this
+                )
 
                 .sessionManagement(session -> {
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);

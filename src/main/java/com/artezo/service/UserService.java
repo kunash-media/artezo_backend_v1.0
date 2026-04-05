@@ -17,4 +17,7 @@ public interface UserService {
     UserResponseDTO patchUser(Long userId, UserPatchDTO dto);
 
     void deleteUser(Long userId);
+
+    UserResponseDTO registerGoogleUser(String name, String email);
+
 }

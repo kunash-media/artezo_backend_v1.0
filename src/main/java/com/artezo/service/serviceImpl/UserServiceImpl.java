@@ -250,4 +250,46 @@ public class UserServiceImpl implements UserService {
 
         return response;
     }
+
+
+    @Override
+    @Transactional
+    public UserResponseDTO registerGoogleUser(String name, String email) {
+
+        log.info("[UserService] registerGoogleUser() - email={}", email);
+
+        if (userRepository.existsByEmail(email)) {
+            log.info("[UserService] Google user already exists: {}", email);
+
+            UserEntity existingUser = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Long defaultAddressId = shippingAddressRepository
+                    .findByUserAndIsDefaultTrue(existingUser)
+                    .map(ShippingAddressEntity::getShippingId)
+                    .orElse(null);
+
+            return buildResponse(existingUser, defaultAddressId);
+        }
+
+        // ── Split name ──
+        String[] parts = name != null ? name.split(" ") : new String[]{"User"};
+
+        UserEntity user = new UserEntity();
+        user.setFirstName(parts[0]);
+        user.setLastName(parts.length > 1 ? parts[1] : "User");
+        user.setEmail(email);
+
+        // 🔥 IMPORTANT: dummy values
+        user.setPhone("9999999999_" + System.currentTimeMillis()); // avoid duplicate
+        user.setPasswordHash(passwordEncoder.encode("GOOGLE_AUTH"));
+
+        UserEntity savedUser = userRepository.save(user);
+
+        log.info("[UserService] Google user saved, userId={}", savedUser.getUserId());
+
+        // ❗ Skip address creation (or make optional later)
+        return buildResponse(savedUser, null);
+    }
+
 }

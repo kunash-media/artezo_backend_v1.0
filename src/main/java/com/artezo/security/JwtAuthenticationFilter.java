@@ -23,7 +23,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    private static final String ACCESS_TOKEN_COOKIE = "admin_token";
+    private static final String ADMIN_TOKEN = "admin_token";
+    private static final String USER_TOKEN  = "user_token";
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -102,17 +103,67 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // ─────────────────────────────────────────────────────────────
     //  CHANGED: Read JWT from HttpOnly cookie (primary method)
     // ─────────────────────────────────────────────────────────────
+//    private String extractTokenFromCookie(HttpServletRequest request) {
+//        if (request.getCookies() == null) return null;
+//
+//        for (Cookie cookie : request.getCookies()) {
+//            if (ACCESS_TOKEN_COOKIE.equals(cookie.getName())) {
+//                String value = cookie.getValue();
+//                if (value != null && !value.isBlank()) {
+//                    return value;
+//                }
+//            }
+//        }
+//        return null;
+//    }
+
+//    private String extractTokenFromCookie(HttpServletRequest request) {
+//        if (request.getCookies() == null) return null;
+//
+//        String adminToken = null;
+//        String userToken  = null;
+//
+//        for (Cookie cookie : request.getCookies()) {
+//
+//            if (ADMIN_TOKEN.equals(cookie.getName())) {
+//                adminToken = cookie.getValue();
+//            }
+//
+//            if (USER_TOKEN.equals(cookie.getName())) {
+//                userToken = cookie.getValue();
+//            }
+//        }
+//
+//        // 🔥 PRIORITY LOGIC
+//        if (adminToken != null && !adminToken.isBlank()) {
+//            return adminToken; // admin takes priority
+//        }
+//
+//        if (userToken != null && !userToken.isBlank()) {
+//            return userToken;
+//        }
+//
+//        return null;
+//    }
+
     private String extractTokenFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) return null;
 
+        String requestURI = request.getRequestURI();
+
         for (Cookie cookie : request.getCookies()) {
-            if (ACCESS_TOKEN_COOKIE.equals(cookie.getName())) {
-                String value = cookie.getValue();
-                if (value != null && !value.isBlank()) {
-                    return value;
-                }
+
+            // ✅ ADMIN APIs
+            if (requestURI.startsWith("/api/admin") && ADMIN_TOKEN.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+
+            // ✅ USER APIs
+            if (requestURI.startsWith("/api/users") && USER_TOKEN.equals(cookie.getName())) {
+                return cookie.getValue();
             }
         }
+
         return null;
     }
 
