@@ -32,16 +32,6 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.getBySku(sku));
     }
 
-//    // PATCH - update stock
-//    @PatchMapping("/patch-by-sku/{sku}/stock")
-//    public ResponseEntity<InventoryDTO> updateStock(
-//            @PathVariable String sku,
-//            @RequestParam("availableStock") Integer newStock) {
-//
-//        log.info("Updating stock for SKU: {} to {}", sku, newStock);
-//        inventoryService.updateStock(sku, newStock);
-//        return ResponseEntity.ok(inventoryService.getBySku(sku));
-//    }
 
     @PatchMapping("/patch-by-sku/{sku}/stock")
     public ResponseEntity<InventoryDTO> updateStock(

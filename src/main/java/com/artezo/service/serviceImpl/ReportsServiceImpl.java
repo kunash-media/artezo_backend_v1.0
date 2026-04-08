@@ -437,7 +437,7 @@ public class ReportsServiceImpl implements ReportsService {
      */
     private String formatRupees(Double amount) {
         if (amount == null) return "₹0.00";
-        BigDecimal bd = BigDecimal.valueOf(amount).setScale(2, RoundingMode.UNNECESSARY);
+        BigDecimal bd = BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP);
 
         // Indian grouping: last 3 digits, then groups of 2
         java.text.NumberFormat nf =

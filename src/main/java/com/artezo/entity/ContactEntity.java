@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "contacts")
@@ -35,15 +38,21 @@ public class ContactEntity {
     @Column(name = "message", nullable = false, length = 1000)
     private String message;
 
+    @CreationTimestamp                          // ← auto-set on INSERT
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
     public ContactEntity() {
     }
 
-    public ContactEntity(Long formId, String name, String email, String phone, String message) {
+
+    public ContactEntity(Long formId, String name, String email, String phone, String message, LocalDateTime createdAt) {
         this.formId = formId;
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.message = message;
+        this.createdAt = createdAt;
     }
 
     public Long getFormId() {
@@ -84,5 +93,13 @@ public class ContactEntity {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 @RestController
-@RequestMapping("/api/coupons")
+@RequestMapping("/api/v1/coupons")
 public class CouponController {
 
     private static final Logger LOGGER = Logger.getLogger(CouponController.class.getName());
