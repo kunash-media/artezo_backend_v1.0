@@ -3,3 +3,63 @@
 2026-04-09T00:00:16.671+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
 2026-04-09T00:00:16.671+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@42c5dc75]
 2026-04-09T00:00:16.671+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:01:16.630+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:01:16.630+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:01:16.630+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:01:16.630+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@1dedb12]
+2026-04-09T00:01:16.630+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:01:17.530+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/api/notifications/alerts?adminId=ADM7622", parameters={masked}
+2026-04-09T00:01:17.530+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.NotificationController#getAlerts(String)
+2026-04-09T00:01:17.569+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:01:17.569+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.NotificationAlertDTO@66b8d430]
+2026-04-09T00:01:17.569+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:02:16.629+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:02:16.629+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:02:16.645+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:02:16.645+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@75d8cf3e]
+2026-04-09T00:02:16.645+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:03:16.635+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:03:16.635+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:03:16.635+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:03:16.635+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@f9f3d0a]
+2026-04-09T00:03:16.635+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:03:17.513+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/notifications/alerts?adminId=ADM7622", parameters={masked}
+2026-04-09T00:03:17.513+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.NotificationController#getAlerts(String)
+2026-04-09T00:03:17.560+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:03:17.560+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.NotificationAlertDTO@f3fafb6]
+2026-04-09T00:03:17.560+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:04:16.641+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:04:16.641+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-6] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:04:16.657+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:04:16.657+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@756ecbf4]
+2026-04-09T00:04:16.657+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:05:16.628+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:05:16.628+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:05:16.644+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:05:16.644+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@2c43f756]
+2026-04-09T00:05:16.644+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:05:17.517+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/api/notifications/alerts?adminId=ADM7622", parameters={masked}
+2026-04-09T00:05:17.517+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.NotificationController#getAlerts(String)
+2026-04-09T00:05:17.532+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:05:17.532+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.NotificationAlertDTO@3cb52b21]
+2026-04-09T00:05:17.532+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:06:16.747+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:06:16.747+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:06:16.762+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:06:16.762+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@64721359]
+2026-04-09T00:06:16.763+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:07:16.639+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:07:16.639+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:07:16.639+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:07:16.639+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@7368d163]
+2026-04-09T00:07:16.639+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:07:17.528+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/api/notifications/alerts?adminId=ADM7622", parameters={masked}
+2026-04-09T00:07:17.528+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.NotificationController#getAlerts(String)
+2026-04-09T00:07:17.553+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:07:17.553+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.dto.response.NotificationAlertDTO@4de7e7d]
+2026-04-09T00:07:17.553+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2026-04-09T00:08:16.749+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/api/orders/admin/get-all-orders?page=0&size=1", parameters={masked}
+2026-04-09T00:08:16.750+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.artezo.controller.OrderController#getAllOrders(int, int)
+2026-04-09T00:08:16.760+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json]
+2026-04-09T00:08:16.761+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.artezo.exceptions.ApiResponse@342c48d0]
+2026-04-09T00:08:16.761+05:30 DEBUG 24936 --- [Artezo] [http-nio-8085-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
