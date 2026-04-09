@@ -4,6 +4,7 @@ import com.artezo.dto.request.CreateProductRequestDto;
 import com.artezo.dto.request.HeroBannerRequestDto;
 import com.artezo.dto.request.InstallationStepRequestDto;
 import com.artezo.dto.response.BulkUploadResponse;
+import com.artezo.dto.response.ProductCategoryResponse;
 import com.artezo.dto.response.ProductResponseDto;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
@@ -566,4 +567,64 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+
+// ──────────────────────────────────────────────────────────
+//          Category / SubCategory / Addon / GlobalTag APIs
+// ──────────────────────────────────────────────────────────
+
+    @GetMapping("/get-by-category")
+    public ResponseEntity<Page<ProductCategoryResponse>> getByCategory(
+            @RequestParam String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        log.info("GET /get-by-category | category: {}", category);
+        return ResponseEntity.ok(
+                productService.getProductsByCategory(category, page, size, sortBy, sortDir));
+    }
+
+    @GetMapping("/get-by-sub-category")
+    public ResponseEntity<Page<ProductCategoryResponse>> getBySubCategory(
+            @RequestParam String subCategory,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        log.info("GET /get-by-sub-category | subCategory: {}", subCategory);
+        return ResponseEntity.ok(
+                productService.getProductsBySubCategory(subCategory, page, size, sortBy, sortDir));
+    }
+
+    @GetMapping("/get-by-addon")
+    public ResponseEntity<Page<ProductCategoryResponse>> getByAddonKey(
+            @RequestParam String addonKey,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        log.info("GET /get-by-addon | addonKey: {}", addonKey);
+        return ResponseEntity.ok(
+                productService.getProductsByAddonKey(addonKey, page, size, sortBy, sortDir));
+    }
+
+    @GetMapping("/get-by-glob-tag")
+    public ResponseEntity<Page<ProductCategoryResponse>> getByGlobalTag(
+            @RequestParam String tag,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        log.info("GET /get-by-glob-tag | tag: {}", tag);
+        return ResponseEntity.ok(
+                productService.getProductsByGlobalTag(tag, page, size, sortBy, sortDir));
+    }
+
+
+
 }

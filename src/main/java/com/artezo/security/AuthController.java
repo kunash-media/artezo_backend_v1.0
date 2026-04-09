@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -33,27 +34,18 @@ public class AuthController {
     @Value("${jwt.refresh-expiration}")
     private Long refreshTokenExpiration;
 
-    // ── Toggle this in application.properties ──
-    // app.cookie.secure=false  → local dev (HTTP)
-    // app.cookie.secure=true   → production (HTTPS)
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
 
-    public AuthController(AuthenticationManager authenticationManager,
+    public AuthController(@Qualifier("adminAuthenticationManager") AuthenticationManager authenticationManager,
                           JwtUtil jwtUtil,
                           AdminUserDetailsService adminUserDetailsService) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
+        this.authenticationManager   = authenticationManager;
+        this.jwtUtil                 = jwtUtil;
         this.adminUserDetailsService = adminUserDetailsService;
         logger.info("AuthController initialized");
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  Cookie builder helper — single place to change cookie config
-    //
-    //  DEV  (app.cookie.secure=false): Lax + Secure=false  → works on localhost
-    //  PROD (app.cookie.secure=true):  Strict + Secure=true → works on HTTPS same-domain
-    // ─────────────────────────────────────────────────────────────
     private ResponseCookie buildCookie(String name, String value, String path, long maxAgeMs) {
         return ResponseCookie.from(name, value)
                 .httpOnly(true)
@@ -74,9 +66,6 @@ public class AuthController {
                 .build();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  POST /api/admin/auth/login
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request,
                                    HttpServletResponse response) {
@@ -107,7 +96,6 @@ public class AuthController {
 
             logger.info("Login successful for mobile: {} | Cookies set (secure={})", mobile, cookieSecure);
 
-            // cast to AdminDetails to get role
             AdminDetails adminDetails = (AdminDetails) userDetails;
 
             return ResponseEntity.ok(Map.of(
@@ -126,9 +114,6 @@ public class AuthController {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  POST /api/admin/auth/refresh
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(HttpServletRequest request,
                                      HttpServletResponse response) {
@@ -173,12 +158,8 @@ public class AuthController {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    //  POST /api/admin/auth/logout
-    // ─────────────────────────────────────────────────────────────
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-
         logger.info("Logout request received - clearing auth cookies");
 
         response.addHeader(HttpHeaders.SET_COOKIE, clearCookie("admin_token",   "/").toString());

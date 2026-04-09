@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,8 +30,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+//    @Autowired
+//    private UserDetailsService userDetailsService;
+
+    // ── REPLACE with these ──
     @Autowired
-    private UserDetailsService userDetailsService;
+    @Qualifier("adminUserDetailsService")
+    private UserDetailsService adminUserDetailsService;
+
+    @Autowired
+    @Qualifier("userDetailsServiceImpl")
+    private UserDetailsService userUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -66,7 +76,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             logger.debug("Attempting to authenticate user: {} for path: {}", username, requestURI);
 
             try {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+//                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                // ── REPLACE with ──
+                UserDetailsService targetService = requestURI.startsWith("/api/admin")
+                        ? adminUserDetailsService
+                        : userUserDetailsService;
+                UserDetails userDetails = targetService.loadUserByUsername(username);
+
                 logger.trace("UserDetails loaded successfully for: {}", username);
 
                 if (jwtUtil.validateToken(jwt, userDetails)) {
@@ -183,4 +199,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.trace("No token found in cookie or Authorization header for path: {}", requestURI);
         return null;
     }
+
+
+
 }

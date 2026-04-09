@@ -1,13 +1,13 @@
 package com.artezo.service;
 
 import com.artezo.dto.request.CreateProductRequestDto;
+import com.artezo.dto.response.ProductCategoryResponse;
 import com.artezo.dto.response.BulkUploadResponse;
 import com.artezo.dto.response.ProductResponseDto;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
 import com.artezo.exceptions.ProductNotFoundException;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -63,4 +63,16 @@ public interface ProductService {
 
 
     public BulkUploadResponse bulkCreateProducts(MultipartFile excelFile, List<MultipartFile> images);
+
+    //fetch by category and addon, global tag
+
+    // ProductService.java
+
+    Page<ProductCategoryResponse> getProductsByCategory(String category, int page, int size, String sortBy, String sortDir);
+
+    Page<ProductCategoryResponse> getProductsBySubCategory(String subCategory, int page, int size, String sortBy, String sortDir);
+
+    Page<ProductCategoryResponse> getProductsByAddonKey(String addonKey, int page, int size, String sortBy, String sortDir);
+
+    Page<ProductCategoryResponse> getProductsByGlobalTag(String tag, int page, int size, String sortBy, String sortDir);
 }

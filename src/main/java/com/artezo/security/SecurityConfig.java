@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,7 +15,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -33,11 +32,11 @@ public class SecurityConfig {
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          AdminUserDetailsService adminUserDetailsService, OAuth2SuccessHandler oAuth2SuccessHandler) {
+                          AdminUserDetailsService adminUserDetailsService,
+                          OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.adminUserDetailsService = adminUserDetailsService;
-        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
-
+        this.oAuth2SuccessHandler    = oAuth2SuccessHandler;
         logger.info("SecurityConfig bean initialized with JwtFilter and UserDetailsService");
     }
 
@@ -48,25 +47,33 @@ public class SecurityConfig {
         return encoder;
     }
 
+    // ── Admin provider (used in DSL + adminAuthenticationManager) ──
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(adminUserDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
-        logger.debug("DaoAuthenticationProvider bean created with custom UserDetailsService");
+        logger.debug("Admin DaoAuthenticationProvider bean created");
         return authProvider;
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        AuthenticationManager manager = config.getAuthenticationManager();
-        logger.debug("AuthenticationManager bean created from configuration");
-        return manager;
+    // ── Dedicated AuthenticationManager for admin login ──
+    @Bean("adminAuthenticationManager")
+    public AuthenticationManager adminAuthenticationManager() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(adminUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        logger.debug("adminAuthenticationManager bean created");
+        return new ProviderManager(provider);
     }
 
-    // ── NEW: CORS registered inside Spring Security ──
-    // Spring Security intercepts OPTIONS preflight BEFORE Spring MVC,
-    // so CORS must live here — not just in CorsConfig.java (WebMvcConfigurer).
-    // You can now safely DELETE CorsConfig.java.
+    // ── Dedicated AuthenticationManager for user login ──
+    @Bean("userAuthenticationManager")
+    public AuthenticationManager userAuthenticationManager(UserDetailsServiceImpl userDetailsServiceImpl) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsServiceImpl);
+        provider.setPasswordEncoder(passwordEncoder());
+        logger.debug("userAuthenticationManager bean created");
+        return new ProviderManager(provider);
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -86,11 +93,11 @@ public class SecurityConfig {
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);  // required — sends HttpOnly cookies cross-origin
+        config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);  // covers all paths
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 
@@ -99,44 +106,14 @@ public class SecurityConfig {
         logger.info("Configuring SecurityFilterChain - stateless JWT with cookie support");
 
         http
-                // ── NEW: wire CORS bean into Spring Security filter chain ──
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-//                .csrf(csrf -> {
-//                    CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
-//                    csrf
-//                            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-//                            .csrfTokenRequestHandler(requestHandler)
-//                            .ignoringRequestMatchers(
-//                                    "/api/admin/auth/login",
-//                                    "/api/admin/auth/refresh",
-//                                    "/api/admin/bootstrap",
-//                                    "/api/orders/**",
-//                                    "/api/users/**",
-//                                    "/api/v1/custom-categories/**",
-//                                    "/api/inventory/**",
-//                                    "/api/products/**",
-//                                    "/api/v1/cart/**",
-//                                    "/api/v1/wishlist/**",
-//                                    "/api/otp/**",
-//                                    "/api/shipping-addresses/**",
-//                                    "/api/recent-users/**",
-//                                    "/api/coupons/**",
-//                                    "/api/reviews/**",
-//                                    "/api/banners/**"
-//                            );
-//                    logger.debug("CSRF protection enabled with CookieCsrfTokenRepository");
-//                })
-
-                // ── Uncomment for quick Apidog/Postman testing, comment for production ──
-                 .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())
 
                 .authorizeHttpRequests(auth -> {
                     auth
                             .requestMatchers("/api/admin/bootstrap").permitAll()
                             .requestMatchers("/api/admin/auth/**").permitAll()
-                            .requestMatchers("/api/users/auth/**").permitAll()
-//                            .requestMatchers("/api/users/**").authenticated()
+//                            .requestMatchers("/api/users/auth/**").permitAll()
                             .requestMatchers("/api/admin/**").authenticated()
                             .anyRequest().permitAll();
 
@@ -144,10 +121,8 @@ public class SecurityConfig {
                             "/api/admin/** → authenticated, others → permitAll");
                 })
 
-
-                //------ OAuth 2.0 ---------//
                 .oauth2Login(oauth -> oauth
-                        .successHandler(oAuth2SuccessHandler) // we will create this
+                        .successHandler(oAuth2SuccessHandler)
                 )
 
                 .sessionManagement(session -> {

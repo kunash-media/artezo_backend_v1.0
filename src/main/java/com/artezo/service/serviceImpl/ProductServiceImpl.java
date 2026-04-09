@@ -1,9 +1,6 @@
 package com.artezo.service.serviceImpl;
 
-import com.artezo.dto.request.CreateProductRequestDto;
-import com.artezo.dto.request.HeroBannerRequestDto;
-import com.artezo.dto.request.InstallationStepRequestDto;
-import com.artezo.dto.request.VariantRequestDto;
+import com.artezo.dto.request.*;
 import com.artezo.dto.response.*;
 import com.artezo.entity.InstallationStepEntity;
 import com.artezo.entity.InventoryEntity;
@@ -1700,6 +1697,129 @@ public class ProductServiceImpl implements ProductService {
         response.setMessage("Upload failed — " + msg);
         log.error("Bulk upload aborted: {}", msg);
         return response;
+    }
+
+
+
+//─────────────────────────────────────────────────────────────
+//   Private helper — maps ProductEntity → ProductCategoryResponse
+// ─────────────────────────────────────────────────────────────
+    private ProductCategoryResponse mapToCategoryResponse(ProductEntity e) {
+        ProductCategoryResponse dto = new ProductCategoryResponse();
+
+        dto.setProductPrimeId(e.getProductPrimeId());
+        dto.setProductStrId(e.getProductStrId());
+        dto.setProductName(e.getProductName());
+        dto.setBrandName(e.getBrandName());
+        dto.setProductCategory(e.getProductCategory());
+        dto.setProductSubCategory(e.getProductSubCategory());
+
+        dto.setCurrentSku(e.getCurrentSku());
+        dto.setSelectedColor(e.getSelectedColor());
+        dto.setCurrentSellingPrice(e.getCurrentSellingPrice());
+        dto.setCurrentMrpPrice(e.getCurrentMrpPrice());
+        dto.setCurrentStock(e.getCurrentStock());
+
+        dto.setIsCustomizable(e.getIsCustomizable());
+        dto.setIsDeleted(e.getIsDeleted());
+        dto.setIsUnderTrendCategory(e.getUnderTrendCategory());
+
+        // Main image URL (same pattern as your existing mapToResponseDto)
+        if (e.getMainImageData() != null && e.getMainImageData().length > 0) {
+            dto.setMainImage("/api/products/" + e.getProductPrimeId() + "/main");
+        }
+
+        // globalTags
+        if (e.getGlobalTags() != null && !"[]".equals(e.getGlobalTags())) {
+            try {
+                List<String> tags = objectMapper.readValue(
+                        e.getGlobalTags(), new TypeReference<List<String>>() {});
+                dto.setGlobalTags(tags);
+            } catch (Exception ex) {
+                log.error("Failed to deserialize globalTags for product {}", e.getProductPrimeId(), ex);
+                dto.setGlobalTags(List.of());
+            }
+        } else {
+            dto.setGlobalTags(List.of());
+        }
+
+        // addonKeys
+        if (e.getAddonKeys() != null && !"[]".equals(e.getAddonKeys())) {
+            try {
+                List<String> addons = objectMapper.readValue(
+                        e.getAddonKeys(), new TypeReference<List<String>>() {});
+                dto.setAddonKeys(addons);
+            } catch (Exception ex) {
+                log.error("Failed to deserialize addonKeys for product {}", e.getProductPrimeId(), ex);
+                dto.setAddonKeys(List.of());
+            }
+        } else {
+            dto.setAddonKeys(List.of());
+        }
+
+        return dto;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+//   Private helper — builds Pageable (reuse your existing sort logic)
+// ─────────────────────────────────────────────────────────────
+    private Pageable buildPageable(int page, int size, String sortBy, String sortDir) {
+        Sort sort = (sortBy != null && !sortBy.isBlank())
+                ? (sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending())
+                : Sort.by("productPrimeId").descending();
+        return PageRequest.of(page, size, sort);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+//   get-by-category
+// ─────────────────────────────────────────────────────────────
+    @Override
+    public Page<ProductCategoryResponse> getProductsByCategory(
+            String category, int page, int size, String sortBy, String sortDir) {
+
+        log.info("Fetching products by category: {}", category);
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        return productRepository.findByCategory(category, pageable)
+                .map(this::mapToCategoryResponse);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+//   get-by-sub-category
+// ─────────────────────────────────────────────────────────────
+    @Override
+    public Page<ProductCategoryResponse> getProductsBySubCategory(
+            String subCategory, int page, int size, String sortBy, String sortDir) {
+
+        log.info("Fetching products by subCategory: {}", subCategory);
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        return productRepository.findBySubCategory(subCategory, pageable)
+                .map(this::mapToCategoryResponse);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+//   get-by-addon
+// ─────────────────────────────────────────────────────────────
+    @Override
+    public Page<ProductCategoryResponse> getProductsByAddonKey(
+            String addonKey, int page, int size, String sortBy, String sortDir) {
+
+        log.info("Fetching products by addonKey: {}", addonKey);
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        return productRepository.findByAddonKey(addonKey, pageable)
+                .map(this::mapToCategoryResponse);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+//   get-by-glob-tag
+// ─────────────────────────────────────────────────────────────
+    @Override
+    public Page<ProductCategoryResponse> getProductsByGlobalTag(
+            String tag, int page, int size, String sortBy, String sortDir) {
+
+        log.info("Fetching products by globalTag: {}", tag);
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        return productRepository.findByGlobalTag(tag, pageable)
+                .map(this::mapToCategoryResponse);
     }
 
 }
