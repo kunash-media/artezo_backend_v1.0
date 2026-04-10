@@ -79,6 +79,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(List.of(
+                "https://artezo-admin-frontend-ruddy.vercel.app/",
                 "http://localhost:5500",
                 "http://127.0.0.1:5500",
                 "http://localhost:5501",
@@ -113,7 +114,7 @@ public class SecurityConfig {
                     auth
                             .requestMatchers("/api/admin/bootstrap").permitAll()
                             .requestMatchers("/api/admin/auth/**").permitAll()
-//                            .requestMatchers("/api/users/auth/**").permitAll()
+                            .requestMatchers("/api/users/auth/**").permitAll()
                             .requestMatchers("/api/admin/**").authenticated()
                             .anyRequest().permitAll();
 
