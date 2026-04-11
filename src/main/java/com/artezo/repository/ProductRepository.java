@@ -86,14 +86,14 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
 
     @Query(
-            value = "SELECT * FROM products_table WHERE is_deleted = false AND JSON_CONTAINS(addon_keys, JSON_QUOTE(:addonKey))",
+            value = "SELECT * FROM products_table WHERE is_deleted = false AND JSON_CONTAINS(addon_keys, JSON_QUOTE(:addonKey)) ORDER BY product_prime_id DESC",
             countQuery = "SELECT COUNT(*) FROM products_table WHERE is_deleted = false AND JSON_CONTAINS(addon_keys, JSON_QUOTE(:addonKey))",
             nativeQuery = true
     )
     Page<ProductEntity> findByAddonKey(@Param("addonKey") String addonKey, Pageable pageable);
 
     @Query(
-            value = "SELECT * FROM products_table WHERE is_deleted = false AND JSON_CONTAINS(global_tags, JSON_QUOTE(:tag))",
+            value = "SELECT * FROM products_table WHERE is_deleted = false AND JSON_CONTAINS(global_tags, JSON_QUOTE(:tag)) ORDER BY product_prime_id DESC",
             countQuery = "SELECT COUNT(*) FROM products_table WHERE is_deleted = false AND JSON_CONTAINS(global_tags, JSON_QUOTE(:tag))",
             nativeQuery = true
     )

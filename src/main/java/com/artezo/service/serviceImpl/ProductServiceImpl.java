@@ -1910,8 +1910,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     // ─────────────────────────────────────────────────────────────
-//   Private helper — builds Pageable (reuse your existing sort logic)
-// ─────────────────────────────────────────────────────────────
+    //   Private helper — builds Pageable (reuse your existing sort logic)
+    // ─────────────────────────────────────────────────────────────
     private Pageable buildPageable(int page, int size, String sortBy, String sortDir) {
         Sort sort = (sortBy != null && !sortBy.isBlank())
                 ? (sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending())
@@ -1920,8 +1920,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     // ─────────────────────────────────────────────────────────────
-//   get-by-category
-// ─────────────────────────────────────────────────────────────
+    //   get-by-category
+    // ─────────────────────────────────────────────────────────────
     @Override
     public Page<ProductCategoryResponse> getProductsByCategory(
             String category, int page, int size, String sortBy, String sortDir) {
@@ -1933,8 +1933,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     // ─────────────────────────────────────────────────────────────
-//   get-by-sub-category
-// ─────────────────────────────────────────────────────────────
+    //   get-by-sub-category
+    // ─────────────────────────────────────────────────────────────
     @Override
     public Page<ProductCategoryResponse> getProductsBySubCategory(
             String subCategory, int page, int size, String sortBy, String sortDir) {
@@ -1946,29 +1946,29 @@ public class ProductServiceImpl implements ProductService {
     }
 
     // ─────────────────────────────────────────────────────────────
-//   get-by-addon
-// ─────────────────────────────────────────────────────────────
+    //   get-by-addon
+    // ─────────────────────────────────────────────────────────────
     @Override
     public Page<ProductCategoryResponse> getProductsByAddonKey(
-            String addonKey, int page, int size, String sortBy, String sortDir) {
+        String addonKey, int page, int size, String sortBy, String sortDir) {
 
         log.info("Fetching products by addonKey: {}", addonKey);
-        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Pageable pageable = PageRequest.of(page, size); // ← no sort here
         return productRepository.findByAddonKey(addonKey, pageable)
                 .map(this::mapToCategoryResponse);
     }
 
     // ─────────────────────────────────────────────────────────────
-//   get-by-glob-tag
-// ─────────────────────────────────────────────────────────────
+    //   get-by-glob-tag
+    // ─────────────────────────────────────────────────────────────
+
     @Override
     public Page<ProductCategoryResponse> getProductsByGlobalTag(
             String tag, int page, int size, String sortBy, String sortDir) {
 
         log.info("Fetching products by globalTag: {}", tag);
-        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Pageable pageable = PageRequest.of(page, size); // ← no sort here
         return productRepository.findByGlobalTag(tag, pageable)
                 .map(this::mapToCategoryResponse);
     }
-
 }
