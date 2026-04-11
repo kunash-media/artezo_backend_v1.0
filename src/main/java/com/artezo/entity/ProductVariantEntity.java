@@ -30,10 +30,18 @@ public class ProductVariantEntity {
     private byte[] mainImageData;
     private String mainImageStrUrl;
 
-    @ElementCollection
-    @CollectionTable(name = "variant_mockup_images", joinColumns = @JoinColumn(name = "variant_id"))
-    @Lob
-    private List<byte[]> mockupImageDataList = new ArrayList<>();
+//        @ElementCollection
+//        @CollectionTable(
+//                name = "variant_mockup_images",
+//                joinColumns = @JoinColumn(name = "variant_pk_id", referencedColumnName = "id")
+//        )
+//        @Column(name = "mockup_image_data_list", columnDefinition = "LONGBLOB")
+//        @Lob
+//        private List<byte[]> mockupImageDataList = new ArrayList<>();
+
+    // ADD THIS:
+    @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<VariantMockupImageEntity> mockupImages = new ArrayList<>();
 
     private LocalDate mfgDate;
     private LocalDate expDate;
@@ -51,7 +59,7 @@ public class ProductVariantEntity {
     public ProductVariantEntity(){}
 
 
-    public ProductVariantEntity(Long id, ProductEntity product, String variantId, String titleName, String color, String sku, Double price, Double mrp, Integer stock, byte[] mainImageData, String mainImageStrUrl, List<byte[]> mockupImageDataList, LocalDate mfgDate, LocalDate expDate, String size, String couponAvailable, Double weight, Double length, Double breadth, Double height) {
+    public ProductVariantEntity(Long id, ProductEntity product, String variantId, String titleName, String color, String sku, Double price, Double mrp, Integer stock, byte[] mainImageData, String mainImageStrUrl, List<VariantMockupImageEntity> mockupImages, LocalDate mfgDate, LocalDate expDate, String size, String couponAvailable, Double weight, Double length, Double breadth, Double height) {
         this.id = id;
         this.product = product;
         this.variantId = variantId;
@@ -63,7 +71,7 @@ public class ProductVariantEntity {
         this.stock = stock;
         this.mainImageData = mainImageData;
         this.mainImageStrUrl = mainImageStrUrl;
-        this.mockupImageDataList = mockupImageDataList;
+        this.mockupImages = mockupImages;
         this.mfgDate = mfgDate;
         this.expDate = expDate;
         this.size = size;
@@ -74,13 +82,21 @@ public class ProductVariantEntity {
         this.height = height;
     }
 
-    public Long getId() {
-        return id;
+    public List<VariantMockupImageEntity> getMockupImages() {
+        return mockupImages;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setMockupImages(List<VariantMockupImageEntity> mockupImages) {
+        this.mockupImages = mockupImages;
     }
+
+    public Long getId() {
+    return id;
+}
+
+    public void setId(Long id) {
+    this.id = id;
+}
 
     public ProductEntity getProduct() {
         return product;
@@ -162,13 +178,6 @@ public class ProductVariantEntity {
         this.mainImageStrUrl = mainImageStrUrl;
     }
 
-    public List<byte[]> getMockupImageDataList() {
-        return mockupImageDataList;
-    }
-
-    public void setMockupImageDataList(List<byte[]> mockupImageDataList) {
-        this.mockupImageDataList = mockupImageDataList;
-    }
 
     public LocalDate getMfgDate() {
         return mfgDate;

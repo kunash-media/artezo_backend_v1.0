@@ -3,16 +3,23 @@ package com.artezo.controller;
 import com.artezo.dto.request.CreateProductRequestDto;
 import com.artezo.dto.request.HeroBannerRequestDto;
 import com.artezo.dto.request.InstallationStepRequestDto;
+import com.artezo.dto.request.VariantRequestDto;
 import com.artezo.dto.response.BulkUploadResponse;
 import com.artezo.dto.response.ProductCategoryResponse;
 import com.artezo.dto.response.ProductResponseDto;
+import com.artezo.entity.ProductEntity;
+import com.artezo.entity.ProductVariantEntity;
+import com.artezo.entity.VariantMockupImageEntity;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
 import com.artezo.exceptions.ProductNotFoundException;
+import com.artezo.repository.ProductRepository;
 import com.artezo.service.ProductService;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
@@ -30,13 +37,15 @@ import java.util.stream.Collectors;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductRepository productRepository;
 
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
-
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductRepository productRepository) {
         this.productService = productService;
+        this.productRepository = productRepository;
     }
+
 
     // ──────────────────────────────────────────────────────────
     //          GET BY productPrimeId API for admin and web view
@@ -88,6 +97,9 @@ public class ProductController {
             @RequestPart(value = "mockupImages", required = false) List<MultipartFile> mockupImages,
             // Variant images - optional (indexed)
             @RequestPart(value = "variantsMainImages", required = false) List<MultipartFile> variantMainImages,
+
+            @RequestPart(value = "variantsMockupImages", required = false) List<MultipartFile> variantMockupImages, // ← NEW
+
             // Hero banners images - optional (indexed)
             @RequestPart(value = "heroBannersImages", required = false) List<MultipartFile> heroBannerImages,
             // ─── NEW: Main product video (single file, optional) ───
@@ -136,6 +148,44 @@ public class ProductController {
                 }
             }
         }
+
+        // ── NEW: Assign variant mockup images (flat list, sliced by mockupImageCount) ──
+//        if (request.getVariants() != null && variantMockupImages != null && !variantMockupImages.isEmpty()) {
+//            int fileIndex = 0;
+//            for (VariantRequestDto variant : request.getVariants()) {
+//                int count = variant.getMockupImageCount() != null ? variant.getMockupImageCount() : 0;
+//                List<byte[]> variantMockups = new ArrayList<>();
+//                for (int j = 0; j < count && fileIndex < variantMockupImages.size(); j++, fileIndex++) {
+//                    MultipartFile f = variantMockupImages.get(fileIndex);
+//                    if (f != null && !f.isEmpty()) {
+//                        try { variantMockups.add(f.getBytes()); }
+//                        catch (IOException e) { log.warn("Failed to read variant mockup image at fileIndex {}", fileIndex, e); }
+//                    }
+//                }
+//                if (!variantMockups.isEmpty()) variant.setMockupImages(variantMockups);
+//            }
+//        }
+
+        // In BOTH controller methods, replace the variant mockup slice block with this:
+        if (request.getVariants() != null && variantMockupImages != null && !variantMockupImages.isEmpty()) {
+            int fileIndex = 0;
+            for (VariantRequestDto variant : request.getVariants()) {
+                int count = (variant.getMockupImageCount() != null && variant.getMockupImageCount() > 0)
+                        ? variant.getMockupImageCount()
+                        : variantMockupImages.size() - fileIndex; // ✅ fallback: give all remaining files to this variant
+
+                List<byte[]> variantMockups = new ArrayList<>();
+                for (int j = 0; j < count && fileIndex < variantMockupImages.size(); j++, fileIndex++) {
+                    MultipartFile f = variantMockupImages.get(fileIndex);
+                    if (f != null && !f.isEmpty()) {
+                        try { variantMockups.add(f.getBytes()); }
+                        catch (IOException e) { log.warn("Failed to read variant mockup at fileIndex {}", fileIndex, e); }
+                    }
+                }
+                if (!variantMockups.isEmpty()) variant.setMockupImages(variantMockups);
+            }
+        }
+
 
         // ── Assign hero banners images (by index) ──
         if (request.getHeroBanners() != null && heroBannerImages != null) {
@@ -223,6 +273,7 @@ public class ProductController {
             @RequestPart(value = "mockupImages", required = false) List<MultipartFile> mockupImageFiles,
             @RequestPart(value = "productVideo", required = false) MultipartFile productVideoFile,
             @RequestPart(value = "variantsMainImages", required = false) List<MultipartFile> variantMainImages,
+            @RequestPart(value = "variantsMockupImages", required = false) List<MultipartFile> variantMockupImages,         // ← NEW
             @RequestPart(value = "heroBannersImages", required = false) List<MultipartFile> heroBannerImages,
             @RequestPart(value = "installationStepsImages", required = false) List<MultipartFile> stepImages,
             @RequestPart(value = "installationStepsVideos", required = false) List<MultipartFile> stepVideos
@@ -256,6 +307,28 @@ public class ProductController {
                 }
             }
         }
+
+        // ── NEW: Variant mockup images — flat list sliced by mockupImageCount ──
+        if (request.getVariants() != null && variantMockupImages != null && !variantMockupImages.isEmpty()) {
+            int fileIndex = 0;
+            for (VariantRequestDto variant : request.getVariants()) {
+                int count = variant.getMockupImageCount() != null ? variant.getMockupImageCount() : 0;
+                List<byte[]> variantMockups = new ArrayList<>();
+                for (int j = 0; j < count && fileIndex < variantMockupImages.size(); j++, fileIndex++) {
+                    MultipartFile f = variantMockupImages.get(fileIndex);
+                    if (f != null && !f.isEmpty()) {
+                        try { variantMockups.add(f.getBytes()); }
+                        catch (IOException e) { log.warn("Failed to read variant mockup at fileIndex {}", fileIndex, e); }
+                    }
+                }
+                // Only set if we actually got bytes — null = preserve existing
+                if (!variantMockups.isEmpty()) {
+                    variant.setMockupImages(variantMockups);
+                }
+            }
+        }
+
+
 
         // ── Hero banner images ──
         // ✅ Queue approach: files arrive in same order as banners that had a new file
@@ -381,6 +454,29 @@ public class ProductController {
                 .body(data);
     }
 
+    @GetMapping("/{productPrimeId}/variant/{variantId}/mockup/{index}")
+    public ResponseEntity<Resource> streamVariantMockupImage(
+            @PathVariable Long productPrimeId,
+            @PathVariable String variantId,
+            @PathVariable int index) {
+
+        ProductEntity product = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        ProductVariantEntity variant = product.getVariants().stream()
+                .filter(v -> variantId.equals(v.getVariantId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Variant not found"));
+
+        List<VariantMockupImageEntity> mockups = variant.getMockupImages();
+        if (mockups == null || index >= mockups.size()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body((Resource) new ByteArrayResource(mockups.get(index).getImageData()));
+    }
 
     // Hero Banner Image
     @GetMapping("/{productPrimeId}/hero-banner/{bannerId}")

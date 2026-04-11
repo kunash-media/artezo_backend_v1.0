@@ -2,10 +2,7 @@ package com.artezo.service.serviceImpl;
 
 import com.artezo.dto.request.*;
 import com.artezo.dto.response.*;
-import com.artezo.entity.InstallationStepEntity;
-import com.artezo.entity.InventoryEntity;
-import com.artezo.entity.ProductEntity;
-import com.artezo.entity.ProductVariantEntity;
+import com.artezo.entity.*;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
 import com.artezo.exceptions.ProductNotFoundException;
@@ -21,6 +18,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -124,31 +122,75 @@ public class ProductServiceImpl implements ProductService {
         entity.setProductVideoData(request.getProductVideo());
 
         // Handle variants (temporarily without variantId)
+//        if (Boolean.TRUE.equals(request.getHasVariants()) && request.getVariants() != null) {
+//            for (VariantRequestDto vReq : request.getVariants()) {
+//                ProductVariantEntity variant = new ProductVariantEntity();
+//                mapVariantToEntity(variant, vReq);
+//                variant.setProduct(entity);
+//                entity.getVariants().add(variant);
+//            }
+//        }
+
+        // Step 1: add variants WITHOUT mockups
         if (Boolean.TRUE.equals(request.getHasVariants()) && request.getVariants() != null) {
             for (VariantRequestDto vReq : request.getVariants()) {
                 ProductVariantEntity variant = new ProductVariantEntity();
                 mapVariantToEntity(variant, vReq);
                 variant.setProduct(entity);
+                // NO mockups here yet — IDs don't exist
                 entity.getVariants().add(variant);
             }
         }
 
+
         // Generate productStrId
+//        long count = productRepository.count() + 1;
+//        entity.setProductStrId(String.format("PRD%05d", count));
+//
+//        ProductEntity saved = productRepository.save(entity);
+//        log.info("Product created → productPrimeId: {}, productStrId: {}", saved.getProductPrimeId(), saved.getProductStrId());
+//
+//        // ─── AUTO-GENERATE variantIds AFTER save ───
+//        if (saved.getVariants() != null && !saved.getVariants().isEmpty()) {
+//            for (ProductVariantEntity variant : saved.getVariants()) {
+//                String color = variant.getColor() != null ? variant.getColor().trim() : "";
+//                String colorPart = color.isEmpty() ? "DEFAULT" :
+//                        color.toUpperCase().replaceAll("[^A-Z0-9]", "");
+//
+//                String generatedId = String.format("VAR-%s-%d", colorPart, variant.getId());
+//                variant.setVariantId(generatedId);
+//            }
+//            saved = productRepository.save(saved);
+//        }
+
+
+        // Step 2: first save — gets variant IDs assigned
         long count = productRepository.count() + 1;
         entity.setProductStrId(String.format("PRD%05d", count));
-
-        ProductEntity saved = productRepository.save(entity);
+        ProductEntity saved = productRepository.saveAndFlush(entity);
         log.info("Product created → productPrimeId: {}, productStrId: {}", saved.getProductPrimeId(), saved.getProductStrId());
 
-        // ─── AUTO-GENERATE variantIds AFTER save ───
+        // Step 3: generate variantIds + assign mockups NOW that IDs exist
         if (saved.getVariants() != null && !saved.getVariants().isEmpty()) {
-            for (ProductVariantEntity variant : saved.getVariants()) {
+            for (int i = 0; i < saved.getVariants().size(); i++) {
+                ProductVariantEntity variant = saved.getVariants().get(i);
+
+                // Generate variantId
                 String color = variant.getColor() != null ? variant.getColor().trim() : "";
                 String colorPart = color.isEmpty() ? "DEFAULT" :
                         color.toUpperCase().replaceAll("[^A-Z0-9]", "");
+                variant.setVariantId(String.format("VAR-%s-%d", colorPart, variant.getId()));
 
-                String generatedId = String.format("VAR-%s-%d", colorPart, variant.getId());
-                variant.setVariantId(generatedId);
+                // ── Assign mockups using OneToMany entity — ID exists now ──
+                if (request.getVariants() != null && i < request.getVariants().size()) {
+                    VariantRequestDto vReq = request.getVariants().get(i);
+                    if (vReq.getMockupImages() != null && !vReq.getMockupImages().isEmpty()) {
+                        for (byte[] bytes : vReq.getMockupImages()) {
+                            VariantMockupImageEntity img = new VariantMockupImageEntity(variant, bytes);
+                            variant.getMockupImages().add(img);
+                        }
+                    }
+                }
             }
             saved = productRepository.save(saved);
         }
@@ -269,7 +311,253 @@ public class ProductServiceImpl implements ProductService {
 
     // ────────────────────────────────────────────────
     //                  UPDATE FULL + INVENTORY SYNC
+    @Override
+    @Transactional
+    public ProductResponseDto patchProduct(Long productPrimeId, CreateProductRequestDto request) {
+        log.info("Partial patch product productPrimeId: {}", productPrimeId);
+
+        ProductEntity entity = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found: " + productPrimeId));
+
+        // ── Basic fields ──
+        if (request.getProductName() != null) entity.setProductName(request.getProductName());
+        if (request.getBrandName() != null) entity.setBrandName(request.getBrandName());
+        if (request.getProductCategory() != null) entity.setProductCategory(request.getProductCategory());
+        if (request.getProductSubCategory() != null) entity.setProductSubCategory(request.getProductSubCategory());
+        if (request.getYoutubeUrl() != null) entity.setYoutubeUrl(request.getYoutubeUrl());
+
+        // ── Boolean flags — null-safe ──
+        if (request.getHasVariants() != null) entity.setHasVariants(request.getHasVariants());
+        if (request.getIsCustomizable() != null) entity.setIsCustomizable(request.getIsCustomizable());
+        if (request.getIsExchange() != null) entity.setIsExchange(request.getIsExchange());
+        if (request.getReturnAvailable() != null) entity.setReturnAvailable(request.getReturnAvailable());
+        if (request.getUnderTrendCategory() != null) entity.setUnderTrendCategory(request.getUnderTrendCategory());
+
+        // ── Pricing & stock ──
+        if (request.getCurrentSku() != null) entity.setCurrentSku(request.getCurrentSku());
+        if (request.getSelectedColor() != null) entity.setSelectedColor(request.getSelectedColor());
+        if (request.getCurrentSellingPrice() != null) entity.setCurrentSellingPrice(request.getCurrentSellingPrice());
+        if (request.getCurrentMrpPrice() != null) entity.setCurrentMrpPrice(request.getCurrentMrpPrice());
+        if (request.getCurrentStock() != null) entity.setCurrentStock(request.getCurrentStock());
+
+        // ── Text lists ──
+        if (request.getDescription() != null) entity.setDescription(String.join("\n", request.getDescription()));
+        if (request.getAboutItem() != null) entity.setAboutItem(String.join("\n", request.getAboutItem()));
+
+        // ── JSON fields ──
+        if (request.getSpecifications() != null) {
+            try {
+                entity.setSpecifications(objectMapper.writeValueAsString(request.getSpecifications()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize specifications", ex);
+            }
+        }
+
+        if (request.getCustomFields() != null) {
+            try {
+                entity.setCustomFields(objectMapper.writeValueAsString(request.getCustomFields()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize customFields", ex);
+            }
+        }
+
+        if (request.getAdditionalInfo() != null) {
+            try {
+                entity.setAdditionalInfo(objectMapper.writeValueAsString(request.getAdditionalInfo()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize additionalInfo", ex);
+            }
+        }
+        if (request.getFaq() != null) {
+            try {
+                entity.setFaq(objectMapper.writeValueAsString(request.getFaq()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize faq", ex);
+            }
+        }
+        if (request.getGlobalTags() != null) {
+            try {
+                entity.setGlobalTags(objectMapper.writeValueAsString(request.getGlobalTags()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize globalTags", ex);
+            }
+        }
+        if (request.getAddonKeys() != null) {
+            try {
+                entity.setAddonKeys(objectMapper.writeValueAsString(request.getAddonKeys()));
+            } catch (Exception ex) {
+                log.error("Failed to serialize addonKeys", ex);
+            }
+        }
+        if (request.getCategoryPath() != null && !request.getCategoryPath().isEmpty()) {
+            entity.setCategoryPath(request.getCategoryPath());
+        }
+
+        // ── Images ──
+        if (request.getMainImage() != null) entity.setMainImageData(request.getMainImage());
+        if (request.getMockupImages() != null) {
+            entity.getMockupImageDataList().clear();
+            entity.getMockupImageDataList().addAll(request.getMockupImages());
+        }
+        if (request.getProductVideo() != null) entity.setProductVideoData(request.getProductVideo());
+
+        // ── Hero banners — merge by bannerId ──
+        if (request.getHeroBanners() != null) {
+            try {
+                List<HeroBannerRequestDto> existing = new ArrayList<>();
+                if (entity.getHeroBanners() != null && !"[]".equals(entity.getHeroBanners())) {
+                    existing = objectMapper.readValue(entity.getHeroBanners(),
+                            new TypeReference<List<HeroBannerRequestDto>>() {
+                            });
+                }
+                for (HeroBannerRequestDto incoming : request.getHeroBanners()) {
+                    Optional<HeroBannerRequestDto> match = existing.stream()
+                            .filter(b -> b.getBannerId() == incoming.getBannerId())
+                            .findFirst();
+                    if (match.isPresent()) {
+                        if (incoming.getImgDescription() != null)
+                            match.get().setImgDescription(incoming.getImgDescription());
+                        if (incoming.getBannerImg() != null) match.get().setBannerImg(incoming.getBannerImg());
+                    } else {
+                        existing.add(incoming);
+                    }
+                }
+                entity.setHeroBanners(objectMapper.writeValueAsString(existing));
+            } catch (Exception ex) {
+                log.error("Patch hero banners failed", ex);
+            }
+        }
+
+        // ── Installation steps — patch per step number ──
+        if (request.getInstallationSteps() != null) {
+            for (InstallationStepRequestDto stepReq : request.getInstallationSteps()) {
+                Optional<InstallationStepEntity> existing = Optional.ofNullable(installationStepRepository
+                        .findByProduct_ProductPrimeIdAndStep(entity.getProductPrimeId(), stepReq.getStep()));
+
+                InstallationStepEntity stepEntity = existing.orElse(new InstallationStepEntity());
+                if (stepEntity.getId() == null) stepEntity.setProduct(entity);
+
+                stepEntity.setStep(stepReq.getStep());
+                if (stepReq.getTitle() != null) stepEntity.setTitle(stepReq.getTitle());
+                if (stepReq.getShortDescription() != null)
+                    stepEntity.setShortDescription(stepReq.getShortDescription());
+                if (stepReq.getShortNote() != null) stepEntity.setShortNote(stepReq.getShortNote());
+                if (stepReq.getStepImage() != null) stepEntity.setStepImageData(stepReq.getStepImage());
+                if (stepReq.getVideoFile() != null) stepEntity.setVideoData(stepReq.getVideoFile());
+
+                installationStepRepository.save(stepEntity);
+            }
+        }
+
+        // ── Variants — full replace if provided ──
+//        if (request.getVariants() != null) {
+//            entity.getVariants().clear();
+//            for (VariantRequestDto vReq : request.getVariants()) {
+//                ProductVariantEntity variant = new ProductVariantEntity();
+//                mapVariantToEntity(variant, vReq);
+//                variant.setProduct(entity);
+//                entity.getVariants().add(variant);
+//            }
+//        }
+
+        if (request.getVariants() != null) {
+
+            // ✅ FIX: snapshot BOTH mainImage AND mockups by index (not SKU)
+            // Index-based is safer — SKU may change or be null
+            List<byte[]> existingMainImages = new ArrayList<>();
+            List<List<byte[]>> existingMockupsList = new ArrayList<>();
+
+            for (ProductVariantEntity existing : entity.getVariants()) {
+                existingMainImages.add(existing.getMainImageData());
+                existingMockupsList.add(
+                        existing.getMockupImages().stream()
+                                .map(VariantMockupImageEntity::getImageData)
+                                .collect(Collectors.toList())
+                );
+            }
+
+            // Clear and flush
+            entity.getVariants().clear();
+            productRepository.saveAndFlush(entity);
+
+            // Rebuild variants
+            for (VariantRequestDto vReq : request.getVariants()) {
+                ProductVariantEntity variant = new ProductVariantEntity();
+                mapVariantToEntity(variant, vReq); // mainImage only set if non-null (Fix 1)
+                variant.setProduct(entity);
+                entity.getVariants().add(variant);
+            }
+
+            // Save to get IDs
+            entity = productRepository.saveAndFlush(entity);
+
+
+
+            // Assign mockups + restore main images where not overridden
+            for (int i = 0; i < entity.getVariants().size(); i++) {
+
+                ProductVariantEntity savedVariant = entity.getVariants().get(i);
+                VariantRequestDto vReq = request.getVariants().get(i);
+
+                // ✅ FIX: restore existing mainImage if no new one was sent
+                if (savedVariant.getMainImageData() == null && i < existingMainImages.size()) {
+                    savedVariant.setMainImageData(existingMainImages.get(i));
+                }
+
+                // Determine mockup bytes to use
+                List<byte[]> mockupBytes = null;
+
+                // Temporary — add inside the variants loop, before mockup assignment
+                log.info("Variant[{}] SKU={} incomingMockups={} existingMockups={}",
+                        i,
+                        vReq.getSku(),
+                        vReq.getMockupImages() != null ? vReq.getMockupImages().size() : 0,
+                        i < existingMockupsList.size() ? existingMockupsList.get(i).size() : 0
+                );
+
+                if (vReq.getMockupImages() != null && !vReq.getMockupImages().isEmpty()) {
+                    // New mockups sent — use them
+                    mockupBytes = vReq.getMockupImages();
+                } else if (!Boolean.TRUE.equals(vReq.getClearMockupImages())) {
+                    // ✅ FIX: fall back by index first, then by SKU as secondary
+                    if (i < existingMockupsList.size() && !existingMockupsList.get(i).isEmpty()) {
+                        mockupBytes = existingMockupsList.get(i);
+                    }
+                }
+
+                if (mockupBytes != null) {
+                    for (byte[] bytes : mockupBytes) {
+                        VariantMockupImageEntity img = new VariantMockupImageEntity(savedVariant, bytes);
+                        savedVariant.getMockupImages().add(img);
+                    }
+                }
+            }
+
+            // Final save
+            entity = productRepository.saveAndFlush(entity);
+        }
+
+// Regenerate variantIds
+        if (entity.getVariants() != null && !entity.getVariants().isEmpty()) {
+            for (ProductVariantEntity variant : entity.getVariants()) {
+                String color = variant.getColor() != null ? variant.getColor().trim() : "";
+                String colorPart = color.isEmpty() ? "DEFAULT" :
+                        color.toUpperCase().replaceAll("[^A-Z0-9]", "");
+                variant.setVariantId(String.format("VAR-%s-%d", colorPart, variant.getId()));
+            }
+            entity = productRepository.save(entity);
+        }
+
+        if (request.getCurrentStock() != null || request.getVariants() != null) {
+            syncInventoryFromProduct(entity);
+        }
+
+        return mapToResponseDto(entity);
+    }
+
+
     // ────────────────────────────────────────────────
+
     @Override
     @Transactional
     public ProductResponseDto updateProduct(Long productPrimeId, CreateProductRequestDto request) {
@@ -322,158 +610,9 @@ public class ProductServiceImpl implements ProductService {
 
         return mapToResponseDto(saved);
     }
-
     // ────────────────────────────────────────────────
     //                  PATCH + INVENTORY SYNC
     // ────────────────────────────────────────────────
-    @Override
-    @Transactional
-    public ProductResponseDto patchProduct(Long productPrimeId, CreateProductRequestDto request) {
-        log.info("Partial patch product productPrimeId: {}", productPrimeId);
-
-        ProductEntity entity = productRepository.findById(productPrimeId)
-                .orElseThrow(() -> new RuntimeException("Product not found: " + productPrimeId));
-
-        // ── Basic fields ──
-        if (request.getProductName() != null) entity.setProductName(request.getProductName());
-        if (request.getBrandName() != null) entity.setBrandName(request.getBrandName());
-        if (request.getProductCategory() != null) entity.setProductCategory(request.getProductCategory());
-        if (request.getProductSubCategory() != null) entity.setProductSubCategory(request.getProductSubCategory());
-        if (request.getYoutubeUrl() != null) entity.setYoutubeUrl(request.getYoutubeUrl());
-
-        // ── Boolean flags — null-safe ──
-        if (request.getHasVariants() != null) entity.setHasVariants(request.getHasVariants());
-        if (request.getIsCustomizable() != null) entity.setIsCustomizable(request.getIsCustomizable());
-        if (request.getIsExchange() != null) entity.setIsExchange(request.getIsExchange());
-        if (request.getReturnAvailable() != null) entity.setReturnAvailable(request.getReturnAvailable());
-        if (request.getUnderTrendCategory() != null) entity.setUnderTrendCategory(request.getUnderTrendCategory());
-
-        // ── Pricing & stock ──
-        if (request.getCurrentSku() != null) entity.setCurrentSku(request.getCurrentSku());
-        if (request.getSelectedColor() != null) entity.setSelectedColor(request.getSelectedColor());
-        if (request.getCurrentSellingPrice() != null) entity.setCurrentSellingPrice(request.getCurrentSellingPrice());
-        if (request.getCurrentMrpPrice() != null) entity.setCurrentMrpPrice(request.getCurrentMrpPrice());
-        if (request.getCurrentStock() != null) entity.setCurrentStock(request.getCurrentStock());
-
-        // ── Text lists ──
-        if (request.getDescription() != null) entity.setDescription(String.join("\n", request.getDescription()));
-        if (request.getAboutItem() != null) entity.setAboutItem(String.join("\n", request.getAboutItem()));
-
-        // ── JSON fields ──
-        if (request.getSpecifications() != null) {
-            try { entity.setSpecifications(objectMapper.writeValueAsString(request.getSpecifications())); }
-            catch (Exception ex) { log.error("Failed to serialize specifications", ex); }
-        }
-
-        if (request.getCustomFields() != null) {
-            try { entity.setCustomFields(objectMapper.writeValueAsString(request.getCustomFields())); }
-            catch (Exception ex) { log.error("Failed to serialize customFields", ex); }
-        }
-
-        if (request.getAdditionalInfo() != null) {
-            try { entity.setAdditionalInfo(objectMapper.writeValueAsString(request.getAdditionalInfo())); }
-            catch (Exception ex) { log.error("Failed to serialize additionalInfo", ex); }
-        }
-        if (request.getFaq() != null) {
-            try { entity.setFaq(objectMapper.writeValueAsString(request.getFaq())); }
-            catch (Exception ex) { log.error("Failed to serialize faq", ex); }
-        }
-        if (request.getGlobalTags() != null) {
-            try { entity.setGlobalTags(objectMapper.writeValueAsString(request.getGlobalTags())); }
-            catch (Exception ex) { log.error("Failed to serialize globalTags", ex); }
-        }
-        if (request.getAddonKeys() != null) {
-            try { entity.setAddonKeys(objectMapper.writeValueAsString(request.getAddonKeys())); }
-            catch (Exception ex) { log.error("Failed to serialize addonKeys", ex); }
-        }
-        if (request.getCategoryPath() != null && !request.getCategoryPath().isEmpty()) {
-            entity.setCategoryPath(request.getCategoryPath());
-        }
-
-        // ── Images ──
-        if (request.getMainImage() != null) entity.setMainImageData(request.getMainImage());
-        if (request.getMockupImages() != null) {
-            entity.getMockupImageDataList().clear();
-            entity.getMockupImageDataList().addAll(request.getMockupImages());
-        }
-        if (request.getProductVideo() != null) entity.setProductVideoData(request.getProductVideo());
-
-        // ── Hero banners — merge by bannerId ──
-        if (request.getHeroBanners() != null) {
-            try {
-                List<HeroBannerRequestDto> existing = new ArrayList<>();
-                if (entity.getHeroBanners() != null && !"[]".equals(entity.getHeroBanners())) {
-                    existing = objectMapper.readValue(entity.getHeroBanners(),
-                            new TypeReference<List<HeroBannerRequestDto>>() {});
-                }
-                for (HeroBannerRequestDto incoming : request.getHeroBanners()) {
-                    Optional<HeroBannerRequestDto> match = existing.stream()
-                            .filter(b -> b.getBannerId() == incoming.getBannerId())
-                            .findFirst();
-                    if (match.isPresent()) {
-                        if (incoming.getImgDescription() != null) match.get().setImgDescription(incoming.getImgDescription());
-                        if (incoming.getBannerImg() != null) match.get().setBannerImg(incoming.getBannerImg());
-                    } else {
-                        existing.add(incoming);
-                    }
-                }
-                entity.setHeroBanners(objectMapper.writeValueAsString(existing));
-            } catch (Exception ex) {
-                log.error("Patch hero banners failed", ex);
-            }
-        }
-
-        // ── Installation steps — patch per step number ──
-        if (request.getInstallationSteps() != null) {
-            for (InstallationStepRequestDto stepReq : request.getInstallationSteps()) {
-                Optional<InstallationStepEntity> existing = Optional.ofNullable(installationStepRepository
-                        .findByProduct_ProductPrimeIdAndStep(entity.getProductPrimeId(), stepReq.getStep()));
-
-                InstallationStepEntity stepEntity = existing.orElse(new InstallationStepEntity());
-                if (stepEntity.getId() == null) stepEntity.setProduct(entity);
-
-                stepEntity.setStep(stepReq.getStep());
-                if (stepReq.getTitle() != null) stepEntity.setTitle(stepReq.getTitle());
-                if (stepReq.getShortDescription() != null) stepEntity.setShortDescription(stepReq.getShortDescription());
-                if (stepReq.getShortNote() != null) stepEntity.setShortNote(stepReq.getShortNote());
-                if (stepReq.getStepImage() != null) stepEntity.setStepImageData(stepReq.getStepImage());
-                if (stepReq.getVideoFile() != null) stepEntity.setVideoData(stepReq.getVideoFile());
-
-                installationStepRepository.save(stepEntity);
-            }
-        }
-
-        // ── Variants — full replace if provided ──
-        if (request.getVariants() != null) {
-            entity.getVariants().clear();
-            for (VariantRequestDto vReq : request.getVariants()) {
-                ProductVariantEntity variant = new ProductVariantEntity();
-                mapVariantToEntity(variant, vReq);
-                variant.setProduct(entity);
-                entity.getVariants().add(variant);
-            }
-        }
-
-        ProductEntity saved = productRepository.save(entity);
-
-        // ── Regenerate variantIds ──
-        if (saved.getVariants() != null && !saved.getVariants().isEmpty()) {
-            for (ProductVariantEntity variant : saved.getVariants()) {
-                String color = variant.getColor() != null ? variant.getColor().trim() : "";
-                String colorPart = color.isEmpty() ? "DEFAULT" :
-                        color.toUpperCase().replaceAll("[^A-Z0-9]", "");
-                variant.setVariantId(String.format("VAR-%s-%d", colorPart, variant.getId()));
-            }
-            saved = productRepository.save(saved);
-        }
-
-        // ── Inventory sync ──
-        if (request.getCurrentStock() != null || request.getVariants() != null) {
-            syncInventoryFromProduct(saved);
-        }
-
-        return mapToResponseDto(saved);
-    }
 
     // ────────────────────────────────────────────────
     //      PRIVATE: Save installation steps
@@ -730,7 +869,10 @@ public class ProductServiceImpl implements ProductService {
         v.setPrice(r.getPrice());
         v.setMrp(r.getMrp());
         v.setStock(r.getStock());
-        v.setMainImageData(r.getMainImage());
+//        v.setMainImageData(r.getMainImage());
+        if (r.getMainImage() != null) {
+            v.setMainImageData(r.getMainImage());
+        }
         v.setMfgDate(r.getMfgDate());
         v.setExpDate(r.getExpDate());
         v.setSize(r.getSize());
@@ -789,21 +931,42 @@ public class ProductServiceImpl implements ProductService {
             dto.setMockupImages(mockupUrls);
         }
 
+        // REPLACE your existing variant stream with this:
         if (e.getHasVariants() && e.getVariants() != null && !e.getVariants().isEmpty()) {
             List<VariantResponseDto> variantsDto = e.getVariants().stream()
                     .map(v -> {
                         VariantResponseDto vd = new VariantResponseDto();
-                        vd.setVariantId(v.getVariantId());  // now auto-generated
+                        vd.setVariantId(v.getVariantId());
                         vd.setTitleName(v.getTitleName());
                         vd.setColor(v.getColor());
                         vd.setSku(v.getSku());
                         vd.setPrice(v.getPrice());
                         vd.setMrp(v.getMrp());
                         vd.setStock(v.getStock());
+                        vd.setSize(v.getSize());                    // ← FIX: was missing
+                        vd.setMfgDate(v.getMfgDate());              // ← optional but consistent
+                        vd.setExpDate(v.getExpDate());              // ← optional but consistent
+                        vd.setWeight(v.getWeight());
+                        vd.setLength(v.getLength());
+                        vd.setBreadth(v.getBreadth());
+                        vd.setHeight(v.getHeight());
 
+                        // Main image URL
                         if (v.getMainImageData() != null && v.getMainImageData().length > 0) {
                             vd.setMainImage(variantMainImageUrl(e.getProductPrimeId(), v.getVariantId()));
                         }
+
+                        // ── FIX: variant mockup image URLs ──
+                        if (v.getMockupImages() != null && !v.getMockupImages().isEmpty()) {
+                            List<String> mockupUrls = new ArrayList<>();
+                            for (int i = 0; i < v.getMockupImages().size(); i++) {
+                                mockupUrls.add("/api/products/" + e.getProductPrimeId()
+                                        + "/variant/" + v.getVariantId()
+                                        + "/mockup/" + i);
+                            }
+                            vd.setMockupImages(mockupUrls);
+                        }
+
                         return vd;
                     })
                     .collect(Collectors.toList());
@@ -868,20 +1031,6 @@ public class ProductServiceImpl implements ProductService {
         }
 
 
-        if (e.getFaq() != null && !"{}".equals(e.getFaq()) && !"null".equals(e.getFaq())) {
-            try {
-                Map<String, String> faqMap = objectMapper.readValue(
-                        e.getFaq(),
-                        new TypeReference<Map<String, String>>() {}
-                );
-                dto.setFaq(faqMap);
-            } catch (Exception ex) {
-                log.error("Failed to deserialize faq JSON", ex);
-                dto.setFaq(new HashMap<>());
-            }
-        } else {
-            dto.setFaq(new HashMap<>());
-        }
 
         dto.setCustomFields(e.getCustomFields());
 

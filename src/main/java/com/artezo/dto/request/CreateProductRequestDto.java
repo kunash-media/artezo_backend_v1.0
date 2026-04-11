@@ -8,7 +8,6 @@ import java.util.Map;
 
 public class CreateProductRequestDto {
 
-
     private String productName;
     private String brandName;
     private String productCategory;

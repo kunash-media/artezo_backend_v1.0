@@ -14,6 +14,8 @@ public class VariantRequestDto {
     private Double mrp;
     private Integer stock;
     private byte[] mainImage;
+
+    private Integer mockupImageCount;
     private List<byte[]> mockupImages;
     private LocalDate mfgDate;
     private LocalDate expDate;
@@ -25,6 +27,7 @@ public class VariantRequestDto {
     private Double breadth;
     private Double height;
 
+    private Boolean clearMockupImages = false;
 
     public String getVariantId() {
         return variantId;
@@ -160,5 +163,21 @@ public class VariantRequestDto {
 
     public void setHeight(Double height) {
         this.height = height;
+    }
+
+    public Integer getMockupImageCount() {
+        return mockupImageCount;
+    }
+
+    public void setMockupImageCount(Integer mockupImageCount) {
+        this.mockupImageCount = mockupImageCount;
+    }
+
+    public Boolean getClearMockupImages() {
+        return clearMockupImages;
+    }
+
+    public void setClearMockupImages(Boolean clearMockupImages) {
+        this.clearMockupImages = clearMockupImages;
     }
 }

@@ -1,5 +1,6 @@
 package com.artezo.exceptions;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
@@ -92,6 +94,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleDuplicateSubmission(DuplicateSubmissionException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
     }
+
+
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleClientAbort(AsyncRequestNotUsableException ex) {
+        // Client disconnected mid-stream — normal for video/media, just ignore
+        log.debug("Client disconnected during streaming (ignored): {}", ex.getMessage());
+        // Return void — no response needed, connection is already gone
+    }
+
 
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {
