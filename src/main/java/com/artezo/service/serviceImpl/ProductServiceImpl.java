@@ -113,7 +113,6 @@ public class ProductServiceImpl implements ProductService {
         // Handle images
         entity.setMainImageData(request.getMainImage());
 
-
         if (request.getMockupImages() != null && !request.getMockupImages().isEmpty()) {
             entity.getMockupImageDataList().addAll(request.getMockupImages());
         }
@@ -122,14 +121,6 @@ public class ProductServiceImpl implements ProductService {
         entity.setProductVideoData(request.getProductVideo());
 
         // Handle variants (temporarily without variantId)
-//        if (Boolean.TRUE.equals(request.getHasVariants()) && request.getVariants() != null) {
-//            for (VariantRequestDto vReq : request.getVariants()) {
-//                ProductVariantEntity variant = new ProductVariantEntity();
-//                mapVariantToEntity(variant, vReq);
-//                variant.setProduct(entity);
-//                entity.getVariants().add(variant);
-//            }
-//        }
 
         // Step 1: add variants WITHOUT mockups
         if (Boolean.TRUE.equals(request.getHasVariants()) && request.getVariants() != null) {
@@ -142,26 +133,6 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-
-        // Generate productStrId
-//        long count = productRepository.count() + 1;
-//        entity.setProductStrId(String.format("PRD%05d", count));
-//
-//        ProductEntity saved = productRepository.save(entity);
-//        log.info("Product created → productPrimeId: {}, productStrId: {}", saved.getProductPrimeId(), saved.getProductStrId());
-//
-//        // ─── AUTO-GENERATE variantIds AFTER save ───
-//        if (saved.getVariants() != null && !saved.getVariants().isEmpty()) {
-//            for (ProductVariantEntity variant : saved.getVariants()) {
-//                String color = variant.getColor() != null ? variant.getColor().trim() : "";
-//                String colorPart = color.isEmpty() ? "DEFAULT" :
-//                        color.toUpperCase().replaceAll("[^A-Z0-9]", "");
-//
-//                String generatedId = String.format("VAR-%s-%d", colorPart, variant.getId());
-//                variant.setVariantId(generatedId);
-//            }
-//            saved = productRepository.save(saved);
-//        }
 
 
         // Step 2: first save — gets variant IDs assigned
@@ -450,15 +421,6 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // ── Variants — full replace if provided ──
-//        if (request.getVariants() != null) {
-//            entity.getVariants().clear();
-//            for (VariantRequestDto vReq : request.getVariants()) {
-//                ProductVariantEntity variant = new ProductVariantEntity();
-//                mapVariantToEntity(variant, vReq);
-//                variant.setProduct(entity);
-//                entity.getVariants().add(variant);
-//            }
-//        }
 
         if (request.getVariants() != null) {
 
@@ -537,7 +499,7 @@ public class ProductServiceImpl implements ProductService {
             entity = productRepository.saveAndFlush(entity);
         }
 
-// Regenerate variantIds
+        // Regenerate variantIds
         if (entity.getVariants() != null && !entity.getVariants().isEmpty()) {
             for (ProductVariantEntity variant : entity.getVariants()) {
                 String color = variant.getColor() != null ? variant.getColor().trim() : "";
@@ -801,10 +763,6 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-//        if (r.getCustomFields() != null) {
-//            e.setCustomFields(r.getCustomFields()); // already a JSON string, set directly
-//        }
-
         if (r.getCustomFields() != null) {
             try {
                 e.setCustomFields(objectMapper.writeValueAsString(r.getCustomFields()));
@@ -869,7 +827,7 @@ public class ProductServiceImpl implements ProductService {
         v.setPrice(r.getPrice());
         v.setMrp(r.getMrp());
         v.setStock(r.getStock());
-//        v.setMainImageData(r.getMainImage());
+
         if (r.getMainImage() != null) {
             v.setMainImageData(r.getMainImage());
         }
@@ -1030,10 +988,7 @@ public class ProductServiceImpl implements ProductService {
             dto.setSpecifications(new HashMap<>());
         }
 
-
-
         dto.setCustomFields(e.getCustomFields());
-
 
         // Global tags
         if (e.getGlobalTags() != null && !"[]".equals(e.getGlobalTags())) {
