@@ -2,6 +2,7 @@ package com.artezo.service.serviceImpl;
 
 import com.artezo.dto.request.PaymentRequest;
 import com.artezo.dto.request.PaymentVerificationRequest;
+import com.artezo.dto.response.PaymentOrderDTO;
 import com.artezo.dto.response.PaymentResponse;
 import com.artezo.dto.response.PaymentVerificationResponse;
 import com.artezo.entity.PaymentOrder;
@@ -14,6 +15,7 @@ import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import io.micrometer.common.util.StringUtils;
+import org.hibernate.Hibernate;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,8 +229,12 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentOrder> getAllPaymentOrders() {
-        return paymentOrderRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<PaymentOrderDTO> getAllPaymentOrders() {
+        return paymentOrderRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -274,4 +280,27 @@ public class PaymentServiceImpl implements PaymentService {
 
         return paymentOrderRepository.findByUserUserIdAndStatus(userId, paymentStatus);
     }
+
+
+    // Add this private mapper anywhere in PaymentServiceImpl
+    private PaymentOrderDTO toDTO(PaymentOrder order) {
+        PaymentOrderDTO dto = new PaymentOrderDTO();
+        dto.setId(order.getId());
+        dto.setRazorpayOrderId(order.getRazorpayOrderId());
+        dto.setRazorpayPaymentId(order.getRazorpayPaymentId());
+        dto.setAmount(order.getAmount());
+        dto.setCurrency(order.getCurrency());
+        dto.setReceipt(order.getReceipt());
+        dto.setCustomerName(order.getCustomerName());
+        dto.setCustomerEmail(order.getCustomerEmail());
+        dto.setCustomerPhone(order.getCustomerPhone());
+        dto.setStatus(order.getStatus());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setUpdatedAt(order.getUpdatedAt());
+        if (order.getUser() != null) {
+            dto.setUserId(order.getUser().getUserId());
+        }
+        return dto;
+    }
+
 }

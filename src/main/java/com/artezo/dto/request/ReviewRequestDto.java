@@ -1,6 +1,5 @@
 package com.artezo.dto.request;
 
-
 import jakarta.validation.constraints.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
@@ -25,9 +24,11 @@ public class ReviewRequestDto {
     private List<MultipartFile> images;
     private List<MultipartFile> videos;
 
-    // For local development with base64
-    private List<String> imageBase64;
-    private List<String> videoBase64;
+    // For base64 (store only ONE image/video per review for simplicity)
+    private String imageBase64;
+    private String videoBase64;
+    private String imageContentType;
+    private String videoContentType;
 
     // Getters and Setters
     public Long getProductId() {
@@ -78,19 +79,35 @@ public class ReviewRequestDto {
         this.videos = videos;
     }
 
-    public List<String> getImageBase64() {
+    public String getImageBase64() {
         return imageBase64;
     }
 
-    public void setImageBase64(List<String> imageBase64) {
+    public void setImageBase64(String imageBase64) {
         this.imageBase64 = imageBase64;
     }
 
-    public List<String> getVideoBase64() {
+    public String getVideoBase64() {
         return videoBase64;
     }
 
-    public void setVideoBase64(List<String> videoBase64) {
+    public void setVideoBase64(String videoBase64) {
         this.videoBase64 = videoBase64;
+    }
+
+    public String getImageContentType() {
+        return imageContentType;
+    }
+
+    public void setImageContentType(String imageContentType) {
+        this.imageContentType = imageContentType;
+    }
+
+    public String getVideoContentType() {
+        return videoContentType;
+    }
+
+    public void setVideoContentType(String videoContentType) {
+        this.videoContentType = videoContentType;
     }
 }

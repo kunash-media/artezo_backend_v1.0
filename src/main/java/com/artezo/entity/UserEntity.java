@@ -1,5 +1,6 @@
 package com.artezo.entity;
 
+import com.artezo.enum_status.UserStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,6 +39,10 @@ public class UserEntity {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_status", columnDefinition = "VARCHAR(50)")
+    private UserStatus userStatus;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -82,5 +87,13 @@ public class UserEntity {
     public List<ShippingAddressEntity> getShippingAddresses() { return shippingAddresses; }
     public void setShippingAddresses(List<ShippingAddressEntity> shippingAddresses) {
         this.shippingAddresses = shippingAddresses;
+    }
+
+    public UserStatus getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
     }
 }

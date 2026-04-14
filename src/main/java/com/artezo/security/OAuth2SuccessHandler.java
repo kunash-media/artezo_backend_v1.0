@@ -102,6 +102,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         // ─────────────────────────────────────────────
         // 4. REDIRECT TO FRONTEND
         // ─────────────────────────────────────────────
-        response.sendRedirect("http://127.0.0.1:5500/sign-with-gogle/welcome-page.html");
+        response.sendRedirect("http://127.0.0.1:5501/index.html");
     }
 }

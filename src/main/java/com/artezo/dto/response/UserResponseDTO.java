@@ -1,5 +1,7 @@
 package com.artezo.dto.response;
 
+import com.artezo.enum_status.UserStatus;
+
 import java.math.BigDecimal;
 
 public class UserResponseDTO {
@@ -16,6 +18,7 @@ public class UserResponseDTO {
     private Long totalOrdersCount;     // total number of orders placed by this customer
     private BigDecimal totalSpent;
 
+    private UserStatus userStatus;
 
 
     // Default shipping address snapshot (optional, returned on registration)
@@ -65,5 +68,13 @@ public class UserResponseDTO {
 
     public void setTotalSpent(BigDecimal totalSpent) {
         this.totalSpent = totalSpent;
+    }
+
+    public UserStatus getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
     }
 }

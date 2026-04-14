@@ -26,7 +26,7 @@ public class ShippingAddressController {
     // POST /api/users/{userId}/addresses
     // Add a new shipping address
     // ─────────────────────────────────────────────────────────────
-    @PostMapping
+    @PostMapping("/create-address/{userId}")
     public ResponseEntity<?> addAddress(
             @PathVariable Long userId,
             @RequestBody ShippingAddressRequestDTO dto) {
@@ -46,7 +46,7 @@ public class ShippingAddressController {
     // GET /api/users/{userId}/addresses
     // Get all addresses for a user
     // ─────────────────────────────────────────────────────────────
-    @GetMapping
+    @GetMapping("/get-user-addresses")
     public ResponseEntity<?> getAllAddresses(@PathVariable Long userId) {
 
         log.info("[Controller] GET /api/users/{}/addresses - getAllAddresses called", userId);
@@ -65,7 +65,7 @@ public class ShippingAddressController {
     // GET /api/users/{userId}/addresses/{shippingId}
     // Get a specific address by ID
     // ─────────────────────────────────────────────────────────────
-    @GetMapping("/{shippingId}")
+    @GetMapping("/{userId}/{shippingId}")
     public ResponseEntity<?> getAddressById(
             @PathVariable Long userId,
             @PathVariable Long shippingId) {
@@ -86,7 +86,7 @@ public class ShippingAddressController {
     // PATCH /api/users/{userId}/addresses/{shippingId}
     // Partial update — only provided fields are updated
     // ─────────────────────────────────────────────────────────────
-    @PatchMapping("/{shippingId}")
+    @PatchMapping("/patch/{userId}/{shippingId}")
     public ResponseEntity<?> patchAddress(
             @PathVariable Long userId,
             @PathVariable Long shippingId,
@@ -129,7 +129,7 @@ public class ShippingAddressController {
     // DELETE /api/users/{userId}/addresses/{shippingId}
     // Delete an address (auto-promotes next address as default if deleted was default)
     // ─────────────────────────────────────────────────────────────
-    @DeleteMapping("/{shippingId}")
+    @DeleteMapping("/delete-address/{userId}/{shippingId}")
     public ResponseEntity<?> deleteAddress(
             @PathVariable Long userId,
             @PathVariable Long shippingId) {

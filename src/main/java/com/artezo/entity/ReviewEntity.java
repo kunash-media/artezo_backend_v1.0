@@ -20,32 +20,49 @@ public class ReviewEntity {
     @Column(nullable = false)
     private Integer rating;
 
-
-
     @Column(columnDefinition = "TEXT")
     private String comment;
 
-    // Store as comma-separated URLs (use TEXT for longer content)
-    @Column(columnDefinition = "TEXT")
-    private String imageUrls;  // "https://example.com/image1.jpg,https://example.com/image2.jpg"
+    // Store actual image data in database as BLOB
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] imageData;
 
-    @Column(columnDefinition = "TEXT")
-    private String videoUrls;  // "https://example.com/video1.mp4,https://example.com/video2.mp4"
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] videoData;
 
-    // Remove these binary fields - we don't store actual data anymore
-    // @Lob
-    // @Column(columnDefinition = "LONGBLOB")
-    // private byte[] imageData;
-
-    // @Lob
-    // @Column(columnDefinition = "LONGBLOB")
-    // private byte[] videoData;
-
-    // Keep metadata
+    // Store metadata
     private String imageContentType;
     private String videoContentType;
+
+    // 🔴 FIXED: Only declare once
+    @Column(nullable = false)
+    private Boolean approved = false;  // DEFAULT FALSE - NOT APPROVED
+
+    // 🔴 FIXED: Only declare once (removed duplicate)
+    @Column(nullable = false)
+    private String status = "pending";  // pending, approved, rejected
+
+    // Store both original and compressed sizes
+    private Long imageOriginalSize;      // Original size before compression
+    private Long imageCompressedSize;    // Size after compression
+    private Long videoOriginalSize;      // Original size before compression
+    private Long videoCompressedSize;    // Size after compression
+
+    // Keep for backward compatibility (optional)
     private Long imageSize;
     private Long videoSize;
+
+    // Store image/video names
+    private String imageName;
+    private String videoName;
+
+    // ==================== ADMIN FIELDS ====================
+    private Boolean flagged = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String replies; // Store replies as JSON string
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -54,28 +71,20 @@ public class ReviewEntity {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = "pending";
+        }
+        if (approved == null) {
+            approved = false;
+        }
+        if (flagged == null) {
+            flagged = false;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // Helper methods to handle multiple images/videos
-    public String[] getImageUrlsArray() {
-        return imageUrls != null ? imageUrls.split(",") : new String[0];
-    }
-
-    public void setImageUrlsArray(String[] urls) {
-        this.imageUrls = String.join(",", urls);
-    }
-
-    public String[] getVideoUrlsArray() {
-        return videoUrls != null ? videoUrls.split(",") : new String[0];
-    }
-
-    public void setVideoUrlsArray(String[] urls) {
-        this.videoUrls = String.join(",", urls);
     }
 
     // Getters and Setters
@@ -119,27 +128,21 @@ public class ReviewEntity {
         this.comment = comment;
     }
 
-    public String getImageUrls() {
-        return imageUrls;
+    public byte[] getImageData() {
+        return imageData;
     }
 
-    public void setImageUrls(String imageUrls) {
-        this.imageUrls = imageUrls;
+    public void setImageData(byte[] imageData) {
+        this.imageData = imageData;
     }
 
-    public String getVideoUrls() {
-        return videoUrls;
+    public byte[] getVideoData() {
+        return videoData;
     }
 
-    public void setVideoUrls(String videoUrls) {
-        this.videoUrls = videoUrls;
+    public void setVideoData(byte[] videoData) {
+        this.videoData = videoData;
     }
-
-    // Remove getters/setters for imageData/videoData
-    // public byte[] getImageData() { return imageData; }
-    // public void setImageData(byte[] imageData) { this.imageData = imageData; }
-    // public byte[] getVideoData() { return videoData; }
-    // public void setVideoData(byte[] videoData) { this.videoData = videoData; }
 
     public String getImageContentType() {
         return imageContentType;
@@ -157,6 +160,38 @@ public class ReviewEntity {
         this.videoContentType = videoContentType;
     }
 
+    public Long getImageOriginalSize() {
+        return imageOriginalSize;
+    }
+
+    public void setImageOriginalSize(Long imageOriginalSize) {
+        this.imageOriginalSize = imageOriginalSize;
+    }
+
+    public Long getImageCompressedSize() {
+        return imageCompressedSize;
+    }
+
+    public void setImageCompressedSize(Long imageCompressedSize) {
+        this.imageCompressedSize = imageCompressedSize;
+    }
+
+    public Long getVideoOriginalSize() {
+        return videoOriginalSize;
+    }
+
+    public void setVideoOriginalSize(Long videoOriginalSize) {
+        this.videoOriginalSize = videoOriginalSize;
+    }
+
+    public Long getVideoCompressedSize() {
+        return videoCompressedSize;
+    }
+
+    public void setVideoCompressedSize(Long videoCompressedSize) {
+        this.videoCompressedSize = videoCompressedSize;
+    }
+
     public Long getImageSize() {
         return imageSize;
     }
@@ -171,6 +206,56 @@ public class ReviewEntity {
 
     public void setVideoSize(Long videoSize) {
         this.videoSize = videoSize;
+    }
+
+    public String getImageName() {
+        return imageName;
+    }
+
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
+    }
+
+    public String getVideoName() {
+        return videoName;
+    }
+
+    public void setVideoName(String videoName) {
+        this.videoName = videoName;
+    }
+
+    // ==================== GETTERS AND SETTERS FOR ADMIN FIELDS ====================
+
+    public Boolean getApproved() {
+        return approved;
+    }
+
+    public void setApproved(Boolean approved) {
+        this.approved = approved;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Boolean getFlagged() {
+        return flagged;
+    }
+
+    public void setFlagged(Boolean flagged) {
+        this.flagged = flagged;
+    }
+
+    public String getReplies() {
+        return replies;
+    }
+
+    public void setReplies(String replies) {
+        this.replies = replies;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -197,10 +282,13 @@ public class ReviewEntity {
                 ", userId=" + userId +
                 ", rating=" + rating +
                 ", comment='" + comment + '\'' +
-                ", imageUrls='" + imageUrls + '\'' +
-                ", videoUrls='" + videoUrls + '\'' +
-                ", imageSize=" + imageSize +
-                ", videoSize=" + videoSize +
+                ", imageOriginalSize=" + imageOriginalSize +
+                ", imageCompressedSize=" + imageCompressedSize +
+                ", videoOriginalSize=" + videoOriginalSize +
+                ", videoCompressedSize=" + videoCompressedSize +
+                ", approved=" + approved +
+                ", status='" + status + '\'' +
+                ", flagged=" + flagged +
                 ", createdAt=" + createdAt +
                 '}';
     }

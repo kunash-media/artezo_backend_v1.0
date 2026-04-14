@@ -3,6 +3,7 @@ package com.artezo.repository;
 import com.artezo.entity.PaymentOrder;
 import com.artezo.enum_status.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,4 +23,7 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
 
     // Optional: For additional filtering
     List<PaymentOrder> findByUserUserIdAndStatus(Long userId, PaymentStatus status);
+
+    @Query("SELECT po FROM PaymentOrder po")
+    List<PaymentOrder> findAllPaymentOrders();
 }

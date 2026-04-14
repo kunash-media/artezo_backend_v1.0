@@ -1,5 +1,7 @@
 package com.artezo.dto.request;
 
+import com.artezo.enum_status.UserStatus;
+
 // All fields optional — only non-null fields applied on PATCH
 public class UserPatchDTO {
 
@@ -8,6 +10,8 @@ public class UserPatchDTO {
     private String lastName;
     private String email;
     private String phone;
+
+    private UserStatus userStatus;
 
     // Getters & Setters
     public String getFirstName() { return firstName; }
@@ -24,4 +28,12 @@ public class UserPatchDTO {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public UserStatus getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
+    }
 }

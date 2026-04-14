@@ -2,6 +2,7 @@ package com.artezo.controller;
 
 import com.artezo.dto.request.PaymentRequest;
 import com.artezo.dto.request.PaymentVerificationRequest;
+import com.artezo.dto.response.PaymentOrderDTO;
 import com.artezo.dto.response.PaymentResponse;
 import com.artezo.dto.response.PaymentVerificationResponse;
 import com.artezo.entity.PaymentOrder;
@@ -132,7 +133,7 @@ public class PaymentController {
     public ResponseEntity<?> getAllPaymentOrders() {
         try {
             log.info("Fetching all payment orders");
-            List<PaymentOrder> paymentOrders = paymentService.getAllPaymentOrders();
+            List<PaymentOrderDTO> paymentOrders = paymentService.getAllPaymentOrders();
             return ResponseEntity.ok(paymentOrders);
         } catch (Exception e) {
             log.error("Error fetching all payment orders: {}", e.getMessage());

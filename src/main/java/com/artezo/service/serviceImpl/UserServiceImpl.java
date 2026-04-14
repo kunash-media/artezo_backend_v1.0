@@ -60,6 +60,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(dto.getEmail());
         user.setPhone(dto.getPhone());
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        user.setUserStatus(dto.getUserStatus());
         UserEntity savedUser = userRepository.save(user);
         log.info("[UserService] registerUser() - user saved, userId={}", savedUser.getUserId());
 
@@ -172,6 +173,12 @@ public class UserServiceImpl implements UserService {
             changes.append("phone ");
         }
 
+        if(dto.getUserStatus() != null) {
+            user.setUserStatus(dto.getUserStatus());
+            changes.append("userStatus");
+        }
+
+
         UserEntity updated = userRepository.save(user);
         log.info("[UserService] patchUser() - userId={} updated, changed fields: [{}]",
                 userId, changes.toString().trim());
@@ -223,6 +230,7 @@ public class UserServiceImpl implements UserService {
         response.setPhone(user.getPhone());
         response.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
         response.setDefaultShippingAddressId(defaultAddressId);
+        response.setUserStatus(user.getUserStatus());
         return response;
     }
 
@@ -247,6 +255,7 @@ public class UserServiceImpl implements UserService {
         // order stats
         response.setTotalOrdersCount(orderStats.getTotalOrdersCount());
         response.setTotalSpent(orderStats.getTotalSpent());
+        response.setUserStatus(user.getUserStatus());
 
         return response;
     }

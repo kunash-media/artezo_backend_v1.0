@@ -3,6 +3,7 @@ package com.artezo.service;
 
 import com.artezo.dto.request.PaymentRequest;
 import com.artezo.dto.request.PaymentVerificationRequest;
+import com.artezo.dto.response.PaymentOrderDTO;
 import com.artezo.dto.response.PaymentResponse;
 import com.artezo.dto.response.PaymentVerificationResponse;
 import com.artezo.entity.PaymentOrder;
@@ -29,7 +30,7 @@ public interface PaymentService {
     /**
      * Get all payment orders
      */
-    List<PaymentOrder> getAllPaymentOrders();
+    List<PaymentOrderDTO> getAllPaymentOrders();
 
     /**
      * Update payment status

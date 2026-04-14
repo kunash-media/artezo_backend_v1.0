@@ -49,4 +49,21 @@ public interface ReviewService {
 
     // Get reviews with videos only
     List<ReviewResponseDto> getReviewsWithVideos(Long productId);
+
+    // ==================== NEW METHODS FOR ADMIN PANEL ====================
+
+    // Get all reviews (for admin panel)
+    List<ReviewResponseDto> getAllReviews();
+
+    // Update review status (approve/reject)
+    ReviewResponseDto updateReviewStatus(Long reviewId, String status);
+
+    // Add reply to review
+    ReviewResponseDto addReplyToReview(Long reviewId, String replyComment);
+
+    // Clear flag from review
+    ReviewResponseDto clearFlag(Long reviewId);
+
+    // Bulk approve reviews
+    List<ReviewResponseDto> bulkApproveReviews(List<Long> reviewIds);
 }

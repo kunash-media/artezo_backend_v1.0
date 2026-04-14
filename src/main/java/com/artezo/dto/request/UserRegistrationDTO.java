@@ -1,5 +1,6 @@
 package com.artezo.dto.request;
 
+import com.artezo.enum_status.UserStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -42,6 +43,8 @@ public class UserRegistrationDTO {
     private String nearBy;
 
     private String landmark;
+
+    private UserStatus userStatus = UserStatus.ACTIVE;
 
     // ── Helper: build combined full name for shipping label ────────
     public String getFullName() {
@@ -90,4 +93,12 @@ public class UserRegistrationDTO {
 
     public String getLandmark() { return landmark; }
     public void setLandmark(String landmark) { this.landmark = landmark; }
+
+    public UserStatus getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(UserStatus userStatus) {
+        this.userStatus = userStatus;
+    }
 }

@@ -35,7 +35,6 @@ public class OrderEntity {
     private UserEntity user;            // FK → your existing UserEntity
 
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private ProductEntity product;

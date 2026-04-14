@@ -47,7 +47,7 @@ public class InventoryController {
 
     @GetMapping("/get-all-inventories")
     public ResponseEntity<Page<InventoryDTO>> getAllInventories(
-            @PageableDefault(size = 10, sort = "sku", direction = Sort.Direction.ASC) Pageable pageable) {
+            @PageableDefault(size = 500, sort = "sku", direction = Sort.Direction.ASC) Pageable pageable) {
 
         log.info("Fetching all inventories with pagination: page={}, size={}",
                 pageable.getPageNumber(), pageable.getPageSize());

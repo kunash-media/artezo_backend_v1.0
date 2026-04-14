@@ -15,7 +15,7 @@ import com.artezo.exceptions.ProductCreateResult;
 import com.artezo.exceptions.ProductNotFoundException;
 import com.artezo.repository.ProductRepository;
 import com.artezo.service.ProductService;
-import jakarta.annotation.Resource;
+import org.springframework.core.io.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -421,6 +422,7 @@ public class ProductController {
     //    IMAGE SERVING (byte[] → fast for small files)
     // ────────────────────────────────────────────────
     @GetMapping(value = "/{productPrimeId}/main", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_GIF_VALUE})
+    @Transactional
     public ResponseEntity<byte[]> getMainImage(@PathVariable Long productPrimeId) {
         byte[] data = productService.getProductMainImageData(productPrimeId);
         if (data == null || data.length == 0) return ResponseEntity.notFound().build();
@@ -432,6 +434,7 @@ public class ProductController {
     }
 
     @GetMapping(value = "/{productPrimeId}/mockup/{index}", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})
+    @Transactional
     public ResponseEntity<byte[]> getMockupImage(@PathVariable Long productPrimeId, @PathVariable int index) {
         List<byte[]> images = productService.getProductMockupImagesData(productPrimeId);
         if (images == null || index < 0 || index >= images.size()) return ResponseEntity.notFound().build();
@@ -444,6 +447,7 @@ public class ProductController {
     }
 
     @GetMapping(value = "/{productPrimeId}/variant/{variantId}/main", produces = MediaType.ALL_VALUE)
+    @Transactional
     public ResponseEntity<byte[]> getVariantMainImage(@PathVariable Long productPrimeId, @PathVariable String variantId) {
         byte[] data = productService.getVariantMainImageData(productPrimeId, variantId);
         if (data == null || data.length == 0) return ResponseEntity.notFound().build();
@@ -455,6 +459,7 @@ public class ProductController {
     }
 
     @GetMapping("/{productPrimeId}/variant/{variantId}/mockup/{index}")
+    @Transactional
     public ResponseEntity<Resource> streamVariantMockupImage(
             @PathVariable Long productPrimeId,
             @PathVariable String variantId,
@@ -480,6 +485,7 @@ public class ProductController {
 
     // Hero Banner Image
     @GetMapping("/{productPrimeId}/hero-banner/{bannerId}")
+    @Transactional
     public ResponseEntity<byte[]> getHeroBannerImage(
             @PathVariable Long productPrimeId,
             @PathVariable String bannerId) {
@@ -495,6 +501,7 @@ public class ProductController {
 
     // Installation Step Image
     @GetMapping("/{productPrimeId}/step/{step}/image")
+    @Transactional
     public ResponseEntity<byte[]> getInstallationStepImage(
             @PathVariable Long productPrimeId,
             @PathVariable Integer step) {
@@ -513,6 +520,7 @@ public class ProductController {
     // ────────────────────────────────────────────────
 
     @GetMapping(value = "/{productPrimeId}/installation-video/{stepIndex}", produces = "video/mp4")
+    @Transactional
     public ResponseEntity<InputStreamResource> streamInstallationVideo(
             @PathVariable Long productPrimeId,
             @PathVariable int stepIndex,
