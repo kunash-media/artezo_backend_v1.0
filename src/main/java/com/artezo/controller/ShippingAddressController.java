@@ -46,7 +46,7 @@ public class ShippingAddressController {
     // GET /api/users/{userId}/addresses
     // Get all addresses for a user
     // ─────────────────────────────────────────────────────────────
-    @GetMapping("/get-user-addresses")
+    @GetMapping("/get-user-addresses/{userId}")
     public ResponseEntity<?> getAllAddresses(@PathVariable Long userId) {
 
         log.info("[Controller] GET /api/users/{}/addresses - getAllAddresses called", userId);
