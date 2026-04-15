@@ -1,6 +1,7 @@
 package com.artezo.dto.response;
 
 import com.artezo.entity.ReviewEntity;
+import com.artezo.entity.UserEntity;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,12 +68,26 @@ public class ReviewResponseDto {
         ReviewResponseDto dto = new ReviewResponseDto();
 
         dto.setReviewId(entity.getReviewId());
-        dto.setProductId(entity.getProductId());
-        dto.setUserId(entity.getUserId());
+        dto.setProductId(entity.getProduct().getProductPrimeId());  // ⚠️ Change this
+        dto.setUserId(entity.getUser().getUserId());  // ⚠️ Change this
         dto.setRating(entity.getRating());
         dto.setComment(entity.getComment());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
+
+        // 🔴 ADD THIS - Set customer name and email from UserEntity
+        if (entity.getUser() != null) {
+            UserEntity user = entity.getUser();
+            String fullName = user.getFirstName();
+            if (user.getMiddleName() != null && !user.getMiddleName().isEmpty()) {
+                fullName += " " + user.getMiddleName();
+            }
+            if (user.getLastName() != null && !user.getLastName().isEmpty()) {
+                fullName += " " + user.getLastName();
+            }
+            dto.setCustomerName(fullName);
+            dto.setCustomerEmail(user.getEmail());
+        }
 
         // Set names
         dto.setImageName(entity.getImageName());
@@ -114,7 +129,7 @@ public class ReviewResponseDto {
 
         // ==================== SET ADMIN FIELDS ====================
         dto.setStatus(entity.getStatus());
-        dto.setApproved(entity.getApproved());  // 🔴 NEW: Set approved field
+        dto.setApproved(entity.getApproved());
         dto.setFlagged(entity.getFlagged());
 
         // Parse replies from JSON string if present
@@ -377,5 +392,25 @@ public class ReviewResponseDto {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    // Add these fields to ReviewResponseDto.java
+    private String customerName;
+    private String customerEmail;
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
+
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
     }
 }

@@ -2,8 +2,6 @@ package com.artezo.enum_status;
 
 public enum OrderStatus {
     PENDING,
-    CONFIRMED,
-    PROCESSING,
     PLACED,
     SHIPPED,
     DELIVERED,

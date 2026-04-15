@@ -3,7 +3,13 @@ package com.artezo.service.serviceImpl;
 import com.artezo.dto.request.ReviewRequestDto;
 import com.artezo.dto.response.ReviewResponseDto;
 import com.artezo.entity.ReviewEntity;
+import com.artezo.entity.ProductEntity;
+import com.artezo.entity.UserEntity;
+import com.artezo.entity.OrderEntity;
 import com.artezo.repository.ReviewRepository;
+import com.artezo.repository.ProductRepository;
+import com.artezo.repository.UserRepository;
+import com.artezo.repository.OrderRepository;
 import com.artezo.exceptions.ReviewNotFoundException;
 import com.artezo.exceptions.MediaUploadException;
 import com.artezo.service.ReviewService;
@@ -23,15 +29,24 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 public class ReviewServiceImpl implements ReviewService {
 
-    @Autowired
-    private ReviewRepository reviewRepository;
+
+    private final ReviewRepository reviewRepository;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
 
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024;
     private static final long MAX_VIDEO_SIZE = 5 * 1024 * 1024;
     private static final long TARGET_VIDEO_SIZE = 2 * 1024 * 1024;
 
-    // 🔴 UPDATED: Now just "ffmpeg" since it's in system PATH
     private static final String FFMPEG_PATH = "C:\\ffmpeg-2026-04-09-git-d3d0b7a5ee-essentials_build\\bin\\ffmpeg.exe";
+
+    public ReviewServiceImpl(ReviewRepository reviewRepository, ProductRepository productRepository, UserRepository userRepository, OrderRepository orderRepository) {
+        this.reviewRepository = reviewRepository;
+        this.productRepository = productRepository;
+        this.userRepository = userRepository;
+        this.orderRepository = orderRepository;
+    }
 
     @Override
     public ReviewResponseDto createReview(ReviewRequestDto requestDto) {
@@ -40,18 +55,36 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         ReviewEntity review = new ReviewEntity();
-        review.setProductId(requestDto.getProductId());
-        review.setUserId(requestDto.getUserId());
+
+        ProductEntity product = productRepository.findById(requestDto.getProductId())
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + requestDto.getProductId()));
+
+        UserEntity user = userRepository.findById(requestDto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + requestDto.getUserId()));
+
+        review.setProduct(product);
+        review.setUser(user);
+
+        // Handle order tracking if orderId is provided (without OrderItemRepository)
+        if (requestDto.getOrderId() != null) {
+            OrderEntity order = orderRepository.findById(requestDto.getOrderId())
+                    .orElseThrow(() -> new RuntimeException("Order not found with id: " + requestDto.getOrderId()));
+            review.setOrder(order);
+            review.setVerifiedPurchase(true);
+
+            // Note: OrderItem tracking is skipped since OrderItemRepository doesn't exist
+            // The review will still be marked as verified purchase at order level
+        }
+
         review.setRating(requestDto.getRating());
         review.setComment(requestDto.getComment());
         review.setCreatedAt(LocalDateTime.now());
         review.setUpdatedAt(LocalDateTime.now());
 
-        // 🔴 NEW: Set default approval values
-        review.setApproved(false);      // Not approved by default
-        review.setStatus("pending");     // Status is pending
-        review.setFlagged(false);        // Not flagged by default
-        review.setReplies(null);         // No replies yet
+        review.setApproved(false);
+        review.setStatus("pending");
+        review.setFlagged(false);
+        review.setReplies(null);
 
         if (requestDto.getImages() != null && !requestDto.getImages().isEmpty()) {
             handleImageWithCompression(review, requestDto.getImages().get(0));
@@ -100,9 +133,6 @@ public class ReviewServiceImpl implements ReviewService {
         }
     }
 
-    /**
-     * 🔴 VIDEO COMPRESSION WITH FFMPEG - NOW WORKING!
-     */
     private void handleVideoWithCompression(ReviewEntity review, MultipartFile video) {
         try {
             long originalSize = video.getSize();
@@ -178,7 +208,6 @@ public class ReviewServiceImpl implements ReviewService {
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
 
-            // Read output to avoid blocking
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -196,7 +225,6 @@ public class ReviewServiceImpl implements ReviewService {
 
             byte[] compressedBytes = Files.readAllBytes(tempOutputFile.toPath());
 
-            // If still > 2MB, try aggressive compression
             if (compressedBytes.length > TARGET_VIDEO_SIZE) {
                 System.out.println("⚠️ Still >2MB, trying aggressive compression...");
                 return aggressiveCompression(tempInputFile);
@@ -280,8 +308,6 @@ public class ReviewServiceImpl implements ReviewService {
         }
     }
 
-    // ==================== MEDIA RETRIEVAL ====================
-
     @Override
     public byte[] getReviewMedia(Long reviewId, String mediaType) {
         ReviewEntity review = reviewRepository.findById(reviewId)
@@ -294,8 +320,6 @@ public class ReviewServiceImpl implements ReviewService {
         }
         return null;
     }
-
-    // ==================== OTHER METHODS ====================
 
     @Override
     public ReviewResponseDto getReviewById(Long reviewId) {
@@ -357,9 +381,8 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Map<String, Object> getProductReviewSummary(Long productId) {
         Map<String, Object> summary = new HashMap<>();
-        // 🔴 UPDATED: Only count approved reviews for average rating
-        Double avgRating = reviewRepository.getAverageRatingForApprovedReviews(productId);
-        Long reviewCount = reviewRepository.getApprovedReviewCountForProduct(productId);
+        Double avgRating = reviewRepository.getAverageRatingForProduct(productId);
+        Long reviewCount = reviewRepository.getReviewCountForProduct(productId);
 
         summary.put("productId", productId);
         summary.put("averageRating", avgRating != null ? Math.round(avgRating * 10) / 10.0 : 0.0);
@@ -418,8 +441,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public List<ReviewResponseDto> getRecentReviews(Long productId) {
-        // 🔴 UPDATED: Only get recent approved reviews
-        List<ReviewEntity> reviews = reviewRepository.findTopRecentApprovedReviews(productId);
+        List<ReviewEntity> reviews = reviewRepository.findTopRecentReviews(productId);
         return reviews.stream()
                 .limit(10)
                 .map(ReviewResponseDto::fromEntity)
@@ -428,8 +450,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public List<ReviewResponseDto> getReviewsWithImages(Long productId) {
-        // 🔴 UPDATED: Only get approved reviews with images
-        List<ReviewEntity> reviews = reviewRepository.findApprovedReviewsWithImages(productId);
+        List<ReviewEntity> reviews = reviewRepository.findReviewsWithImages(productId);
         return reviews.stream()
                 .map(ReviewResponseDto::fromEntity)
                 .toList();
@@ -437,14 +458,11 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public List<ReviewResponseDto> getReviewsWithVideos(Long productId) {
-        // 🔴 UPDATED: Only get approved reviews with videos
-        List<ReviewEntity> reviews = reviewRepository.findApprovedReviewsWithVideos(productId);
+        List<ReviewEntity> reviews = reviewRepository.findReviewsWithVideos(productId);
         return reviews.stream()
                 .map(ReviewResponseDto::fromEntity)
                 .toList();
     }
-
-    // ==================== NEW METHODS FOR ADMIN PANEL ====================
 
     @Override
     public List<ReviewResponseDto> getAllReviews() {
@@ -459,7 +477,6 @@ public class ReviewServiceImpl implements ReviewService {
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException("Review not found with id: " + reviewId));
 
-        // 🔴 UPDATED: Set both status and approved fields
         review.setStatus(status);
         review.setApproved("approved".equalsIgnoreCase(status));
         review.setUpdatedAt(LocalDateTime.now());
@@ -475,10 +492,8 @@ public class ReviewServiceImpl implements ReviewService {
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException("Review not found with id: " + reviewId));
 
-        // 🔴 IMPROVED: Store replies as JSON in the replies field instead of appending to comment
         List<Map<String, Object>> repliesList = new ArrayList<>();
 
-        // Parse existing replies if any
         if (review.getReplies() != null && !review.getReplies().isEmpty()) {
             try {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -489,7 +504,6 @@ public class ReviewServiceImpl implements ReviewService {
             }
         }
 
-        // Add new reply
         Map<String, Object> newReply = new HashMap<>();
         newReply.put("id", System.currentTimeMillis());
         newReply.put("content", replyComment);
@@ -497,7 +511,6 @@ public class ReviewServiceImpl implements ReviewService {
         newReply.put("date", LocalDateTime.now().toString());
         repliesList.add(newReply);
 
-        // Save replies as JSON
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             review.setReplies(mapper.writeValueAsString(repliesList));
@@ -515,7 +528,6 @@ public class ReviewServiceImpl implements ReviewService {
         ReviewEntity review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException("Review not found with id: " + reviewId));
 
-        // 🔴 UPDATED: Actually clear the flagged field
         review.setFlagged(false);
         review.setUpdatedAt(LocalDateTime.now());
 

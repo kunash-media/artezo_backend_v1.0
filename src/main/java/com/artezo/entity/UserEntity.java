@@ -54,6 +54,14 @@ public class UserEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // Add this method to UserEntity.java
+    public String getFullName() {
+        if (middleName != null && !middleName.isEmpty()) {
+            return firstName + " " + middleName + " " + lastName;
+        }
+        return firstName + " " + lastName;
+    }
+
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();

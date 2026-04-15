@@ -24,19 +24,22 @@ public class ReviewController {
 
     // ==================== CREATE REVIEWS ====================
 
-    // Create new review with images/videos (multipart/form-data)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ReviewResponseDto> createReview(
             @RequestParam("productId") Long productId,
             @RequestParam("userId") Long userId,
             @RequestParam("rating") Integer rating,
             @RequestParam(value = "comment", required = false) String comment,
+            @RequestParam(value = "orderId", required = false) Long orderId,        // ⬅️ ADD THIS
+            @RequestParam(value = "orderItemId", required = false) Long orderItemId, // ⬅️ ADD THIS
             @RequestPart(value = "images", required = false) MultipartFile images,
             @RequestPart(value = "videos", required = false) MultipartFile videos) {
 
         System.out.println("🔴 CONTROLLER - Received request:");
         System.out.println("   productId: " + productId);
         System.out.println("   userId: " + userId);
+        System.out.println("   orderId: " + orderId);           // ⬅️ ADD THIS
+        System.out.println("   orderItemId: " + orderItemId);   // ⬅️ ADD THIS
         System.out.println("   rating: " + rating);
         System.out.println("   comment: " + comment);
         System.out.println("   images: " + (images != null ? images.getOriginalFilename() : "null"));
@@ -47,6 +50,8 @@ public class ReviewController {
         requestDto.setUserId(userId);
         requestDto.setRating(rating);
         requestDto.setComment(comment);
+        requestDto.setOrderId(orderId);           // ⬅️ ADD THIS
+        requestDto.setOrderItemId(orderItemId);   // ⬅️ ADD THIS
 
         if (images != null && !images.isEmpty()) {
             requestDto.setImages(List.of(images));

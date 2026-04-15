@@ -11,11 +11,25 @@ public class ReviewEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reviewId;
 
-    @Column(nullable = false)
-    private Long productId;
+    // ==================== RELATIONSHIPS ====================
 
-    @Column(nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private ProductEntity product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    private OrderEntity order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_item_id")
+    private OrderItemEntity orderItem;  // To track which specific item was reviewed
+
+    // ==================== FIELDS ====================
 
     @Column(nullable = false)
     private Integer rating;
@@ -36,19 +50,17 @@ public class ReviewEntity {
     private String imageContentType;
     private String videoContentType;
 
-    // 🔴 FIXED: Only declare once
     @Column(nullable = false)
     private Boolean approved = false;  // DEFAULT FALSE - NOT APPROVED
 
-    // 🔴 FIXED: Only declare once (removed duplicate)
     @Column(nullable = false)
     private String status = "pending";  // pending, approved, rejected
 
     // Store both original and compressed sizes
-    private Long imageOriginalSize;      // Original size before compression
-    private Long imageCompressedSize;    // Size after compression
-    private Long videoOriginalSize;      // Original size before compression
-    private Long videoCompressedSize;    // Size after compression
+    private Long imageOriginalSize;
+    private Long imageCompressedSize;
+    private Long videoOriginalSize;
+    private Long videoCompressedSize;
 
     // Keep for backward compatibility (optional)
     private Long imageSize;
@@ -63,6 +75,9 @@ public class ReviewEntity {
 
     @Column(columnDefinition = "TEXT")
     private String replies; // Store replies as JSON string
+
+    @Column(columnDefinition = "boolean default false")
+    private boolean isVerifiedPurchase = false;  // TRUE if product was actually purchased
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -87,7 +102,8 @@ public class ReviewEntity {
         updatedAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    // ==================== GETTERS AND SETTERS ====================
+
     public Long getReviewId() {
         return reviewId;
     }
@@ -96,20 +112,36 @@ public class ReviewEntity {
         this.reviewId = reviewId;
     }
 
-    public Long getProductId() {
-        return productId;
+    public ProductEntity getProduct() {
+        return product;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setProduct(ProductEntity product) {
+        this.product = product;
     }
 
-    public Long getUserId() {
-        return userId;
+    public UserEntity getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(UserEntity user) {
+        this.user = user;
+    }
+
+    public OrderEntity getOrder() {
+        return order;
+    }
+
+    public void setOrder(OrderEntity order) {
+        this.order = order;
+    }
+
+    public OrderItemEntity getOrderItem() {
+        return orderItem;
+    }
+
+    public void setOrderItem(OrderItemEntity orderItem) {
+        this.orderItem = orderItem;
     }
 
     public Integer getRating() {
@@ -224,8 +256,6 @@ public class ReviewEntity {
         this.videoName = videoName;
     }
 
-    // ==================== GETTERS AND SETTERS FOR ADMIN FIELDS ====================
-
     public Boolean getApproved() {
         return approved;
     }
@@ -258,6 +288,14 @@ public class ReviewEntity {
         this.replies = replies;
     }
 
+    public boolean isVerifiedPurchase() {
+        return isVerifiedPurchase;
+    }
+
+    public void setVerifiedPurchase(boolean verifiedPurchase) {
+        isVerifiedPurchase = verifiedPurchase;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -274,21 +312,31 @@ public class ReviewEntity {
         this.updatedAt = updatedAt;
     }
 
+    // Helper method to get product ID (for backward compatibility)
+    public Long getProductId() {
+        return product != null ? product.getProductPrimeId() : null;
+    }
+
+    // Helper method to get user ID (for backward compatibility)
+    public Long getUserId() {
+        return user != null ? user.getUserId() : null;
+    }
+
+    // Helper method to get order ID (for backward compatibility)
+    public Long getOrderId() {
+        return order != null ? order.getOrderId() : null;
+    }
+
     @Override
     public String toString() {
         return "ReviewEntity{" +
                 "reviewId=" + reviewId +
-                ", productId=" + productId +
-                ", userId=" + userId +
                 ", rating=" + rating +
                 ", comment='" + comment + '\'' +
-                ", imageOriginalSize=" + imageOriginalSize +
-                ", imageCompressedSize=" + imageCompressedSize +
-                ", videoOriginalSize=" + videoOriginalSize +
-                ", videoCompressedSize=" + videoCompressedSize +
                 ", approved=" + approved +
                 ", status='" + status + '\'' +
                 ", flagged=" + flagged +
+                ", isVerifiedPurchase=" + isVerifiedPurchase +
                 ", createdAt=" + createdAt +
                 '}';
     }

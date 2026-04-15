@@ -30,7 +30,13 @@ public class ReviewRequestDto {
     private String imageContentType;
     private String videoContentType;
 
-    // Getters and Setters
+    // ==================== NEW FIELDS FOR ORDER TRACKING ====================
+
+    private Long orderId;        // To track which order this review belongs to
+    private Long orderItemId;    // To track which specific item in the order is being reviewed
+
+    // ==================== GETTERS AND SETTERS ====================
+
     public Long getProductId() {
         return productId;
     }
@@ -109,5 +115,23 @@ public class ReviewRequestDto {
 
     public void setVideoContentType(String videoContentType) {
         this.videoContentType = videoContentType;
+    }
+
+    // ==================== GETTERS AND SETTERS FOR NEW FIELDS ====================
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
+
+    public Long getOrderItemId() {
+        return orderItemId;
+    }
+
+    public void setOrderItemId(Long orderItemId) {
+        this.orderItemId = orderItemId;
     }
 }

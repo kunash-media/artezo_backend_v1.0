@@ -97,13 +97,60 @@ public class WishlistServiceImpl implements WishlistService {
         return buildWishlistResponse(wishlist);
     }
 
+//    @Override
+//    @Transactional
+//    public void removeItem(Long userId, Long productId, String variantId) {
+//        logger.info("[WISHLIST] Removing item | userId={}, productId={}, variantId={}", userId, productId, variantId);
+//        wishlistRepository.findByUser_UserId(userId).forEach(wishlist ->
+//                wishlistItemRepository.deleteByWishlist_IdAndProductIdAndVariantId(
+//                        wishlist.getId(), productId, variantId));
+//    }
+
     @Override
     @Transactional
     public void removeItem(Long userId, Long productId, String variantId) {
-        logger.info("[WISHLIST] Removing item | userId={}, productId={}, variantId={}", userId, productId, variantId);
-        wishlistRepository.findByUser_UserId(userId).forEach(wishlist ->
-                wishlistItemRepository.deleteByWishlist_IdAndProductIdAndVariantId(
-                        wishlist.getId(), productId, variantId));
+        logger.info("[WISHLIST] Removing item | userId={}, productId={}, variantId={}",
+                userId, productId, variantId);
+
+        List<WishlistEntity> wishlists = wishlistRepository.findByUser_UserId(userId);
+
+        if (wishlists.isEmpty()) {
+            throw new RuntimeException(
+                    "No wishlist found for userId=" + userId);
+        }
+
+        // Count how many rows were actually deleted across all wishlists for this user.
+        // (Most users have exactly one wishlist, but the schema allows multiple.)
+        int deletedCount = 0;
+        for (WishlistEntity wishlist : wishlists) {
+
+            // existsByWishlist_IdAndProductIdAndVariantId lets us check before delete
+            // so we can count without relying on void deleteBy… return type.
+            boolean exists = wishlistItemRepository
+                    .existsByWishlist_IdAndProductIdAndVariantId(
+                            wishlist.getId(), productId, variantId);
+
+            if (exists) {
+                wishlistItemRepository
+                        .deleteByWishlist_IdAndProductIdAndVariantId(
+                                wishlist.getId(), productId, variantId);
+                deletedCount++;
+            }
+        }
+
+        if (deletedCount == 0) {
+            // Nothing matched — this is the silent-failure case that caused the bug.
+            // Throwing here causes the controller to return 404 instead of 200,
+            // which lets the frontend roll back the optimistic UI correctly.
+            logger.warn("[WISHLIST] Item not found for removal | userId={}, productId={}, variantId={}",
+                    userId, productId, variantId);
+            throw new RuntimeException(
+                    "Item not found in wishlist: productId=" + productId
+                            + ", variantId=" + variantId);
+        }
+
+        logger.info("[WISHLIST] Item removed ({} row(s)) | userId={}, productId={}, variantId={}",
+                deletedCount, userId, productId, variantId);
     }
 
     @Override
