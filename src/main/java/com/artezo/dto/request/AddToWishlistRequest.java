@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 public class AddToWishlistRequest {
     private Long userId;
     private String wishlistName;     // default: "My Wishlist"
-
     private Long productId;
     private String variantId;
     private String sku;
@@ -15,6 +14,7 @@ public class AddToWishlistRequest {
     private String titleName;
     private BigDecimal wishlistedPrice;
     private String customFieldsJson;
+    private String productName;
 
     public Long getUserId() {
         return userId;
@@ -94,5 +94,13 @@ public class AddToWishlistRequest {
 
     public void setCustomFieldsJson(String customFieldsJson) {
         this.customFieldsJson = customFieldsJson;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 }

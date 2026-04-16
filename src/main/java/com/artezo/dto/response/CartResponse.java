@@ -99,6 +99,8 @@ public class CartResponse {
         private String customFieldsJson;
         private LocalDateTime createdAt;
 
+        private String productImageUrl;
+
 
         public Long getItemId() {
             return itemId;
@@ -202,6 +204,14 @@ public class CartResponse {
 
         public void setCreatedAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
+        }
+
+        public String getProductImageUrl() {
+            return productImageUrl;
+        }
+
+        public void setProductImageUrl(String productImageUrl) {
+            this.productImageUrl = productImageUrl;
         }
     }
 }

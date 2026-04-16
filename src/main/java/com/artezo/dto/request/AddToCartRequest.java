@@ -18,6 +18,8 @@ public class AddToCartRequest {
     private Integer quantity;
     private String customFieldsJson; // raw JSON string of customFields[]
 
+    private String productName;
+
 
     public Long getUserId() {
         return userId;
@@ -113,5 +115,13 @@ public class AddToCartRequest {
 
     public void setCustomFieldsJson(String customFieldsJson) {
         this.customFieldsJson = customFieldsJson;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 }

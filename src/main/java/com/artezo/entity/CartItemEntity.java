@@ -65,9 +65,14 @@ public class CartItemEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "product_image_url", length = 500)
+    private String productImageUrl;
+
+
+
     public CartItemEntity(){}
 
-    public CartItemEntity(Long id, CartEntity cart, Long productId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal unitPrice, BigDecimal mrpPrice, Integer quantity, String customFieldsJson, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public CartItemEntity(Long id, CartEntity cart, Long productId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal unitPrice, BigDecimal mrpPrice, Integer quantity, String customFieldsJson, LocalDateTime createdAt, LocalDateTime updatedAt, String productImageUrl) {
         this.id = id;
         this.cart = cart;
         this.productId = productId;
@@ -82,6 +87,7 @@ public class CartItemEntity {
         this.customFieldsJson = customFieldsJson;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.productImageUrl = productImageUrl;
     }
 
     public Long getId() {
@@ -194,5 +200,13 @@ public class CartItemEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getProductImageUrl() {
+        return productImageUrl;
+    }
+
+    public void setProductImageUrl(String productImageUrl) {
+        this.productImageUrl = productImageUrl;
     }
 }

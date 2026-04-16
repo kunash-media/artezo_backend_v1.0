@@ -53,9 +53,12 @@ public class WishlistItemEntity {
     @Column(name = "added_at", updatable = false)
     private LocalDateTime addedAt;
 
+    @Column(name = "product_image_url", length = 500)
+    private String productImageUrl;
+
     public WishlistItemEntity(){}
 
-    public WishlistItemEntity(Long id, WishlistEntity wishlist, Long productId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal wishlistedPrice, String customFieldsJson, LocalDateTime addedAt) {
+    public WishlistItemEntity(Long id, WishlistEntity wishlist, Long productId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal wishlistedPrice, String customFieldsJson, LocalDateTime addedAt, String productImageUrl) {
         this.id = id;
         this.wishlist = wishlist;
         this.productId = productId;
@@ -67,8 +70,8 @@ public class WishlistItemEntity {
         this.wishlistedPrice = wishlistedPrice;
         this.customFieldsJson = customFieldsJson;
         this.addedAt = addedAt;
+        this.productImageUrl = productImageUrl;
     }
-
 
     public Long getId() {
         return id;
@@ -156,5 +159,13 @@ public class WishlistItemEntity {
 
     public void setAddedAt(LocalDateTime addedAt) {
         this.addedAt = addedAt;
+    }
+
+    public String getProductImageUrl() {
+        return productImageUrl;
+    }
+
+    public void setProductImageUrl(String productImageUrl) {
+        this.productImageUrl = productImageUrl;
     }
 }

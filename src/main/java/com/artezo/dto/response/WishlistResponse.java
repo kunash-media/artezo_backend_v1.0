@@ -77,6 +77,7 @@ public class WishlistResponse {
         private String customFieldsJson;
         private LocalDateTime addedAt;
 
+        private String productImageUrl;
 
         public Long getItemId() {
             return itemId;
@@ -156,6 +157,14 @@ public class WishlistResponse {
 
         public void setAddedAt(LocalDateTime addedAt) {
             this.addedAt = addedAt;
+        }
+
+        public String getProductImageUrl() {
+            return productImageUrl;
+        }
+
+        public void setProductImageUrl(String productImageUrl) {
+            this.productImageUrl = productImageUrl;
         }
     }
 }

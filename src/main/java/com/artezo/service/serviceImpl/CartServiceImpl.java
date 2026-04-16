@@ -64,11 +64,12 @@ public class CartServiceImpl implements CartService {
                     .sku(request.getSku())
                     .selectedColor(request.getSelectedColor())
                     .selectedSize(request.getSelectedSize())
-                    .titleName(request.getTitleName())
+                    .titleName(request.getProductName() != null ? request.getProductName() : request.getTitleName())
                     .unitPrice(request.getUnitPrice())
                     .mrpPrice(request.getMrpPrice())
                     .quantity(request.getQuantity() != null ? request.getQuantity() : 1)
                     .customFieldsJson(request.getCustomFieldsJson())
+                    .productImageUrl(calculateImageUrl(request.getProductId()))
                     .build();
             cartItemRepository.save(newItem);
             logger.info("[CART] New item added to cart | productId={}", request.getProductId());
@@ -76,6 +77,11 @@ public class CartServiceImpl implements CartService {
 
         Long userId = cart.getUser() != null ? cart.getUser().getUserId() : null;
         return buildCartResponse(cart.getId(), userId, cart.getStatus().name());
+    }
+
+    private String calculateImageUrl(Long productPrimeId) {
+        if (productPrimeId == null) return null;
+        return "/api/products/" + productPrimeId + "/main";
     }
 
     @Override
@@ -211,21 +217,36 @@ public class CartServiceImpl implements CartService {
         List<CartItemEntity> items = cartItemRepository.findByCart_Id(cartId);
 
         List<CartResponse.CartItemResponse> itemResponses = items.stream()
-                .map(item -> CartResponse.CartItemResponse.builder()
-                        .itemId(item.getId())
-                        .productId(item.getProductId())
-                        .variantId(item.getVariantId())
-                        .sku(item.getSku())
-                        .selectedColor(item.getSelectedColor())
-                        .selectedSize(item.getSelectedSize())
-                        .titleName(item.getTitleName())
-                        .unitPrice(item.getUnitPrice())
-                        .mrpPrice(item.getMrpPrice())
-                        .quantity(item.getQuantity())
-                        .itemTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                        .customFieldsJson(item.getCustomFieldsJson())
-                        .createdAt(item.getCreatedAt())
-                        .build())
+                .map(item -> {
+                    String imageUrl = item.getProductImageUrl();   // ← Use stored URL if available
+
+                    // Fallback logic (only if stored URL is missing - rare after migration)
+                    if (imageUrl == null && item.getProductId() != null) {
+                        if (item.getVariantId() != null && !item.getVariantId().isEmpty()) {
+                            imageUrl = "/api/products/" + item.getProductId()
+                                    + "/variant/" + item.getVariantId() + "/main";
+                        } else {
+                            imageUrl = "/api/products/" + item.getProductId() + "/main";
+                        }
+                    }
+
+                    return CartResponse.CartItemResponse.builder()
+                            .itemId(item.getId())
+                            .productId(item.getProductId())
+                            .variantId(item.getVariantId())
+                            .sku(item.getSku())
+                            .selectedColor(item.getSelectedColor())
+                            .selectedSize(item.getSelectedSize())
+                            .titleName(item.getTitleName())
+                            .unitPrice(item.getUnitPrice())
+                            .mrpPrice(item.getMrpPrice())
+                            .quantity(item.getQuantity())
+                            .itemTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                            .customFieldsJson(item.getCustomFieldsJson())
+                            .createdAt(item.getCreatedAt())
+                            .productImageUrl(imageUrl)          // ← Always populated
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         BigDecimal totalAmount = itemResponses.stream()

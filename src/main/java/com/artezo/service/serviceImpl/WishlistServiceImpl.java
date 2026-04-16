@@ -5,6 +5,7 @@ import com.artezo.dto.response.WishlistResponse;
 import com.artezo.entity.UserEntity;
 import com.artezo.entity.WishlistEntity;
 import com.artezo.entity.WishlistItemEntity;
+import com.artezo.repository.ProductRepository;
 import com.artezo.repository.UserRepository;
 import com.artezo.repository.WishlistItemRepository;
 import com.artezo.repository.WishlistRepository;
@@ -26,9 +27,7 @@ public class WishlistServiceImpl implements WishlistService {
     private final WishlistItemRepository wishlistItemRepository;
     private final UserRepository userRepository;
 
-    public WishlistServiceImpl(WishlistRepository wishlistRepository,
-                               WishlistItemRepository wishlistItemRepository,
-                               UserRepository userRepository) {
+    public WishlistServiceImpl(WishlistRepository wishlistRepository, WishlistItemRepository wishlistItemRepository, UserRepository userRepository) {
         this.wishlistRepository = wishlistRepository;
         this.wishlistItemRepository = wishlistItemRepository;
         this.userRepository = userRepository;
@@ -65,9 +64,9 @@ public class WishlistServiceImpl implements WishlistService {
                     .sku(request.getSku())
                     .selectedColor(request.getSelectedColor())
                     .selectedSize(request.getSelectedSize())
-                    .titleName(request.getTitleName())
-                    .wishlistedPrice(request.getWishlistedPrice())
+                    .titleName(request.getProductName() != null ? request.getProductName() : request.getTitleName())                    .wishlistedPrice(request.getWishlistedPrice())
                     .customFieldsJson(request.getCustomFieldsJson())
+                    .productImageUrl(calculateImageUrl(request.getProductId(), request.getVariantId()))
                     .build();
             wishlistItemRepository.save(item);
             logger.info("[WISHLIST] Item added | productId={}", request.getProductId());
@@ -76,6 +75,15 @@ public class WishlistServiceImpl implements WishlistService {
         }
 
         return buildWishlistResponse(wishlist);
+    }
+
+    private String calculateImageUrl(Long productPrimeId, String variantId) {
+        if (productPrimeId == null) return null;
+
+//        if (variantId != null && !variantId.trim().isEmpty()) {
+//            return "/api/products/" + productPrimeId + "/variant/" + variantId + "/main";
+//        }
+        return "/api/products/" + productPrimeId + "/main";
     }
 
     @Override
@@ -180,31 +188,78 @@ public class WishlistServiceImpl implements WishlistService {
 
     // ─── Helper ───────────────────────────────────────────────────────────────
 
+//    private WishlistResponse buildWishlistResponse(WishlistEntity wishlist) {
+//        List<WishlistItemEntity> items = wishlistItemRepository.findByWishlist_Id(wishlist.getId());
+//
+//        List<WishlistResponse.WishlistItemResponse> itemResponses = items.stream()
+//                .map(item -> WishlistResponse.WishlistItemResponse.builder()
+//                        .itemId(item.getId())
+//                        .productId(item.getProductId())
+//                        .variantId(item.getVariantId())
+//                        .sku(item.getSku())
+//                        .selectedColor(item.getSelectedColor())
+//                        .selectedSize(item.getSelectedSize())
+//                        .titleName(item.getTitleName())
+//                        .wishlistedPrice(item.getWishlistedPrice())
+//                        .customFieldsJson(item.getCustomFieldsJson())
+//                        .addedAt(item.getAddedAt())
+//                        .build())
+//                .collect(Collectors.toList());
+//
+//        return WishlistResponse.builder()
+//                .wishlistId(wishlist.getId())
+//                .userId(wishlist.getUser().getUserId())  // ← from UserEntity relation
+//                .name(wishlist.getName())
+//                .isPublic(wishlist.getIsPublic())
+//                .items(itemResponses)
+//                .totalItems(itemResponses.size())
+//                .build();
+//    }
+
     private WishlistResponse buildWishlistResponse(WishlistEntity wishlist) {
+
         List<WishlistItemEntity> items = wishlistItemRepository.findByWishlist_Id(wishlist.getId());
 
+
         List<WishlistResponse.WishlistItemResponse> itemResponses = items.stream()
-                .map(item -> WishlistResponse.WishlistItemResponse.builder()
-                        .itemId(item.getId())
-                        .productId(item.getProductId())
-                        .variantId(item.getVariantId())
-                        .sku(item.getSku())
-                        .selectedColor(item.getSelectedColor())
-                        .selectedSize(item.getSelectedSize())
-                        .titleName(item.getTitleName())
-                        .wishlistedPrice(item.getWishlistedPrice())
-                        .customFieldsJson(item.getCustomFieldsJson())
-                        .addedAt(item.getAddedAt())
-                        .build())
+                .map(item -> {
+                    String imageUrl = item.getProductImageUrl();   // ← Use stored URL if available
+
+                    // Fallback logic (only if stored URL is missing - rare after migration)
+                    if (imageUrl == null && item.getProductId() != null) {
+                        if (item.getVariantId() != null && !item.getVariantId().isEmpty()) {
+                            imageUrl = "/api/products/" + item.getProductId()
+                                    + "/variant/" + item.getVariantId() + "/main";
+                        } else {
+                            imageUrl = "/api/products/" + item.getProductId() + "/main";
+                        }
+                    }
+
+                    return WishlistResponse.WishlistItemResponse.builder()
+                            .itemId(item.getId())
+                            .productId(item.getProductId())
+                            .variantId(item.getVariantId())
+                            .sku(item.getSku())
+                            .selectedColor(item.getSelectedColor())
+                            .selectedSize(item.getSelectedSize())
+                            .titleName(item.getTitleName())
+                            .wishlistedPrice(item.getWishlistedPrice())
+                            .customFieldsJson(item.getCustomFieldsJson())
+                            .addedAt(item.getAddedAt())
+                            .productImageUrl(imageUrl)          // ← Always populated
+                            .build();
+                })
                 .collect(Collectors.toList());
+
 
         return WishlistResponse.builder()
                 .wishlistId(wishlist.getId())
-                .userId(wishlist.getUser().getUserId())  // ← from UserEntity relation
+                .userId(wishlist.getUser().getUserId())
                 .name(wishlist.getName())
                 .isPublic(wishlist.getIsPublic())
                 .items(itemResponses)
                 .totalItems(itemResponses.size())
                 .build();
+
     }
 }
