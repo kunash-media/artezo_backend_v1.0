@@ -1,12 +1,10 @@
 package com.artezo.controller;
 
-import com.artezo.dto.request.CreateProductRequestDto;
-import com.artezo.dto.request.HeroBannerRequestDto;
-import com.artezo.dto.request.InstallationStepRequestDto;
-import com.artezo.dto.request.VariantRequestDto;
+import com.artezo.dto.request.*;
 import com.artezo.dto.response.BulkUploadResponse;
 import com.artezo.dto.response.ProductCategoryResponse;
 import com.artezo.dto.response.ProductResponseDto;
+import com.artezo.dto.response.ProductSearchResultDto;
 import com.artezo.entity.ProductEntity;
 import com.artezo.entity.ProductVariantEntity;
 import com.artezo.entity.VariantMockupImageEntity;
@@ -47,7 +45,6 @@ public class ProductController {
         this.productRepository = productRepository;
     }
 
-
     // ──────────────────────────────────────────────────────────
     //          GET BY productPrimeId API for admin and web view
     // ──────────────────────────────────────────────────────────
@@ -58,6 +55,7 @@ public class ProductController {
         log.info("Fetching product by productPrimeId: {}", productPrimeId);
         return ResponseEntity.ok(productService.getAdminViewProductById(productPrimeId));
     }
+
 
     //------ for web view product details  ------------//
     @GetMapping("/get-by-productPrimeId/{productPrimeId}")
@@ -149,23 +147,6 @@ public class ProductController {
                 }
             }
         }
-
-        // ── NEW: Assign variant mockup images (flat list, sliced by mockupImageCount) ──
-//        if (request.getVariants() != null && variantMockupImages != null && !variantMockupImages.isEmpty()) {
-//            int fileIndex = 0;
-//            for (VariantRequestDto variant : request.getVariants()) {
-//                int count = variant.getMockupImageCount() != null ? variant.getMockupImageCount() : 0;
-//                List<byte[]> variantMockups = new ArrayList<>();
-//                for (int j = 0; j < count && fileIndex < variantMockupImages.size(); j++, fileIndex++) {
-//                    MultipartFile f = variantMockupImages.get(fileIndex);
-//                    if (f != null && !f.isEmpty()) {
-//                        try { variantMockups.add(f.getBytes()); }
-//                        catch (IOException e) { log.warn("Failed to read variant mockup image at fileIndex {}", fileIndex, e); }
-//                    }
-//                }
-//                if (!variantMockups.isEmpty()) variant.setMockupImages(variantMockups);
-//            }
-//        }
 
         // In BOTH controller methods, replace the variant mockup slice block with this:
         if (request.getVariants() != null && variantMockupImages != null && !variantMockupImages.isEmpty()) {
@@ -729,6 +710,25 @@ public class ProductController {
                 productService.getProductsByGlobalTag(tag, page, size, sortBy, sortDir));
     }
 
+    // ──────────────────────────────────────────────────────────
+//          SEARCH / AUTOCOMPLETE ENDPOINT
+// ──────────────────────────────────────────────────────────
 
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductSearchResultDto>> searchProducts(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "8") int limit) {
 
+        log.info("GET /search | keyword: '{}' | limit: {}", keyword, limit);
+
+        if (keyword == null || keyword.trim().length() < 2) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+
+        // Cap limit to prevent abuse
+        int safeLimit = Math.min(limit, 20);
+
+        List<ProductSearchResultDto> results = productService.searchProducts(keyword.trim(), safeLimit);
+        return ResponseEntity.ok(results);
+    }
 }

@@ -1,6 +1,7 @@
 package com.artezo.service;
 
 import com.artezo.dto.request.CreateProductRequestDto;
+import com.artezo.dto.response.ProductSearchResultDto;
 import com.artezo.dto.response.ProductCategoryResponse;
 import com.artezo.dto.response.BulkUploadResponse;
 import com.artezo.dto.response.ProductResponseDto;
@@ -75,4 +76,7 @@ public interface ProductService {
     Page<ProductCategoryResponse> getProductsByAddonKey(String addonKey, int page, int size, String sortBy, String sortDir);
 
     Page<ProductCategoryResponse> getProductsByGlobalTag(String tag, int page, int size, String sortBy, String sortDir);
+
+
+    List<ProductSearchResultDto> searchProducts(String keyword, int limit);
 }

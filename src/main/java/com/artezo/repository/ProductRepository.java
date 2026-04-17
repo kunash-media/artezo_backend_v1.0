@@ -1,5 +1,6 @@
 package com.artezo.repository;
 
+import com.artezo.dto.response.ProductSearchResultDto;
 import com.artezo.entity.ProductEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,4 +100,37 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             nativeQuery = true
     )
     Page<ProductEntity> findByGlobalTag(@Param("tag") String tag, Pageable pageable);
+
+
+
+    @Query("""
+    SELECT new com.artezo.dto.response.ProductSearchResultDto(
+        p.productPrimeId,
+        p.productStrId,
+        p.productName,
+        p.brandName,
+        p.currentSellingPrice,
+        p.currentMrpPrice,
+        p.productCategory,
+        p.productSubCategory
+    )
+    FROM ProductEntity p
+    WHERE p.isDeleted = false
+      AND (
+           LOWER(p.productName)        LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(p.brandName)          LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(p.productCategory)    LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(p.productSubCategory) LIKE LOWER(CONCAT('%', :keyword, '%'))
+      )
+    ORDER BY
+        CASE WHEN LOWER(p.productName) LIKE LOWER(CONCAT(:keyword, '%')) THEN 0 ELSE 1 END,
+        p.productName ASC
+    """)
+    List<ProductSearchResultDto> searchProducts(@Param("keyword") String keyword, Pageable pageable);
+
+
+    @Query("SELECT p.currentMrpPrice FROM ProductEntity p WHERE p.productPrimeId = :productId")
+    Optional<BigDecimal> findMrpPriceByProductId(@Param("productId") Long productId);
+
+
 }

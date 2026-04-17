@@ -16,6 +16,8 @@ public class AddToWishlistRequest {
     private String customFieldsJson;
     private String productName;
 
+    private BigDecimal mrpPrice;
+
     public Long getUserId() {
         return userId;
     }
@@ -102,5 +104,13 @@ public class AddToWishlistRequest {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public BigDecimal getMrpPrice() {
+        return mrpPrice;
+    }
+
+    public void setMrpPrice(BigDecimal mrpPrice) {
+        this.mrpPrice = mrpPrice;
     }
 }

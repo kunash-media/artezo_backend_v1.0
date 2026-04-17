@@ -18,7 +18,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -1925,5 +1924,18 @@ public class ProductServiceImpl implements ProductService {
         Pageable pageable = PageRequest.of(page, size); // ← no sort here
         return productRepository.findByGlobalTag(tag, pageable)
                 .map(this::mapToCategoryResponse);
+    }
+
+    //-------------------------------------------------------------//
+    //                  searching product                          //
+    //-------------------------------------------------------------//
+    @Override
+    public List<ProductSearchResultDto> searchProducts(String keyword, int limit) {
+        if (keyword == null || keyword.trim().length() < 2) {
+            return Collections.emptyList();
+        }
+        String sanitized = keyword.trim();
+        Pageable pageable = PageRequest.of(0, limit);
+        return productRepository.searchProducts(sanitized, pageable);
     }
 }

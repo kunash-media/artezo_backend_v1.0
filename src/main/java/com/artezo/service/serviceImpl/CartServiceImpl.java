@@ -156,9 +156,11 @@ public class CartServiceImpl implements CartService {
     public CartResponse moveWishlistItemToCart(Long userId, Long wishlistItemId) {
         logger.info("[CART] Moving wishlist item to cart | userId={}, wishlistItemId={}", userId, wishlistItemId);
 
+        // 1. Get the wishlist item
         WishlistItemEntity wishlistItem = wishlistItemRepository.findById(wishlistItemId)
                 .orElseThrow(() -> new RuntimeException("Wishlist item not found: " + wishlistItemId));
 
+        // 2. Create AddToCartRequest from wishlist item
         AddToCartRequest request = new AddToCartRequest();
         request.setUserId(userId);
         request.setProductId(wishlistItem.getProductId());
@@ -168,22 +170,41 @@ public class CartServiceImpl implements CartService {
         request.setSelectedSize(wishlistItem.getSelectedSize());
         request.setTitleName(wishlistItem.getTitleName());
         request.setUnitPrice(wishlistItem.getWishlistedPrice());
+        request.setMrpPrice(wishlistItem.getWishlistedPrice());
         request.setCustomFieldsJson(wishlistItem.getCustomFieldsJson());
         request.setQuantity(1);
 
-        return addToCart(request);
+        // 3. Add to cart
+        CartResponse cartResponse = addToCart(request);
+
+        // 4. Remove the item from wishlist AFTER successfully adding to cart
+        // Get the wishlist ID from the wishlist item
+        Long wishlistId = wishlistItem.getWishlist().getId();
+
+        // Delete the wishlist item
+        wishlistItemRepository.deleteByWishlist_IdAndProductIdAndVariantId(
+                wishlistId,
+                wishlistItem.getProductId(),
+                wishlistItem.getVariantId()
+        );
+
+        logger.info("[CART] Wishlist item removed after moving to cart | wishlistItemId={}", wishlistItemId);
+
+        return cartResponse;
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getCartCount(Long userId) {
+
         return cartRepository.findByUser_UserIdAndStatus(userId, CartEntity.CartStatus.ACTIVE)
                 .map(cart -> {
-                    Integer sum = cartItemRepository.sumQuantityByCartId(cart.getId());
-                    return sum != null ? sum : 0;
+                    // Return the count of items, not sum of quantities
+                    return cartItemRepository.countByCartId(cart.getId());
                 })
                 .orElse(0);
     }
+
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -254,7 +275,12 @@ public class CartServiceImpl implements CartService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalMrp = items.stream()
-                .map(i -> i.getMrpPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .map(i -> {
+                    if (i.getMrpPrice() == null) {
+                        return BigDecimal.ZERO;
+                    }
+                    return i.getMrpPrice().multiply(BigDecimal.valueOf(i.getQuantity()));
+                })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return CartResponse.builder()

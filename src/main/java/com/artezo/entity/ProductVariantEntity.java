@@ -30,14 +30,6 @@ public class ProductVariantEntity {
     private byte[] mainImageData;
     private String mainImageStrUrl;
 
-//        @ElementCollection
-//        @CollectionTable(
-//                name = "variant_mockup_images",
-//                joinColumns = @JoinColumn(name = "variant_pk_id", referencedColumnName = "id")
-//        )
-//        @Column(name = "mockup_image_data_list", columnDefinition = "LONGBLOB")
-//        @Lob
-//        private List<byte[]> mockupImageDataList = new ArrayList<>();
 
     // ADD THIS:
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)

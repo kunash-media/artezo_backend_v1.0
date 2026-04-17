@@ -9,9 +9,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "wishlist_item",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"wishlist_id", "product_id", "variant_id"})
-)
+    name = "wishlist_item",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"wishlist_id", "product_id", "variant_id"}))
 @Builder
 public class WishlistItemEntity {
 
@@ -46,6 +45,9 @@ public class WishlistItemEntity {
     @Column(name = "wishlisted_price", precision = 10, scale = 2)
     private BigDecimal wishlistedPrice;
 
+    @Column(name = "mrp_price", precision = 10, scale = 2)  // ADD THIS if not exists
+    private BigDecimal mrpPrice;  // MRP - Original price
+
     @Column(name = "custom_fields_json", columnDefinition = "TEXT")
     private String customFieldsJson;
 
@@ -58,7 +60,10 @@ public class WishlistItemEntity {
 
     public WishlistItemEntity(){}
 
-    public WishlistItemEntity(Long id, WishlistEntity wishlist, Long productId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal wishlistedPrice, String customFieldsJson, LocalDateTime addedAt, String productImageUrl) {
+    public WishlistItemEntity(Long id, WishlistEntity wishlist, Long productId, String variantId,
+                              String sku, String selectedColor, String selectedSize, String titleName,
+                              BigDecimal wishlistedPrice, BigDecimal mrpPrice,
+                              String customFieldsJson, LocalDateTime addedAt, String productImageUrl) {
         this.id = id;
         this.wishlist = wishlist;
         this.productId = productId;
@@ -68,6 +73,7 @@ public class WishlistItemEntity {
         this.selectedSize = selectedSize;
         this.titleName = titleName;
         this.wishlistedPrice = wishlistedPrice;
+        this.mrpPrice = mrpPrice;
         this.customFieldsJson = customFieldsJson;
         this.addedAt = addedAt;
         this.productImageUrl = productImageUrl;
@@ -143,6 +149,14 @@ public class WishlistItemEntity {
 
     public void setWishlistedPrice(BigDecimal wishlistedPrice) {
         this.wishlistedPrice = wishlistedPrice;
+    }
+
+    public BigDecimal getMrpPrice() {
+        return mrpPrice;
+    }
+
+    public void setMrpPrice(BigDecimal mrpPrice) {
+        this.mrpPrice = mrpPrice;
     }
 
     public String getCustomFieldsJson() {

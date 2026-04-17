@@ -2,6 +2,7 @@ package com.artezo.dto.response;
 
 import lombok.Builder;
 
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -76,8 +77,10 @@ public class WishlistResponse {
         private BigDecimal wishlistedPrice;
         private String customFieldsJson;
         private LocalDateTime addedAt;
-
         private String productImageUrl;
+
+        private  BigDecimal mrpPrice;
+
 
         public Long getItemId() {
             return itemId;
@@ -166,5 +169,15 @@ public class WishlistResponse {
         public void setProductImageUrl(String productImageUrl) {
             this.productImageUrl = productImageUrl;
         }
+
+        public BigDecimal getMrpPrice() {
+            return mrpPrice;
+        }
+
+        public void setMrpPrice(BigDecimal mrpPrice) {
+            this.mrpPrice = mrpPrice;
+        }
     }
+
+
 }
