@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -859,4 +860,79 @@ public class OrderServiceImpl implements OrderService {
 
         return mapToOrderResponse(orderRepository.save(order));
     }
+
+
+    // ────────────────────────────────────────────────────────────────────────
+    //  CANCEL EXCHANGE REQUEST
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public OrderResponse cancelExchangeRequest(Long userId, String orderStrId) {
+        OrderEntity order = getOrderAndValidateOwner(userId, orderStrId);
+
+        if (order.getOrderStatus() != OrderStatus.EXCHANGE_REQUESTED) {
+            throw new OrderException(
+                    "Only exchange requested orders can be cancelled. Current status: " + order.getOrderStatus(),
+                    "INVALID_STATUS_FOR_CANCEL_EXCHANGE");
+        }
+
+        // Reset exchange fields
+        order.setExchangeRequested(false);
+        order.setExchangeReason(null);
+        order.setExchangeRequestedAt(null);
+        order.setOrderStatus(OrderStatus.DELIVERED);
+        order.getOrderItems().forEach(i -> i.setItemStatus(ItemStatus.ACTIVE));
+
+        // Optional: Call Shiprocket to cancel exchange if needed
+        if (order.getExchangeShiprocketOrderId() != null) {
+            try {
+                shiprocketService.cancelOrder(order.getExchangeShiprocketOrderId());
+            } catch (Exception e) {
+                log.warn("SR cancel exchange failed for {}: {}", orderStrId, e.getMessage());
+            }
+        }
+
+        OrderEntity saved = orderRepository.save(order);
+        log.info("Exchange request cancelled for order {}", orderStrId);
+        return mapToOrderResponse(saved);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    //  CANCEL RETURN REQUEST
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public OrderResponse cancelReturnRequest(Long userId, String orderStrId) {
+        OrderEntity order = getOrderAndValidateOwner(userId, orderStrId);
+
+        if (order.getOrderStatus() != OrderStatus.RETURN_REQUESTED) {
+            throw new OrderException(
+                    "Only return requested orders can be cancelled. Current status: " + order.getOrderStatus(),
+                    "INVALID_STATUS_FOR_CANCEL_RETURN");
+        }
+
+        // Reset return fields
+        order.setReturnRequested(false);
+        order.setReturnReason(null);
+        order.setReturnRequestedAt(null);
+        order.setOrderStatus(OrderStatus.DELIVERED);
+        order.getOrderItems().forEach(i -> i.setItemStatus(ItemStatus.ACTIVE));
+
+        // Optional: Call Shiprocket to cancel return if needed
+        if (order.getReturnShiprocketOrderId() != null) {
+            try {
+                shiprocketService.cancelOrder(order.getReturnShiprocketOrderId());
+            } catch (Exception e) {
+                log.warn("SR cancel return failed for {}: {}", orderStrId, e.getMessage());
+            }
+        }
+
+        OrderEntity saved = orderRepository.save(order);
+        log.info("Return request cancelled for order {}", orderStrId);
+        return mapToOrderResponse(saved);
+    }
+
+
 }

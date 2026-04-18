@@ -51,6 +51,9 @@ public class ReviewResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private String orderId;        // ✅ Long → String
+    private Integer orderItemId;
+
     public ReviewResponseDto() {}
 
     private String formatSize(long size) {
@@ -412,5 +415,21 @@ public class ReviewResponseDto {
 
     public void setCustomerEmail(String customerEmail) {
         this.customerEmail = customerEmail;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public Integer getOrderItemId() {
+        return orderItemId;
+    }
+
+    public void setOrderItemId(Integer orderItemId) {
+        this.orderItemId = orderItemId;
     }
 }

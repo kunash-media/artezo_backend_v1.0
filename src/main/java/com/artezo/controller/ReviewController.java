@@ -30,16 +30,16 @@ public class ReviewController {
             @RequestParam("userId") Long userId,
             @RequestParam("rating") Integer rating,
             @RequestParam(value = "comment", required = false) String comment,
-            @RequestParam(value = "orderId", required = false) Long orderId,        // ⬅️ ADD THIS
-            @RequestParam(value = "orderItemId", required = false) Long orderItemId, // ⬅️ ADD THIS
+            @RequestParam(value = "orderId", required = false) String orderId,        // ✅ Long → String
+            @RequestParam(value = "orderItemId", required = false) Integer orderItemId, // ✅ Long → Integer
             @RequestPart(value = "images", required = false) MultipartFile images,
             @RequestPart(value = "videos", required = false) MultipartFile videos) {
 
         System.out.println("🔴 CONTROLLER - Received request:");
         System.out.println("   productId: " + productId);
         System.out.println("   userId: " + userId);
-        System.out.println("   orderId: " + orderId);           // ⬅️ ADD THIS
-        System.out.println("   orderItemId: " + orderItemId);   // ⬅️ ADD THIS
+        System.out.println("   orderId: " + orderId);
+        System.out.println("   orderItemId: " + orderItemId);
         System.out.println("   rating: " + rating);
         System.out.println("   comment: " + comment);
         System.out.println("   images: " + (images != null ? images.getOriginalFilename() : "null"));
@@ -50,8 +50,8 @@ public class ReviewController {
         requestDto.setUserId(userId);
         requestDto.setRating(rating);
         requestDto.setComment(comment);
-        requestDto.setOrderId(orderId);           // ⬅️ ADD THIS
-        requestDto.setOrderItemId(orderItemId);   // ⬅️ ADD THIS
+        requestDto.setOrderId(orderId);           // ✅ Now String, matches frontend
+        requestDto.setOrderItemId(orderItemId);   // ✅ Integer
 
         if (images != null && !images.isEmpty()) {
             requestDto.setImages(List.of(images));
@@ -290,4 +290,8 @@ public class ReviewController {
         List<ReviewResponseDto> reviews = reviewService.bulkApproveReviews(reviewIds);
         return ResponseEntity.ok(reviews);
     }
+
+
+
+
 }

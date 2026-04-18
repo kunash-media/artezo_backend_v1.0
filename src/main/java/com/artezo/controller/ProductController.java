@@ -731,4 +731,26 @@ public class ProductController {
         List<ProductSearchResultDto> results = productService.searchProducts(keyword.trim(), safeLimit);
         return ResponseEntity.ok(results);
     }
+
+
+    // ========== NEW ENDPOINT ADDED - Exchange/Return ke liye single variant details ==========
+    @GetMapping("/{productPrimeId}/variant/{variantId}/exchange-details")
+    public ResponseEntity<Map<String, Object>> getVariantExchangeDetails(
+            @PathVariable Long productPrimeId,
+            @PathVariable String variantId) {
+
+        log.info("Fetching exchange details for product: {}, variant: {}", productPrimeId, variantId);
+        return ResponseEntity.ok(productService.getVariantExchangeDetails(productPrimeId, variantId));
+    }
+// ========== END OF NEW ENDPOINT ==========
+
+    // ========== NEW ENDPOINT ADDED - Saare variants ki dimensions list ==========
+    @GetMapping("/{productPrimeId}/variants/dimensions")
+    public ResponseEntity<List<Map<String, Object>>> getAllVariantsDimensions(
+            @PathVariable Long productPrimeId) {
+
+        log.info("Fetching all variants dimensions for product: {}", productPrimeId);
+        return ResponseEntity.ok(productService.getAllVariantsDimensions(productPrimeId));
+    }
+// ========== END OF NEW ENDPOINT ==========
 }

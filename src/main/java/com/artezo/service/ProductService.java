@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ProductService {
 
@@ -79,4 +80,8 @@ public interface ProductService {
 
 
     List<ProductSearchResultDto> searchProducts(String keyword, int limit);
+
+    Map<String, Object> getVariantExchangeDetails(Long productPrimeId, String variantId);
+    List<Map<String, Object>> getAllVariantsDimensions(Long productPrimeId);
+
 }

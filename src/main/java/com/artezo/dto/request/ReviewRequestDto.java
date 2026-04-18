@@ -32,8 +32,8 @@ public class ReviewRequestDto {
 
     // ==================== NEW FIELDS FOR ORDER TRACKING ====================
 
-    private Long orderId;        // To track which order this review belongs to
-    private Long orderItemId;    // To track which specific item in the order is being reviewed
+    private String orderId;        // ✅ Long → String
+    private Integer orderItemId;   // To track which specific item in the order is being reviewed
 
     // ==================== GETTERS AND SETTERS ====================
 
@@ -119,19 +119,20 @@ public class ReviewRequestDto {
 
     // ==================== GETTERS AND SETTERS FOR NEW FIELDS ====================
 
-    public Long getOrderId() {
+
+    public String getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(Long orderId) {
+    public void setOrderId(String orderId) {
         this.orderId = orderId;
     }
 
-    public Long getOrderItemId() {
+    public Integer getOrderItemId() {
         return orderItemId;
     }
 
-    public void setOrderItemId(Long orderItemId) {
+    public void setOrderItemId(Integer orderItemId) {
         this.orderItemId = orderItemId;
     }
 }

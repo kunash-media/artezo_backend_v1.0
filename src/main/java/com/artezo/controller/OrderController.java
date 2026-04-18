@@ -157,5 +157,24 @@ public class OrderController {
         return ResponseEntity.ok(orderService.patchOrder(orderId, fields));
     }
 
+    @PutMapping("/{orderStrId}/cancel-exchange")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelExchangeRequest(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable String orderStrId) {
+
+        OrderResponse response = orderService.cancelExchangeRequest(userId, orderStrId);
+        return ResponseEntity.ok(ApiResponse.success("Exchange request cancelled successfully", response));
+    }
+
+    @PutMapping("/{orderStrId}/cancel-return")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelReturnRequest(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable String orderStrId) {
+
+        OrderResponse response = orderService.cancelReturnRequest(userId, orderStrId);
+        return ResponseEntity.ok(ApiResponse.success("Return request cancelled successfully", response));
+    }
+
+
 
 }

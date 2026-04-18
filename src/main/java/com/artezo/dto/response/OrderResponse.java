@@ -414,6 +414,7 @@ public class OrderResponse {
         private String itemStatus;
         private String productImageUrl;
 
+        private Long productPrimeId;
 
         // getters and setters ...
 
@@ -520,6 +521,14 @@ public class OrderResponse {
 
         public void setProductImageUrl(String productImageUrl) {
             this.productImageUrl = productImageUrl;
+        }
+
+        public Long getProductPrimeId() {
+            return productPrimeId;
+        }
+
+        public void setProductPrimeId(Long productPrimeId) {
+            this.productPrimeId = productPrimeId;
         }
     }
 }

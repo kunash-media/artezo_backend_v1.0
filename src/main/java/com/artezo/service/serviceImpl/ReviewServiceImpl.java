@@ -48,7 +48,6 @@ public class ReviewServiceImpl implements ReviewService {
         this.orderRepository = orderRepository;
     }
 
-    @Override
     public ReviewResponseDto createReview(ReviewRequestDto requestDto) {
         if (reviewRepository.existsByProductIdAndUserId(requestDto.getProductId(), requestDto.getUserId())) {
             throw new RuntimeException("User has already reviewed this product");
@@ -65,15 +64,22 @@ public class ReviewServiceImpl implements ReviewService {
         review.setProduct(product);
         review.setUser(user);
 
-        // Handle order tracking if orderId is provided (without OrderItemRepository)
+        // Handle order tracking if orderId is provided
         if (requestDto.getOrderId() != null) {
-            OrderEntity order = orderRepository.findById(requestDto.getOrderId())
-                    .orElseThrow(() -> new RuntimeException("Order not found with id: " + requestDto.getOrderId()));
-            review.setOrder(order);
-            review.setVerifiedPurchase(true);
+            OrderEntity order = null;
+            try {
+                Long orderIdLong = Long.parseLong(requestDto.getOrderId());
+                order = orderRepository.findById(orderIdLong).orElse(null);
+            } catch (NumberFormatException e) {
+                // orderId is string like "ORD-xxx", can't parse to Long
+                order = null;
+            }
 
-            // Note: OrderItem tracking is skipped since OrderItemRepository doesn't exist
-            // The review will still be marked as verified purchase at order level
+            if (order != null) {
+                review.setOrder(order);
+                review.setVerifiedPurchase(true);
+            }
+            // If order is null, just skip setting it (no exception thrown)
         }
 
         review.setRating(requestDto.getRating());
@@ -552,4 +558,6 @@ public class ReviewServiceImpl implements ReviewService {
                 .map(ReviewResponseDto::fromEntity)
                 .toList();
     }
+
+
 }

@@ -6,6 +6,7 @@ import com.artezo.dto.response.OrderResponse;
 import com.artezo.dto.response.OrderSummaryResponse;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
 import java.util.Map;
 
 public interface OrderService {
@@ -76,4 +77,10 @@ public interface OrderService {
     public OrderResponse getOrderByOrderId(String orderId);
 
     OrderResponse patchOrder(Long orderId, Map<String, Object> fields);
+
+
+    OrderResponse cancelExchangeRequest(Long userId, String orderStrId);
+    OrderResponse cancelReturnRequest(Long userId, String orderStrId);
+
+
 }

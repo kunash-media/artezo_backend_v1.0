@@ -1938,4 +1938,68 @@ public class ProductServiceImpl implements ProductService {
         Pageable pageable = PageRequest.of(0, limit);
         return productRepository.searchProducts(sanitized, pageable);
     }
+
+
+    // ========== NEW METHOD ADDED - Exchange/Return ke liye single variant details ==========
+    @Override
+    public Map<String, Object> getVariantExchangeDetails(Long productPrimeId, String variantId) {
+        ProductEntity product = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productPrimeId));
+
+        ProductVariantEntity variant = product.getVariants().stream()
+                .filter(v -> variantId.equals(v.getVariantId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Variant not found with id: " + variantId));
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("productPrimeId", product.getProductPrimeId());
+        details.put("productStrId", product.getProductStrId());
+        details.put("productName", product.getProductName());
+        details.put("variantId", variant.getVariantId());
+        details.put("color", variant.getColor());
+        details.put("size", variant.getSize());
+        details.put("weight", variant.getWeight());
+        details.put("length", variant.getLength());
+        details.put("breadth", variant.getBreadth());
+        details.put("height", variant.getHeight());
+        details.put("isExchangeAvailable", product.getIsExchange());
+        details.put("returnAvailable", product.getReturnAvailable());
+
+        return details;
+    }
+// ========== END OF NEW METHOD ==========
+
+    // ========== NEW METHOD ADDED - Saare variants ki dimensions list ==========
+    @Override
+    public List<Map<String, Object>> getAllVariantsDimensions(Long productPrimeId) {
+        ProductEntity product = productRepository.findById(productPrimeId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productPrimeId));
+
+        List<Map<String, Object>> dimensionsList = new ArrayList<>();
+
+        for (ProductVariantEntity variant : product.getVariants()) {
+            Map<String, Object> dim = new HashMap<>();
+            dim.put("variantId", variant.getVariantId());
+            dim.put("color", variant.getColor());
+            dim.put("size", variant.getSize());
+            dim.put("length", variant.getLength());
+            dim.put("breadth", variant.getBreadth());
+            dim.put("height", variant.getHeight());
+            dim.put("weight", variant.getWeight());
+
+            // Null safe dimension text
+            String dimText = (variant.getLength() != null ? variant.getLength() : "?") + "×" +
+                    (variant.getBreadth() != null ? variant.getBreadth() : "?") + "×" +
+                    (variant.getHeight() != null ? variant.getHeight() : "?") + " cm";
+            dim.put("dimensionText", dimText);
+
+            String weightText = (variant.getWeight() != null ? variant.getWeight() : "?") + " g";
+            dim.put("weightText", weightText);
+
+            dimensionsList.add(dim);
+        }
+
+        return dimensionsList;
+    }
+// ========== END OF NEW METHOD ==========
 }
