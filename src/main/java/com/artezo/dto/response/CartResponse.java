@@ -87,6 +87,7 @@ public class CartResponse {
     public static class CartItemResponse {
         private Long itemId;
         private Long productId;
+        private String productStrId;
         private String variantId;
         private String sku;
         private String selectedColor;
@@ -104,6 +105,14 @@ public class CartResponse {
 
         public Long getItemId() {
             return itemId;
+        }
+
+        public String getProductStrId() {
+            return productStrId;
+        }
+
+        public void setProductStrId(String productStrId) {
+            this.productStrId = productStrId;
         }
 
         public void setItemId(Long itemId) {

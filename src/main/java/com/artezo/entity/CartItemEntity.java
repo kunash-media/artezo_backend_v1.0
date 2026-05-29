@@ -25,6 +25,10 @@ public class CartItemEntity {
     @Column(name = "product_id", nullable = false)
     private Long productId;
 
+    @Column(name = "product_str_id", length = 20)
+    private String productStrId;   // snapshot: PRD00001
+
+
     // nullable for products without variants
     @Column(name = "variant_id")
     private String variantId;
@@ -72,10 +76,11 @@ public class CartItemEntity {
 
     public CartItemEntity(){}
 
-    public CartItemEntity(Long id, CartEntity cart, Long productId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal unitPrice, BigDecimal mrpPrice, Integer quantity, String customFieldsJson, LocalDateTime createdAt, LocalDateTime updatedAt, String productImageUrl) {
+    public CartItemEntity(Long id, CartEntity cart, Long productId, String productStrId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal unitPrice, BigDecimal mrpPrice, Integer quantity, String customFieldsJson, LocalDateTime createdAt, LocalDateTime updatedAt, String productImageUrl) {
         this.id = id;
         this.cart = cart;
         this.productId = productId;
+        this.productStrId = productStrId;
         this.variantId = variantId;
         this.sku = sku;
         this.selectedColor = selectedColor;
@@ -96,6 +101,14 @@ public class CartItemEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getProductStrId() {
+        return productStrId;
+    }
+
+    public void setProductStrId(String productStrId) {
+        this.productStrId = productStrId;
     }
 
     public CartEntity getCart() {

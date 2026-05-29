@@ -2,14 +2,8 @@ package com.artezo.service.serviceImpl;
 
 import com.artezo.dto.request.AddToCartRequest;
 import com.artezo.dto.response.CartResponse;
-import com.artezo.entity.CartEntity;
-import com.artezo.entity.CartItemEntity;
-import com.artezo.entity.UserEntity;
-import com.artezo.entity.WishlistItemEntity;
-import com.artezo.repository.CartItemRepository;
-import com.artezo.repository.CartRepository;
-import com.artezo.repository.UserRepository;
-import com.artezo.repository.WishlistItemRepository;
+import com.artezo.entity.*;
+import com.artezo.repository.*;
 import com.artezo.service.CartService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +24,18 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final WishlistItemRepository wishlistItemRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+
 
     public CartServiceImpl(CartRepository cartRepository,
                            CartItemRepository cartItemRepository,
                            WishlistItemRepository wishlistItemRepository,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,ProductRepository productRepository) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.wishlistItemRepository = wishlistItemRepository;
         this.userRepository = userRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -51,6 +48,12 @@ public class CartServiceImpl implements CartService {
         Optional<CartItemEntity> existing = cartItemRepository
                 .findByCart_IdAndProductIdAndVariantId(cart.getId(), request.getProductId(), request.getVariantId());
 
+        // Inside addToCart(), before building CartItemEntity
+        String productStrId = productRepository.findById(request.getProductId())
+                .map(ProductEntity::getProductStrId)
+                .orElseThrow(() -> new RuntimeException("Product not found: " + request.getProductId()));
+
+
         if (existing.isPresent()) {
             CartItemEntity item = existing.get();
             item.setQuantity(item.getQuantity() + (request.getQuantity() != null ? request.getQuantity() : 1));
@@ -60,6 +63,7 @@ public class CartServiceImpl implements CartService {
             CartItemEntity newItem = CartItemEntity.builder()
                     .cart(cart)
                     .productId(request.getProductId())
+                    .productStrId(productStrId)   // ← add this
                     .variantId(request.getVariantId())
                     .sku(request.getSku())
                     .selectedColor(request.getSelectedColor())
@@ -254,6 +258,7 @@ public class CartServiceImpl implements CartService {
                     return CartResponse.CartItemResponse.builder()
                             .itemId(item.getId())
                             .productId(item.getProductId())
+                            .productStrId(item.getProductStrId())
                             .variantId(item.getVariantId())
                             .sku(item.getSku())
                             .selectedColor(item.getSelectedColor())
