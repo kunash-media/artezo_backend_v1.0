@@ -26,7 +26,7 @@ public class ReviewController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ReviewResponseDto> createReview(
-            @RequestParam("productId") Long productId,
+            @RequestParam("productPrimeId") Long productPrimeId,
             @RequestParam("userId") Long userId,
             @RequestParam("rating") Integer rating,
             @RequestParam(value = "comment", required = false) String comment,
@@ -36,7 +36,7 @@ public class ReviewController {
             @RequestPart(value = "videos", required = false) MultipartFile videos) {
 
         System.out.println("🔴 CONTROLLER - Received request:");
-        System.out.println("   productId: " + productId);
+        System.out.println("   productPrimeId: " + productPrimeId);
         System.out.println("   userId: " + userId);
         System.out.println("   orderId: " + orderId);
         System.out.println("   orderItemId: " + orderItemId);
@@ -46,7 +46,7 @@ public class ReviewController {
         System.out.println("   videos: " + (videos != null ? videos.getOriginalFilename() : "null"));
 
         ReviewRequestDto requestDto = new ReviewRequestDto();
-        requestDto.setProductId(productId);
+        requestDto.setProductId(productPrimeId);
         requestDto.setUserId(userId);
         requestDto.setRating(rating);
         requestDto.setComment(comment);
@@ -69,7 +69,7 @@ public class ReviewController {
     @PostMapping("/base64")
     public ResponseEntity<ReviewResponseDto> createReviewWithBase64(@Valid @RequestBody ReviewRequestDto requestDto) {
         System.out.println("🔴 CONTROLLER - Base64 request:");
-        System.out.println("   productId: " + requestDto.getProductId());
+        System.out.println("   productPrimeId: " + requestDto.getProductId());
         System.out.println("   userId: " + requestDto.getUserId());
         System.out.println("   rating: " + requestDto.getRating());
         System.out.println("   comment: " + requestDto.getComment());
@@ -90,9 +90,9 @@ public class ReviewController {
     }
 
     // Get all reviews for a product (PUBLIC - only approved reviews)
-    @GetMapping("/product/{productId}")
-    public ResponseEntity<List<ReviewResponseDto>> getReviewsByProduct(@PathVariable Long productId) {
-        List<ReviewResponseDto> reviews = reviewService.getReviewsByProduct(productId);
+    @GetMapping("/product/{productPrimeId}")
+    public ResponseEntity<List<ReviewResponseDto>> getReviewsByProduct(@PathVariable Long productPrimeId) {
+        List<ReviewResponseDto> reviews = reviewService.getReviewsByProduct(productPrimeId);
         return ResponseEntity.ok(reviews);
     }
 
@@ -104,23 +104,23 @@ public class ReviewController {
     }
 
     // Get recent reviews (limited to 10) - PUBLIC only approved
-    @GetMapping("/product/{productId}/recent")
-    public ResponseEntity<List<ReviewResponseDto>> getRecentReviews(@PathVariable Long productId) {
-        List<ReviewResponseDto> reviews = reviewService.getRecentReviews(productId);
+    @GetMapping("/product/{productPrimeId}/recent")
+    public ResponseEntity<List<ReviewResponseDto>> getRecentReviews(@PathVariable Long productPrimeId) {
+        List<ReviewResponseDto> reviews = reviewService.getRecentReviews(productPrimeId);
         return ResponseEntity.ok(reviews);
     }
 
     // Get reviews with images only - PUBLIC only approved
-    @GetMapping("/product/{productId}/with-images")
-    public ResponseEntity<List<ReviewResponseDto>> getReviewsWithImages(@PathVariable Long productId) {
-        List<ReviewResponseDto> reviews = reviewService.getReviewsWithImages(productId);
+    @GetMapping("/product/{productPrimeId}/with-images")
+    public ResponseEntity<List<ReviewResponseDto>> getReviewsWithImages(@PathVariable Long productPrimeId) {
+        List<ReviewResponseDto> reviews = reviewService.getReviewsWithImages(productPrimeId);
         return ResponseEntity.ok(reviews);
     }
 
     // Get reviews with videos only - PUBLIC only approved
-    @GetMapping("/product/{productId}/with-videos")
-    public ResponseEntity<List<ReviewResponseDto>> getReviewsWithVideos(@PathVariable Long productId) {
-        List<ReviewResponseDto> reviews = reviewService.getReviewsWithVideos(productId);
+    @GetMapping("/product/{productPrimeId}/with-videos")
+    public ResponseEntity<List<ReviewResponseDto>> getReviewsWithVideos(@PathVariable Long productPrimeId) {
+        List<ReviewResponseDto> reviews = reviewService.getReviewsWithVideos(productPrimeId);
         return ResponseEntity.ok(reviews);
     }
 
@@ -230,9 +230,9 @@ public class ReviewController {
     // ==================== REVIEW SUMMARY ====================
 
     // Get product review summary (average rating, total reviews, distribution)
-    @GetMapping("/product/{productId}/summary")
-    public ResponseEntity<Map<String, Object>> getProductReviewSummary(@PathVariable Long productId) {
-        Map<String, Object> summary = reviewService.getProductReviewSummary(productId);
+    @GetMapping("/product/{productPrimeId}/summary")
+    public ResponseEntity<Map<String, Object>> getProductReviewSummary(@PathVariable Long productPrimeId) {
+        Map<String, Object> summary = reviewService.getProductReviewSummary(productPrimeId);
         return ResponseEntity.ok(summary);
     }
 
@@ -290,8 +290,5 @@ public class ReviewController {
         List<ReviewResponseDto> reviews = reviewService.bulkApproveReviews(reviewIds);
         return ResponseEntity.ok(reviews);
     }
-
-
-
 
 }

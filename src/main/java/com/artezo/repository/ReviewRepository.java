@@ -12,9 +12,14 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
 
     // ==================== BASIC QUERIES ====================
 
-    List<ReviewEntity> findByProductId(Long productId);
-    List<ReviewEntity> findByUserId(Long userId);
-    List<ReviewEntity> findByProductIdAndRating(Long productId, Integer rating);
+    // ✅ CORRECT - navigate through product relationship
+    List<ReviewEntity> findByProduct_ProductPrimeId(Long productId);
+
+    // ✅ For userId (direct field exists)
+    List<ReviewEntity> findByUser_UserId(Long userId);
+
+    // ✅ CORRECT - navigate through product and rating
+    List<ReviewEntity> findByProduct_ProductPrimeIdAndRating(Long productId, Integer rating);
 
     @Query("SELECT COUNT(r) > 0 FROM ReviewEntity r WHERE r.product.productPrimeId = :productId AND r.user.userId = :userId")
     boolean existsByProductIdAndUserId(@Param("productId") Long productId, @Param("userId") Long userId);
@@ -33,9 +38,11 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
     @Query("SELECT COUNT(r) FROM ReviewEntity r WHERE r.product.productPrimeId = :productId AND r.videoData IS NOT NULL")
     long countByProductIdAndHasVideo(@Param("productId") Long productId);
 
-    Long countByProductId(Long productId);
+    // ✅ CORRECT - count by product
+    Long countByProduct_ProductPrimeId(Long productId);
 
-    void deleteByProductId(Long productId);
+    // ✅ CORRECT - delete by product
+    void deleteByProduct_ProductPrimeId(Long productId);
 
     // ==================== LIST REVIEWS QUERIES ====================
 
@@ -104,4 +111,3 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
         return existsByProductIdAndUserId(productId, userId);
     }
 }
-

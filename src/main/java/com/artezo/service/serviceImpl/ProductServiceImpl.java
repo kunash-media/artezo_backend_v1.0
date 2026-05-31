@@ -2001,5 +2001,80 @@ public class ProductServiceImpl implements ProductService {
 
         return dimensionsList;
     }
-// ========== END OF NEW METHOD ==========
+    // ========== END OF NEW METHOD ==========
+
+
+
+    @Override
+    public Page<ProductCategoryResponse> getTrendingProducts(int page, int size) {
+        // Validate inputs
+        if (size > 50) size = 50;
+        if (page < 0) page = 0;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "productPrimeId"));
+
+        // Fetch trending products
+        Page<ProductEntity> productPage = productRepository.findAllTrendingProducts(pageable);
+
+        // Convert to DTO using your existing mapping style
+        return productPage.map(this::mapToProductCategoryResponse);
+    }
+
+    private ProductCategoryResponse mapToProductCategoryResponse(ProductEntity e) {
+        ProductCategoryResponse dto = new ProductCategoryResponse();
+
+        // Set basic fields
+        dto.setProductPrimeId(e.getProductPrimeId());
+        dto.setProductStrId(e.getProductStrId());
+        dto.setProductName(e.getProductName());
+        dto.setBrandName(e.getBrandName());
+        dto.setProductCategory(e.getProductCategory());
+        dto.setProductSubCategory(e.getProductSubCategory());
+
+        // Set boolean flags
+        dto.setIsCustomizable(e.getIsCustomizable());
+        dto.setIsDeleted(e.getIsDeleted());
+        dto.setIsUnderTrendCategory(e.getUnderTrendCategory());
+
+        // Set variant/price fields
+        dto.setCurrentSku(e.getCurrentSku());
+        dto.setSelectedColor(e.getSelectedColor());
+        dto.setCurrentSellingPrice(e.getCurrentSellingPrice());
+        dto.setCurrentMrpPrice(e.getCurrentMrpPrice());
+        dto.setCurrentStock(e.getCurrentStock());
+
+        // Set image URL using your helper method (reuse same pattern)
+        if (e.getMainImageData() != null && e.getMainImageData().length > 0) {
+            dto.setMainImage(mainImageUrl(e.getProductPrimeId()));
+        }
+
+        // Parse JSON fields for globalTags and addonKeys
+        if (e.getGlobalTags() != null && !e.getGlobalTags().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                List<String> tags = mapper.readValue(e.getGlobalTags(), new TypeReference<List<String>>() {});
+                dto.setGlobalTags(tags);
+            } catch (Exception ex) {
+                log.error("Error parsing globalTags for product: {}", e.getProductStrId(), ex);
+                dto.setGlobalTags(new ArrayList<>());
+            }
+        } else {
+            dto.setGlobalTags(new ArrayList<>());
+        }
+
+        if (e.getAddonKeys() != null && !e.getAddonKeys().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                List<String> addons = mapper.readValue(e.getAddonKeys(), new TypeReference<List<String>>() {});
+                dto.setAddonKeys(addons);
+            } catch (Exception ex) {
+                log.error("Error parsing addonKeys for product: {}", e.getProductStrId(), ex);
+                dto.setAddonKeys(new ArrayList<>());
+            }
+        } else {
+            dto.setAddonKeys(new ArrayList<>());
+        }
+
+        return dto;
+    }
 }

@@ -133,4 +133,20 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     Optional<BigDecimal> findMrpPriceByProductId(@Param("productId") Long productId);
 
 
+    // Add this method - fetches only trending products with pagination
+    @Query("SELECT p FROM ProductEntity p " +
+            "LEFT JOIN FETCH p.variants v " +
+            "WHERE p.underTrendCategory = true " +
+            "AND p.isDeleted = false " +
+            "AND p.currentStock > 0 " +
+            "ORDER BY p.productPrimeId DESC")
+    Page<ProductEntity> findAllTrendingProductsWithVariants(Pageable pageable);
+
+    // Alternative without variants (if you don't need variants eagerly)
+    @Query("SELECT p FROM ProductEntity p " +
+            "WHERE p.underTrendCategory = true " +
+            "AND p.isDeleted = false " +
+            "AND p.currentStock > 0 " +
+            "ORDER BY p.productPrimeId DESC")
+    Page<ProductEntity> findAllTrendingProducts(Pageable pageable);
 }

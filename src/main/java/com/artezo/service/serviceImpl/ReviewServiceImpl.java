@@ -335,8 +335,8 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<ReviewResponseDto> getReviewsByProduct(Long productId) {
-        List<ReviewEntity> reviews = reviewRepository.findByProductId(productId);
+    public List<ReviewResponseDto> getReviewsByProduct(Long productPrimeId) {
+        List<ReviewEntity> reviews = reviewRepository.findByProduct_ProductPrimeId(productPrimeId);
         return reviews.stream()
                 .map(ReviewResponseDto::fromEntity)
                 .toList();
@@ -344,7 +344,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public List<ReviewResponseDto> getReviewsByUser(Long userId) {
-        List<ReviewEntity> reviews = reviewRepository.findByUserId(userId);
+        List<ReviewEntity> reviews = reviewRepository.findByUser_UserId(userId);
         return reviews.stream()
                 .map(ReviewResponseDto::fromEntity)
                 .toList();
@@ -385,12 +385,12 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public Map<String, Object> getProductReviewSummary(Long productId) {
+    public Map<String, Object> getProductReviewSummary(Long productPrimeId) {
         Map<String, Object> summary = new HashMap<>();
-        Double avgRating = reviewRepository.getAverageRatingForProduct(productId);
-        Long reviewCount = reviewRepository.getReviewCountForProduct(productId);
+        Double avgRating = reviewRepository.getAverageRatingForProduct(productPrimeId);
+        Long reviewCount = reviewRepository.getReviewCountForProduct(productPrimeId);
 
-        summary.put("productId", productId);
+        summary.put("productPrimeId", productPrimeId);
         summary.put("averageRating", avgRating != null ? Math.round(avgRating * 10) / 10.0 : 0.0);
         summary.put("totalReviews", reviewCount != null ? reviewCount : 0);
 
@@ -446,8 +446,8 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<ReviewResponseDto> getRecentReviews(Long productId) {
-        List<ReviewEntity> reviews = reviewRepository.findTopRecentReviews(productId);
+    public List<ReviewResponseDto> getRecentReviews(Long productPrimeId) {
+        List<ReviewEntity> reviews = reviewRepository.findTopRecentReviews(productPrimeId);
         return reviews.stream()
                 .limit(10)
                 .map(ReviewResponseDto::fromEntity)
@@ -455,16 +455,16 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     @Override
-    public List<ReviewResponseDto> getReviewsWithImages(Long productId) {
-        List<ReviewEntity> reviews = reviewRepository.findReviewsWithImages(productId);
+    public List<ReviewResponseDto> getReviewsWithImages(Long productPrimeId) {
+        List<ReviewEntity> reviews = reviewRepository.findReviewsWithImages(productPrimeId);
         return reviews.stream()
                 .map(ReviewResponseDto::fromEntity)
                 .toList();
     }
 
     @Override
-    public List<ReviewResponseDto> getReviewsWithVideos(Long productId) {
-        List<ReviewEntity> reviews = reviewRepository.findReviewsWithVideos(productId);
+    public List<ReviewResponseDto> getReviewsWithVideos(Long productPrimeId) {
+        List<ReviewEntity> reviews = reviewRepository.findReviewsWithVideos(productPrimeId);
         return reviews.stream()
                 .map(ReviewResponseDto::fromEntity)
                 .toList();

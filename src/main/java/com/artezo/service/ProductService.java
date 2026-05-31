@@ -84,4 +84,6 @@ public interface ProductService {
     Map<String, Object> getVariantExchangeDetails(Long productPrimeId, String variantId);
     List<Map<String, Object>> getAllVariantsDimensions(Long productPrimeId);
 
+
+    Page<ProductCategoryResponse> getTrendingProducts(int page, int size);
 }

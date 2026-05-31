@@ -742,7 +742,8 @@ public class ProductController {
         log.info("Fetching exchange details for product: {}, variant: {}", productPrimeId, variantId);
         return ResponseEntity.ok(productService.getVariantExchangeDetails(productPrimeId, variantId));
     }
-// ========== END OF NEW ENDPOINT ==========
+    // ========== END OF NEW ENDPOINT ==========
+
 
     // ========== NEW ENDPOINT ADDED - Saare variants ki dimensions list ==========
     @GetMapping("/{productPrimeId}/variants/dimensions")
@@ -752,5 +753,21 @@ public class ProductController {
         log.info("Fetching all variants dimensions for product: {}", productPrimeId);
         return ResponseEntity.ok(productService.getAllVariantsDimensions(productPrimeId));
     }
-// ========== END OF NEW ENDPOINT ==========
+    // ========== END OF NEW ENDPOINT ==========
+
+
+    @GetMapping("/get-trending")
+    public ResponseEntity<Page<ProductCategoryResponse>> getTrendingProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<ProductCategoryResponse> trendingProducts = productService.getTrendingProducts(page, size);
+
+        if (trendingProducts.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(trendingProducts);
+    }
+
 }
