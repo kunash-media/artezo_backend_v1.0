@@ -294,6 +294,8 @@ public class ProductServiceImpl implements ProductService {
         if (request.getBrandName() != null) entity.setBrandName(request.getBrandName());
         if (request.getProductCategory() != null) entity.setProductCategory(request.getProductCategory());
         if (request.getProductSubCategory() != null) entity.setProductSubCategory(request.getProductSubCategory());
+        if (request.getProductSize() != null) entity.setProductSize(request.getProductSize());
+
         if (request.getYoutubeUrl() != null) entity.setYoutubeUrl(request.getYoutubeUrl());
 
         // ── Boolean flags — null-safe ──
@@ -727,6 +729,7 @@ public class ProductServiceImpl implements ProductService {
         e.setBrandName(r.getBrandName());
         e.setProductCategory(r.getProductCategory());
         e.setProductSubCategory(r.getProductSubCategory());
+        e.setProductSize(r.getProductSize());
         e.setHasVariants(r.getHasVariants());
         e.setIsCustomizable(r.getIsCustomizable());
         e.setIsExchange(r.getIsExchange());
@@ -761,6 +764,7 @@ public class ProductServiceImpl implements ProductService {
                 e.setSpecifications("{}");
             }
         }
+
 
         if (r.getCustomFields() != null) {
             try {
@@ -849,6 +853,7 @@ public class ProductServiceImpl implements ProductService {
         dto.setBrandName(e.getBrandName());
         dto.setProductCategory(e.getProductCategory());
         dto.setProductSubCategory(e.getProductSubCategory());
+        dto.setProductSize(e.getProductSize());
 
         dto.setIsDeleted(e.getIsDeleted());
         dto.setHasVariants(e.getHasVariants());
@@ -868,6 +873,12 @@ public class ProductServiceImpl implements ProductService {
         dto.setLength(e.getLength());
         dto.setHeight(e.getHeight());
         dto.setWeight(e.getWeight());
+
+
+        // Just one line — no deserialization needed:
+        dto.setAdditionalInfo(
+                e.getAdditionalInfo() != null ? e.getAdditionalInfo() : "{}"
+        );
 
         if (e.getMainImageData() != null && e.getMainImageData().length > 0) {
             dto.setMainImage(mainImageUrl(e.getProductPrimeId()));
@@ -1028,6 +1039,8 @@ public class ProductServiceImpl implements ProductService {
         if (e.getAboutItem() != null) {
             dto.setAboutItem(List.of(e.getAboutItem().split("\n")));
         }
+
+
 
         // Installation steps
         List<InstallationStepEntity> steps = installationStepRepository
@@ -1447,6 +1460,10 @@ public class ProductServiceImpl implements ProductService {
 
                     // Basic optional
                     dto.setProductSubCategory(nullIfEmpty(subCategory));
+
+                    //SIZE PATCH ADDED
+                    dto.setProductSize(dto.getProductSize());
+
                     dto.setBrandName(nullIfEmpty(brand));
                     dto.setCurrentSellingPrice(sellingPrice > 0 ? sellingPrice : null);
                     dto.setCurrentMrpPrice(mrpPrice > 0 ? mrpPrice : null);

@@ -29,7 +29,7 @@ public class WishlistItemEntity {
     private String variantId;
 
     // snapshot fields
-    @Column(name = "sku", nullable = false)
+    @Column(name = "sku")
     private String sku;
 
     @Column(name = "selected_color")

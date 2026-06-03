@@ -22,4 +22,20 @@ public interface WishlistItemRepository extends JpaRepository<WishlistItemEntity
 
     @Query("SELECT COUNT(wi) FROM WishlistItemEntity wi WHERE wi.wishlist.user.userId = :userId")
     int countByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT COUNT(wi) > 0 FROM WishlistItemEntity wi " +
+            "WHERE wi.wishlist.user.userId = :userId " +
+            "AND wi.productId = :productId " +
+            "AND (wi.variantId = :variantId OR (wi.variantId IS NULL AND :variantId IS NULL))")
+    boolean existsByUserIdAndProductIdAndVariantId(
+            @Param("userId") Long userId,
+            @Param("productId") Long productId,
+            @Param("variantId") String variantId);
+
+    @Query("SELECT COUNT(wi) > 0 FROM WishlistItemEntity wi " +
+            "WHERE wi.wishlist.user.userId = :userId " +
+            "AND wi.productId = :productId")
+    boolean existsByUserIdAndProductId(
+            @Param("userId") Long userId,
+            @Param("productId") Long productId);
 }

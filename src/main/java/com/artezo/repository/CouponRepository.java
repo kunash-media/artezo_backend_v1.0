@@ -38,7 +38,17 @@ public interface CouponRepository extends JpaRepository<CouponEntity, Long> {
         LOGGER.info(logMessage.toString());
     }
 
+//    List<CouponEntity> findByUser_UserId(Long userId);
 
-    List<CouponEntity> findByUser_UserId(Long userId);
+    @Query("SELECT c FROM CouponEntity c JOIN c.allowedUsers u WHERE u.userId = :userId AND c.isActive = true")
+    List<CouponEntity> findActiveCouponsForUser(@Param("userId") Long userId);
 
+    @Query("SELECT c FROM CouponEntity c JOIN c.products p WHERE p.productPrimeId = :productId AND c.isActive = true")
+    List<CouponEntity> findCouponsByProduct(@Param("productId") Long productId);
+
+    @Query("SELECT c FROM CouponEntity c WHERE c.categoryName = :categoryName AND c.isActive = true")
+    List<CouponEntity> findByCategoryName(@Param("categoryName") String categoryName);
+
+    @Query("SELECT c FROM CouponEntity c WHERE c.validTo < :now")
+    List<CouponEntity> findExpiredCoupons(@Param("now") LocalDateTime now);
 }

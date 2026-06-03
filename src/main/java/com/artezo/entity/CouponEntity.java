@@ -1,15 +1,13 @@
 package com.artezo.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "coupons")
 public class CouponEntity {
-
-    private static final Logger LOGGER = Logger.getLogger(CouponEntity.class.getName());
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +19,7 @@ public class CouponEntity {
     private String description;
 
     @Column(name = "discount_type")
-    private String discountType;
+    private String discountType; // "PERCENTAGE" or "FLAT"
 
     @Column(name = "discount_value")
     private Double discountValue;
@@ -62,212 +60,96 @@ public class CouponEntity {
     @Column(name = "coupon_used")
     private Boolean couponUsed = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private UserEntity user;
+    // NEW: coupon type
+    @Column(name = "coupon_type")
+    private String couponType;
 
+    // NEW: category name
+    @Column(name = "category_name")
+    private String categoryName;
 
-    public CouponEntity() {
-        LOGGER.fine("CouponEntity empty constructor called");
-    }
+    // NEW: many products se link (Type 1 — specific products)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "coupon_products",
+            joinColumns = @JoinColumn(name = "coupon_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    private List<ProductEntity> products = new ArrayList<>();
 
-    public CouponEntity(Long couponId, String couponCode, String description, String discountType,
-                        Double discountValue, Double minOrderAmount, Double maxDiscountAmount,
-                        LocalDateTime validFrom, LocalDateTime validTo, Integer usageLimit,
-                        Integer usagePerCustomer, Integer usedCount, Boolean isActive,
-                        Boolean excludeSaleItems, Boolean freeShipping, LocalDateTime createdAt,
-                        Boolean couponUsed, UserEntity user) {
-        this.couponId = couponId;
-        this.couponCode = couponCode;
-        this.description = description;
-        this.discountType = discountType;
-        this.discountValue = discountValue;
-        this.minOrderAmount = minOrderAmount;
-        this.maxDiscountAmount = maxDiscountAmount;
-        this.validFrom = validFrom;
-        this.validTo = validTo;
-        this.usageLimit = usageLimit;
-        this.usagePerCustomer = usagePerCustomer;
-        this.usedCount = usedCount;
-        this.isActive = isActive;
-        this.excludeSaleItems = excludeSaleItems;
-        this.freeShipping = freeShipping;
-        this.createdAt = createdAt;
-        this.couponUsed = couponUsed;
-        this.user = user;
-    }
+    // NEW: allowed users list
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "coupon_allowed_users",
+            joinColumns = @JoinColumn(name = "coupon_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<UserEntity> allowedUsers = new ArrayList<>();
 
-    public Long getCouponId() {
-        return couponId;
-    }
+    // ---- Constructors ----
+    public CouponEntity() {}
 
-    public void setCouponId(Long couponId) {
-        this.couponId = couponId;
-    }
+    // ---- Getters & Setters ----
+    public Long getCouponId() { return couponId; }
+    public void setCouponId(Long couponId) { this.couponId = couponId; }
 
+    public String getCouponCode() { return couponCode; }
+    public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
 
-    public String getCouponCode() {
-        return couponCode;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setCouponCode(String couponCode) {
-        this.couponCode = couponCode;
-    }
+    public String getDiscountType() { return discountType; }
+    public void setDiscountType(String discountType) { this.discountType = discountType; }
 
-    public String getDescription() {
-        LOGGER.finest("Getting description for coupon: " + couponCode);
-        return description;
-    }
+    public Double getDiscountValue() { return discountValue; }
+    public void setDiscountValue(Double discountValue) { this.discountValue = discountValue; }
 
-    public void setDescription(String description) {
-        LOGGER.fine("Setting description for coupon " + couponCode + " to: " + description);
-        this.description = description;
-    }
+    public Double getMinOrderAmount() { return minOrderAmount; }
+    public void setMinOrderAmount(Double minOrderAmount) { this.minOrderAmount = minOrderAmount; }
 
-    public String getDiscountType() {
-        LOGGER.finest("Getting discountType for coupon: " + couponCode);
-        return discountType;
-    }
+    public Double getMaxDiscountAmount() { return maxDiscountAmount; }
+    public void setMaxDiscountAmount(Double maxDiscountAmount) { this.maxDiscountAmount = maxDiscountAmount; }
 
-    public void setDiscountType(String discountType) {
-        LOGGER.fine("Setting discountType for coupon " + couponCode + " to: " + discountType);
-        this.discountType = discountType;
-    }
+    public LocalDateTime getValidFrom() { return validFrom; }
+    public void setValidFrom(LocalDateTime validFrom) { this.validFrom = validFrom; }
 
-    public Double getDiscountValue() {
-        LOGGER.finest("Getting discountValue for coupon: " + couponCode);
-        return discountValue;
-    }
+    public LocalDateTime getValidTo() { return validTo; }
+    public void setValidTo(LocalDateTime validTo) { this.validTo = validTo; }
 
-    public void setDiscountValue(Double discountValue) {
-        LOGGER.fine("Setting discountValue for coupon " + couponCode + " to: " + discountValue);
-        this.discountValue = discountValue;
-    }
+    public Integer getUsageLimit() { return usageLimit; }
+    public void setUsageLimit(Integer usageLimit) { this.usageLimit = usageLimit; }
 
-    public Double getMinOrderAmount() {
-        LOGGER.finest("Getting minOrderAmount for coupon: " + couponCode);
-        return minOrderAmount;
-    }
+    public Integer getUsagePerCustomer() { return usagePerCustomer; }
+    public void setUsagePerCustomer(Integer usagePerCustomer) { this.usagePerCustomer = usagePerCustomer; }
 
-    public void setMinOrderAmount(Double minOrderAmount) {
-        LOGGER.fine("Setting minOrderAmount for coupon " + couponCode + " to: " + minOrderAmount);
-        this.minOrderAmount = minOrderAmount;
-    }
+    public Integer getUsedCount() { return usedCount; }
+    public void setUsedCount(Integer usedCount) { this.usedCount = usedCount; }
 
-    public Double getMaxDiscountAmount() {
-        LOGGER.finest("Getting maxDiscountAmount for coupon: " + couponCode);
-        return maxDiscountAmount;
-    }
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 
-    public void setMaxDiscountAmount(Double maxDiscountAmount) {
-        LOGGER.fine("Setting maxDiscountAmount for coupon " + couponCode + " to: " + maxDiscountAmount);
-        this.maxDiscountAmount = maxDiscountAmount;
-    }
+    public Boolean getExcludeSaleItems() { return excludeSaleItems; }
+    public void setExcludeSaleItems(Boolean excludeSaleItems) { this.excludeSaleItems = excludeSaleItems; }
 
-    public LocalDateTime getValidFrom() {
-        LOGGER.finest("Getting validFrom for coupon: " + couponCode);
-        return validFrom;
-    }
+    public Boolean getFreeShipping() { return freeShipping; }
+    public void setFreeShipping(Boolean freeShipping) { this.freeShipping = freeShipping; }
 
-    public void setValidFrom(LocalDateTime validFrom) {
-        LOGGER.fine("Setting validFrom for coupon " + couponCode + " to: " + validFrom);
-        this.validFrom = validFrom;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public LocalDateTime getValidTo() {
-        LOGGER.finest("Getting validTo for coupon: " + couponCode);
-        return validTo;
-    }
+    public Boolean getCouponUsed() { return couponUsed; }
+    public void setCouponUsed(Boolean couponUsed) { this.couponUsed = couponUsed; }
 
-    public void setValidTo(LocalDateTime validTo) {
-        LOGGER.fine("Setting validTo for coupon " + couponCode + " to: " + validTo);
-        this.validTo = validTo;
-    }
+    public String getCouponType() { return couponType; }
+    public void setCouponType(String couponType) { this.couponType = couponType; }
 
-    public Integer getUsageLimit() {
-        LOGGER.finest("Getting usageLimit for coupon: " + couponCode);
-        return usageLimit;
-    }
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
 
-    public void setUsageLimit(Integer usageLimit) {
-        LOGGER.fine("Setting usageLimit for coupon " + couponCode + " to: " + usageLimit);
-        this.usageLimit = usageLimit;
-    }
+    public List<ProductEntity> getProducts() { return products; }
+    public void setProducts(List<ProductEntity> products) { this.products = products; }
 
-    public Integer getUsagePerCustomer() {
-        LOGGER.finest("Getting usagePerCustomer for coupon: " + couponCode);
-        return usagePerCustomer;
-    }
-
-    public void setUsagePerCustomer(Integer usagePerCustomer) {
-        LOGGER.fine("Setting usagePerCustomer for coupon " + couponCode + " to: " + usagePerCustomer);
-        this.usagePerCustomer = usagePerCustomer;
-    }
-
-    public Integer getUsedCount() {
-        LOGGER.finest("Getting usedCount for coupon: " + couponCode);
-        return usedCount;
-    }
-
-    public void setUsedCount(Integer usedCount) {
-        LOGGER.fine("Setting usedCount for coupon " + couponCode + " to: " + usedCount);
-        this.usedCount = usedCount;
-    }
-
-    public Boolean getIsActive() {
-        LOGGER.finest("Getting isActive for coupon: " + couponCode);
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        LOGGER.fine("Setting isActive for coupon " + couponCode + " to: " + isActive);
-        this.isActive = isActive;
-    }
-
-    public Boolean getExcludeSaleItems() {
-        LOGGER.finest("Getting excludeSaleItems for coupon: " + couponCode);
-        return excludeSaleItems;
-    }
-
-    public void setExcludeSaleItems(Boolean excludeSaleItems) {
-        LOGGER.fine("Setting excludeSaleItems for coupon " + couponCode + " to: " + excludeSaleItems);
-        this.excludeSaleItems = excludeSaleItems;
-    }
-
-    public Boolean getFreeShipping() {
-        LOGGER.finest("Getting freeShipping for coupon: " + couponCode);
-        return freeShipping;
-    }
-
-    public void setFreeShipping(Boolean freeShipping) {
-        LOGGER.fine("Setting freeShipping for coupon " + couponCode + " to: " + freeShipping);
-        this.freeShipping = freeShipping;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        LOGGER.finest("Getting createdAt for coupon: " + couponCode);
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        LOGGER.fine("Setting createdAt for coupon " + couponCode + " to: " + createdAt);
-        this.createdAt = createdAt;
-    }
-
-    public Boolean getCouponUsed() {
-        return couponUsed;
-    }
-
-    public void setCouponUsed(Boolean couponUsed) {
-        this.couponUsed = couponUsed;
-    }
-
-
-    public UserEntity getUser() {
-        return user;
-    }
-
-    public void setUser(UserEntity user) {
-        this.user = user;
-    }
+    public List<UserEntity> getAllowedUsers() { return allowedUsers; }
+    public void setAllowedUsers(List<UserEntity> allowedUsers) { this.allowedUsers = allowedUsers; }
 }

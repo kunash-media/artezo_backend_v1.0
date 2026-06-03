@@ -3,13 +3,18 @@ package com.artezo.service.serviceImpl;
 import com.artezo.dto.request.CouponRequestDto;
 import com.artezo.dto.response.CouponResponseDto;
 import com.artezo.entity.CouponEntity;
+import com.artezo.entity.CouponUserUsage;
+import com.artezo.entity.ProductEntity;
 import com.artezo.entity.UserEntity;
 import com.artezo.repository.CouponRepository;
+import com.artezo.repository.CouponUserUsageRepository;
+import com.artezo.repository.ProductRepository;
 import com.artezo.repository.UserRepository;
 import com.artezo.service.CouponService;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
@@ -21,26 +26,43 @@ public class CouponServiceImpl implements CouponService {
 
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final CouponUserUsageRepository usageRepository;
 
-    public CouponServiceImpl(CouponRepository couponRepository, UserRepository userRepository) {
-        LOGGER.info("Initializing CouponServiceImpl");
+    public CouponServiceImpl(CouponRepository couponRepository,
+                             UserRepository userRepository,
+                             ProductRepository productRepository,
+                             CouponUserUsageRepository usageRepository) {
         this.couponRepository = couponRepository;
         this.userRepository = userRepository;
-        LOGGER.info("CouponServiceImpl initialized successfully");
+        this.productRepository = productRepository;
+        this.usageRepository = usageRepository;
     }
 
     @Override
+    @Transactional
     public CouponResponseDto createCoupon(CouponRequestDto requestDto) {
-        LOGGER.info("Creating new coupon with code: " + requestDto.getCouponCode());
+        LOGGER.info("Creating coupon: " + requestDto.getCouponCode());
 
         if (couponRepository.existsByCouponCode(requestDto.getCouponCode())) {
-            LOGGER.warning("Coupon code already exists: " + requestDto.getCouponCode());
-            throw new RuntimeException("Coupon with code " + requestDto.getCouponCode() + " already exists");
+            throw new RuntimeException("Coupon already exists: " + requestDto.getCouponCode());
+        }
+
+        if (requestDto.getCouponCode() == null || requestDto.getCouponCode().trim().isEmpty()) {
+            throw new RuntimeException("Coupon code cannot be empty");
+        }
+        if (requestDto.getDiscountValue() == null || requestDto.getDiscountValue() <= 0) {
+            throw new RuntimeException("Discount value must be greater than 0");
+        }
+        if (requestDto.getValidFrom() == null || requestDto.getValidTo() == null) {
+            throw new RuntimeException("Valid from and valid to dates are required");
+        }
+        if (requestDto.getValidFrom().isAfter(requestDto.getValidTo())) {
+            throw new RuntimeException("Valid from date cannot be after valid to date");
         }
 
         CouponEntity coupon = new CouponEntity();
-
-        coupon.setCouponCode(requestDto.getCouponCode());
+        coupon.setCouponCode(requestDto.getCouponCode().toUpperCase().trim());
         coupon.setDescription(requestDto.getDescription());
         coupon.setDiscountType(requestDto.getDiscountType());
         coupon.setDiscountValue(requestDto.getDiscountValue());
@@ -57,295 +79,240 @@ public class CouponServiceImpl implements CouponService {
         coupon.setCouponUsed(false);
         coupon.setCreatedAt(LocalDateTime.now());
 
-        // ✅ Set user if userId is provided
-        if (requestDto.getUserId() != null) {
-            UserEntity user = userRepository.findById(requestDto.getUserId())
-                    .orElseThrow(() -> {
-                        LOGGER.warning("User not found with ID: " + requestDto.getUserId());
-                        return new RuntimeException("User not found with ID: " + requestDto.getUserId());
-                    });
-            coupon.setUser(user);
-            LOGGER.fine("Linked coupon to userId: " + requestDto.getUserId());
-        } else {
-            LOGGER.fine("No userId provided — coupon created as global (not user-specific)");
+        coupon.setCouponType(requestDto.getCouponType());
+        coupon.setCategoryName(requestDto.getCategoryName());
+
+        if (requestDto.getProductIds() != null && !requestDto.getProductIds().isEmpty()) {
+            List<ProductEntity> products = productRepository.findAllById(requestDto.getProductIds());
+            coupon.setProducts(products);
         }
 
-        CouponEntity savedCoupon = couponRepository.save(coupon);
-        LOGGER.info("Coupon created successfully with couponId: " + savedCoupon.getCouponId() + ", code: " + savedCoupon.getCouponCode());
+        if (requestDto.getUserIds() != null && !requestDto.getUserIds().isEmpty()) {
+            List<UserEntity> users = userRepository.findAllById(requestDto.getUserIds());
+            coupon.setAllowedUsers(users);
+        }
 
-        return convertToResponseDto(savedCoupon);
+        CouponEntity saved = couponRepository.save(coupon);
+        LOGGER.info("Coupon created: " + saved.getCouponId());
+        return convertToResponseDto(saved);
     }
 
     @Override
+    @Transactional
     public CouponResponseDto getCouponById(Long couponId) {
-        LOGGER.info("Fetching coupon by couponId: " + couponId);
-
         CouponEntity coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> {
-                    LOGGER.warning("Coupon not found with couponId: " + couponId);
-                    return new RuntimeException("Coupon not found with couponId: " + couponId);
-                });
-
-        LOGGER.info("Coupon found with couponId: " + couponId + ", couponCode: " + coupon.getCouponCode());
-        LOGGER.fine("Converting coupon entity to response DTO");
-
+                .orElseThrow(() -> new RuntimeException("Coupon not found: " + couponId));
         return convertToResponseDto(coupon);
     }
 
     @Override
+    @Transactional
     public CouponResponseDto getCouponByCode(String couponCode) {
-        LOGGER.info("Fetching coupon by code: " + couponCode);
-
         CouponEntity coupon = couponRepository.findByCouponCode(couponCode)
-                .orElseThrow(() -> {
-                    LOGGER.warning("Coupon not found with code: " + couponCode);
-                    return new RuntimeException("Coupon not found with code: " + couponCode);
-                });
-
-        LOGGER.info("Coupon found with code: " + couponCode + ", couponId: " + coupon.getCouponCode());
-        LOGGER.fine("Converting coupon entity to response DTO");
-
+                .orElseThrow(() -> new RuntimeException("Coupon not found: " + couponCode));
         return convertToResponseDto(coupon);
     }
 
     @Override
+    @Transactional
     public List<CouponResponseDto> getAllCoupons() {
-        LOGGER.info("Fetching all coupons from database");
-
-        List<CouponEntity> coupons = couponRepository.findAll();
-        LOGGER.info("Found " + coupons.size() + " coupons in database");
-
-        LOGGER.fine("Converting " + coupons.size() + " coupons to response DTOs");
-        List<CouponResponseDto> responseList = coupons.stream()
+        return couponRepository.findAll().stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
-
-        LOGGER.fine("Successfully converted all coupons to response DTOs");
-
-        return responseList;
     }
 
     @Override
+    @Transactional
     public List<CouponResponseDto> getActiveCoupons() {
-        LOGGER.info("Fetching active coupons from database");
-
-        LocalDateTime now = LocalDateTime.now();
-        LOGGER.fine("Current date/time for active coupon check: " + now);
-
-        List<CouponEntity> activeCoupons = couponRepository.findActiveCoupons(now);
-        LOGGER.info("Found " + activeCoupons.size() + " active coupons");
-
-        LOGGER.fine("Converting " + activeCoupons.size() + " active coupons to response DTOs");
-        List<CouponResponseDto> responseList = activeCoupons.stream()
+        return couponRepository.findActiveCoupons(LocalDateTime.now()).stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
-
-        LOGGER.fine("Successfully converted active coupons to response DTOs");
-
-        return responseList;
     }
 
     @Override
+    @Transactional
     public CouponResponseDto updateCoupon(Long couponId, CouponRequestDto requestDto) {
-        LOGGER.info("Updating coupon with couponId: " + couponId);
-
         CouponEntity coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> {
-                    LOGGER.warning("Coupon not found with couponId: " + couponId);
-                    return new RuntimeException("Coupon not found with couponId: " + couponId);
-                });
+                .orElseThrow(() -> new RuntimeException("Coupon not found: " + couponId));
 
-        LOGGER.info("Found coupon to update with couponId: " + couponId + ", current code: " + coupon.getCouponId());
+        if (requestDto.getCouponCode() != null) coupon.setCouponCode(requestDto.getCouponCode());
+        if (requestDto.getDescription() != null) coupon.setDescription(requestDto.getDescription());
+        if (requestDto.getDiscountType() != null) coupon.setDiscountType(requestDto.getDiscountType());
+        if (requestDto.getDiscountValue() != null) coupon.setDiscountValue(requestDto.getDiscountValue());
+        if (requestDto.getMinOrderAmount() != null) coupon.setMinOrderAmount(requestDto.getMinOrderAmount());
+        if (requestDto.getMaxDiscountAmount() != null) coupon.setMaxDiscountAmount(requestDto.getMaxDiscountAmount());
+        if (requestDto.getValidFrom() != null) coupon.setValidFrom(requestDto.getValidFrom());
+        if (requestDto.getValidTo() != null) coupon.setValidTo(requestDto.getValidTo());
+        if (requestDto.getUsageLimit() != null) coupon.setUsageLimit(requestDto.getUsageLimit());
+        if (requestDto.getUsagePerCustomer() != null) coupon.setUsagePerCustomer(requestDto.getUsagePerCustomer());
+        if (requestDto.getIsActive() != null) coupon.setIsActive(requestDto.getIsActive());
+        if (requestDto.getExcludeSaleItems() != null) coupon.setExcludeSaleItems(requestDto.getExcludeSaleItems());
+        if (requestDto.getFreeShipping() != null) coupon.setFreeShipping(requestDto.getFreeShipping());
+        if (requestDto.getCouponType() != null) coupon.setCouponType(requestDto.getCouponType());
+        if (requestDto.getCategoryName() != null) coupon.setCategoryName(requestDto.getCategoryName());
 
-        if (requestDto.getCouponCode() != null) {
-            LOGGER.fine("Updating code from " + coupon.getCouponCode() + " to: " + requestDto.getCouponCode());
-            coupon.setCouponCode(requestDto.getCouponCode());
-        }
-        if (requestDto.getDescription() != null) {
-            LOGGER.fine("Updating description to: " + requestDto.getDescription());
-            coupon.setDescription(requestDto.getDescription());
-        }
-        if (requestDto.getDiscountType() != null) {
-            LOGGER.fine("Updating discountType to: " + requestDto.getDiscountType());
-            coupon.setDiscountType(requestDto.getDiscountType());
-        }
-        if (requestDto.getDiscountValue() != null) {
-            LOGGER.fine("Updating discountValue to: " + requestDto.getDiscountValue());
-            coupon.setDiscountValue(requestDto.getDiscountValue());
-        }
-        if (requestDto.getMinOrderAmount() != null) {
-            LOGGER.fine("Updating minOrderAmount to: " + requestDto.getMinOrderAmount());
-            coupon.setMinOrderAmount(requestDto.getMinOrderAmount());
-        }
-        if (requestDto.getMaxDiscountAmount() != null) {
-            LOGGER.fine("Updating maxDiscountAmount to: " + requestDto.getMaxDiscountAmount());
-            coupon.setMaxDiscountAmount(requestDto.getMaxDiscountAmount());
-        }
-        if (requestDto.getValidFrom() != null) {
-            LOGGER.fine("Updating validFrom to: " + requestDto.getValidFrom());
-            coupon.setValidFrom(requestDto.getValidFrom());
-        }
-        if (requestDto.getValidTo() != null) {
-            LOGGER.fine("Updating validTo to: " + requestDto.getValidTo());
-            coupon.setValidTo(requestDto.getValidTo());
-        }
-        if (requestDto.getUsageLimit() != null) {
-            LOGGER.fine("Updating usageLimit to: " + requestDto.getUsageLimit());
-            coupon.setUsageLimit(requestDto.getUsageLimit());
-        }
-        if (requestDto.getUsagePerCustomer() != null) {
-            LOGGER.fine("Updating usagePerCustomer to: " + requestDto.getUsagePerCustomer());
-            coupon.setUsagePerCustomer(requestDto.getUsagePerCustomer());
-        }
-        if (requestDto.getIsActive() != null) {
-            LOGGER.fine("Updating isActive to: " + requestDto.getIsActive());
-            coupon.setIsActive(requestDto.getIsActive());
-        }
-        if (requestDto.getExcludeSaleItems() != null) {
-            LOGGER.fine("Updating excludeSaleItems to: " + requestDto.getExcludeSaleItems());
-            coupon.setExcludeSaleItems(requestDto.getExcludeSaleItems());
-        }
-        if (requestDto.getFreeShipping() != null) {
-            LOGGER.fine("Updating freeShipping to: " + requestDto.getFreeShipping());
-            coupon.setFreeShipping(requestDto.getFreeShipping());
+        if (requestDto.getProductIds() != null) {
+            List<ProductEntity> products = productRepository.findAllById(requestDto.getProductIds());
+            coupon.setProducts(products);
         }
 
-        LOGGER.fine("Saving updated coupon to database");
-        CouponEntity updatedCoupon = couponRepository.save(coupon);
-        LOGGER.info("Coupon updated successfully with couponId: " + updatedCoupon.getCouponId());
+        if (requestDto.getUserIds() != null) {
+            List<UserEntity> users = userRepository.findAllById(requestDto.getUserIds());
+            coupon.setAllowedUsers(users);
+        }
 
-        return convertToResponseDto(updatedCoupon);
+        return convertToResponseDto(couponRepository.save(coupon));
     }
 
     @Override
+    @Transactional
     public void deleteCoupon(Long couponId) {
-        LOGGER.info("Deleting coupon with couponId: " + couponId);
-
         if (!couponRepository.existsById(couponId)) {
-            LOGGER.warning("Cannot delete - coupon not found with couponId: " + couponId);
-            throw new RuntimeException("Coupon not found with couponId: " + couponId);
+            throw new RuntimeException("Coupon not found: " + couponId);
         }
-
         couponRepository.deleteById(couponId);
-        LOGGER.info("Coupon deleted successfully with couponId: " + couponId);
     }
 
     @Override
-    public CouponResponseDto incrementUsedCount(Long couponId) {
-        LOGGER.info("Incrementing used count for coupon with couponId: " + couponId);
-
+    @Transactional
+    public CouponResponseDto incrementUsedCount(Long couponId, Long userId) {
         CouponEntity coupon = couponRepository.findById(couponId)
-                .orElseThrow(() -> {
-                    LOGGER.warning("Coupon not found with couponId: " + couponId);
-                    return new RuntimeException("Coupon not found with couponId: " + couponId);
-                });
+                .orElseThrow(() -> new RuntimeException("Coupon not found: " + couponId));
 
-        int oldCount = coupon.getUsedCount();
-        int newCount = oldCount + 1;
-        LOGGER.info("Incrementing used count for coupon " + coupon.getCouponCode() + " from " + oldCount + " to " + newCount);
-
+        int newCount = coupon.getUsedCount() + 1;
         coupon.setUsedCount(newCount);
 
         if (coupon.getUsageLimit() != null && newCount >= coupon.getUsageLimit()) {
-            LOGGER.info("Coupon " + coupon.getCouponCode() + " has reached usage limit. Deactivating coupon.");
             coupon.setIsActive(false);
         }
 
-        CouponEntity updatedCoupon = couponRepository.save(coupon);
-        LOGGER.info("Used count incremented successfully for coupon couponId: " + couponId);
 
-        return convertToResponseDto(updatedCoupon);
+        couponRepository.save(coupon);
+
+        if (userId != null) {
+            CouponUserUsage usage = usageRepository
+                    .findByCouponIdAndUserId(couponId, userId)
+                    .orElse(new CouponUserUsage(couponId, userId));
+            usage.setUsedCount(usage.getUsedCount() + 1);
+            usageRepository.save(usage);
+        }
+
+        return convertToResponseDto(coupon);
     }
 
     @Override
-    public boolean validateCoupon(String code, Double orderAmount) {
-        LOGGER.info("Validating coupon with code: " + code + " for order amount: " + orderAmount);
-
+    @Transactional
+    public boolean validateCoupon(String code, Double orderAmount, Long userId, Long productId) {
         CouponEntity coupon = couponRepository.findByCouponCode(code)
-                .orElseThrow(() -> {
-                    LOGGER.warning("Validation failed - coupon not found with code: " + code);
-                    return new RuntimeException("Coupon not found with code: " + code);
-                });
-
-        LOGGER.info("Found coupon to validate: " + coupon.getCouponCode() + " (couponId: " + coupon.getCouponId() + ")");
+                .orElseThrow(() -> new RuntimeException("Coupon not found: " + code));
 
         LocalDateTime now = LocalDateTime.now();
 
-        if (!coupon.getIsActive()) {
-            LOGGER.info("Validation failed - coupon is not active: " + code);
+        if (!Boolean.TRUE.equals(coupon.getIsActive())) {
+            LOGGER.info("Coupon inactive: " + code);
             return false;
         }
 
         if (now.isBefore(coupon.getValidFrom()) || now.isAfter(coupon.getValidTo())) {
-            LOGGER.info("Validation failed - coupon is outside validity period. Valid from: " +
-                    coupon.getValidFrom() + " to: " + coupon.getValidTo() + ", current: " + now);
+            LOGGER.info("Coupon expired or not started: " + code);
             return false;
         }
 
         if (coupon.getMinOrderAmount() != null && orderAmount < coupon.getMinOrderAmount()) {
-            LOGGER.info("Validation failed - order amount " + orderAmount + " is less than minimum required: " +
-                    coupon.getMinOrderAmount());
+            LOGGER.info("Order amount too low for coupon: " + code);
             return false;
         }
 
         if (coupon.getUsageLimit() != null && coupon.getUsedCount() >= coupon.getUsageLimit()) {
-            LOGGER.info("Validation failed - coupon has reached usage limit. Used: " +
-                    coupon.getUsedCount() + ", Limit: " + coupon.getUsageLimit());
+            LOGGER.info("Coupon usage limit reached: " + code);
             return false;
         }
 
-        LOGGER.info("Coupon validation successful for code: " + code);
+        if (userId != null && !coupon.getAllowedUsers().isEmpty()) {
+            boolean allowed = coupon.getAllowedUsers().stream()
+                    .anyMatch(u -> u.getUserId().equals(userId));
+            if (!allowed) {
+                LOGGER.info("User not allowed for coupon: " + code);
+                return false;
+            }
+        }
+
+        if (userId != null && coupon.getUsagePerCustomer() != null) {
+            CouponUserUsage usage = usageRepository
+                    .findByCouponIdAndUserId(coupon.getCouponId(), userId)
+                    .orElse(null);
+            if (usage != null && usage.getUsedCount() >= coupon.getUsagePerCustomer()) {
+                LOGGER.info("User exceeded per-customer limit for: " + code);
+                return false;
+            }
+        }
+
+        if (productId != null && !coupon.getProducts().isEmpty()) {
+            boolean productAllowed = coupon.getProducts().stream()
+                    .anyMatch(p -> p.getProductPrimeId().equals(productId));
+            if (!productAllowed) {
+                LOGGER.info("Product not applicable for coupon: " + code);
+                return false;
+            }
+        }
+
+        LOGGER.info("Coupon valid: " + code);
         return true;
     }
 
+    @Override
+    @Transactional
+    public List<CouponResponseDto> getUserCoupons(Long userId) {
+        return couponRepository.findActiveCouponsForUser(userId).stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<CouponResponseDto> getProductCoupons(Long productId) {
+        return couponRepository.findCouponsByProduct(productId).stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
     private CouponResponseDto convertToResponseDto(CouponEntity coupon) {
-        LOGGER.finest("Converting coupon entity to response DTO for coupon: " + coupon.getCouponCode());
+        CouponResponseDto response = new CouponResponseDto();
+        response.setCouponId(coupon.getCouponId());
+        response.setCouponCode(coupon.getCouponCode());
+        response.setDescription(coupon.getDescription());
+        response.setDiscountType(coupon.getDiscountType());
+        response.setDiscountValue(coupon.getDiscountValue());
+        response.setMinOrderAmount(coupon.getMinOrderAmount());
+        response.setMaxDiscountAmount(coupon.getMaxDiscountAmount());
+        response.setValidFrom(coupon.getValidFrom());
+        response.setValidTo(coupon.getValidTo());
+        response.setUsageLimit(coupon.getUsageLimit());
+        response.setUsagePerCustomer(coupon.getUsagePerCustomer());
+        response.setUsedCount(coupon.getUsedCount());
+        response.setIsActive(coupon.getIsActive());
+        response.setExcludeSaleItems(coupon.getExcludeSaleItems());
+        response.setFreeShipping(coupon.getFreeShipping());
+        response.setCreatedAt(coupon.getCreatedAt());
+        response.setCouponUsed(coupon.getCouponUsed());
+        response.setCouponType(coupon.getCouponType());
+        response.setCategoryName(coupon.getCategoryName());
 
-        CouponResponseDto response = new CouponResponseDto(
-                coupon.getCouponId(),
-                coupon.getCouponCode(),
-                coupon.getDescription(),
-                coupon.getDiscountType(),
-                coupon.getDiscountValue(),
-                coupon.getMinOrderAmount(),
-                coupon.getMaxDiscountAmount(),
-                coupon.getValidFrom(),
-                coupon.getValidTo(),
-                coupon.getUsageLimit(),
-                coupon.getUsagePerCustomer(),
-                coupon.getUsedCount(),
-                coupon.getIsActive(),
-                coupon.getExcludeSaleItems(),
-                coupon.getFreeShipping(),
-                coupon.getCreatedAt(),
-                coupon.getCouponUsed()
-        );
-
-        LOGGER.finest("Successfully converted coupon " + coupon.getCouponCode() + " to response DTO");
+        if (coupon.getProducts() != null) {
+            response.setProductIds(
+                    coupon.getProducts().stream()
+                            .map(ProductEntity::getProductPrimeId)
+                            .collect(Collectors.toList())
+            );
+        }
+        if (coupon.getAllowedUsers() != null) {
+            response.setUserIds(
+                    coupon.getAllowedUsers().stream()
+                            .map(UserEntity::getUserId)
+                            .collect(Collectors.toList())
+            );
+        }
 
         return response;
     }
-
-
-    public List<CouponResponseDto> getUserCoupons(Long userId) {
-        LOGGER.info("Fetching all coupons for userId: " + userId);
-
-        List<CouponEntity> coupons = couponRepository.findByUser_UserId(userId);
-
-        if (coupons.isEmpty()) {
-            LOGGER.warning("No coupons found for userId: " + userId);
-            return Collections.emptyList();
-        }
-
-        LOGGER.info("Found " + coupons.size() + " coupons for userId: " + userId);
-
-        List<CouponResponseDto> responseList = coupons.stream()
-                .map(this::convertToResponseDto)
-                .collect(Collectors.toList());
-
-        LOGGER.fine("Successfully converted " + coupons.size() + " coupons to response DTOs");
-
-        return responseList;
-    }
-
 }

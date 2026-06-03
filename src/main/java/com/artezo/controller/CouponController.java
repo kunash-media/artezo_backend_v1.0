@@ -107,7 +107,6 @@ public class CouponController {
 
         CouponRequestDto patchDto = new CouponRequestDto();
 
-        // Handle description
         if (updates.containsKey("description")) {
             String description = (String) updates.get("description");
             if (description == null || description.trim().isEmpty()) {
@@ -117,7 +116,6 @@ public class CouponController {
             LOGGER.fine("Updating description for couponId: " + couponId);
         }
 
-        // Handle discount value and max discount amount
         if (updates.containsKey("discountValue")) {
             patchDto.setDiscountValue(((Number) updates.get("discountValue")).doubleValue());
             LOGGER.fine("Updating discount value for couponId: " + couponId);
@@ -128,7 +126,6 @@ public class CouponController {
             LOGGER.fine("Updating max discount amount for couponId: " + couponId);
         }
 
-        // Handle validity dates
         if (updates.containsKey("validFrom")) {
             patchDto.setValidFrom(java.time.LocalDateTime.parse((String) updates.get("validFrom")));
             LOGGER.fine("Updating validFrom for couponId: " + couponId);
@@ -139,13 +136,11 @@ public class CouponController {
             LOGGER.fine("Updating validTo for couponId: " + couponId);
         }
 
-        // Handle status
         if (updates.containsKey("isActive")) {
             patchDto.setIsActive((Boolean) updates.get("isActive"));
             LOGGER.fine("Updating isActive status for couponId: " + couponId + " to: " + updates.get("isActive"));
         }
 
-        // Handle usage limit
         if (updates.containsKey("usageLimit")) {
             Integer usageLimit = (Integer) updates.get("usageLimit");
             if (usageLimit <= 0) {
@@ -155,7 +150,6 @@ public class CouponController {
             LOGGER.fine("Updating usage limit for couponId: " + couponId + " to: " + usageLimit);
         }
 
-        // Handle minimum order amount
         if (updates.containsKey("minOrderAmount")) {
             Double minOrderAmount = ((Number) updates.get("minOrderAmount")).doubleValue();
             if (minOrderAmount < 0) {
@@ -165,7 +159,6 @@ public class CouponController {
             LOGGER.fine("Updating min order amount for couponId: " + couponId + " to: " + minOrderAmount);
         }
 
-        // Handle boolean flags
         if (updates.containsKey("excludeSaleItems")) {
             patchDto.setExcludeSaleItems((Boolean) updates.get("excludeSaleItems"));
             LOGGER.fine("Updating excludeSaleItems for couponId: " + couponId);
@@ -176,7 +169,6 @@ public class CouponController {
             LOGGER.fine("Updating freeShipping for couponId: " + couponId);
         }
 
-        // Handle coupon code (if you want to allow updating it)
         if (updates.containsKey("couponCode")) {
             String couponCode = (String) updates.get("couponCode");
             if (couponCode == null || couponCode.trim().isEmpty()) {
@@ -186,7 +178,6 @@ public class CouponController {
             LOGGER.fine("Updating coupon code for couponId: " + couponId + " to: " + couponCode);
         }
 
-        // Handle discount type (if you want to allow updating it)
         if (updates.containsKey("discountType")) {
             patchDto.setDiscountType((String) updates.get("discountType"));
             LOGGER.fine("Updating discount type for couponId: " + couponId);
@@ -226,25 +217,21 @@ public class CouponController {
     }
 
     @PostMapping("/increment-used-count/{couponId}/increment-usage")
-    public ResponseEntity<CouponResponseDto> incrementUsedCount(@PathVariable Long couponId) {
-        LOGGER.info("Received request to increment usage count for coupon couponId: " + couponId);
-
-        CouponResponseDto updatedCoupon = couponService.incrementUsedCount(couponId);
-
-        LOGGER.info("Usage count incremented successfully for coupon couponId: " + couponId +
-                ", New count: " + updatedCoupon.getUsedCount());
-
+    public ResponseEntity<CouponResponseDto> incrementUsedCount(
+            @PathVariable Long couponId,
+            @RequestParam(required = false) Long userId) {
+        CouponResponseDto updatedCoupon = couponService.incrementUsedCount(couponId, userId);
         return ResponseEntity.ok(updatedCoupon);
     }
 
     @GetMapping("/validate-coupon/validate")
-    public ResponseEntity<Map<String, Object>> validateCoupon(@RequestParam String couponCode,
-                                                              @RequestParam Double orderAmount) {
-        LOGGER.info("Received request to validate coupon - couponCode: " + couponCode + ", Order Amount: " + orderAmount);
+    public ResponseEntity<Map<String, Object>> validateCoupon(
+            @RequestParam String couponCode,
+            @RequestParam Double orderAmount,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Long productId) {
 
-        boolean isValid = couponService.validateCoupon(couponCode, orderAmount);
-
-        LOGGER.info("Validation result for coupon " + couponCode + ": " + (isValid ? "VALID" : "INVALID"));
+        boolean isValid = couponService.validateCoupon(couponCode, orderAmount, userId, productId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("couponCode", couponCode);
@@ -253,7 +240,6 @@ public class CouponController {
         response.put("timestamp", java.time.LocalDateTime.now().toString());
 
         if (isValid) {
-            LOGGER.fine("Coupon is valid, fetching additional details for response");
             CouponResponseDto coupon = couponService.getCouponByCode(couponCode);
             response.put("coupon", coupon);
             response.put("message", "Coupon is valid and can be applied");
@@ -261,9 +247,12 @@ public class CouponController {
             response.put("message", "Coupon is not valid for this order");
         }
 
-        LOGGER.fine("Returning validation response for coupon: " + couponCode);
-
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/get-by-product/{productId}")
+    public ResponseEntity<List<CouponResponseDto>> getProductCoupons(@PathVariable Long productId) {
+        return ResponseEntity.ok(couponService.getProductCoupons(productId));
     }
 
     @ExceptionHandler(RuntimeException.class)

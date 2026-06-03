@@ -13,6 +13,9 @@ public class CreateProductRequestDto {
     private String productCategory;
     private String productSubCategory;
 
+    private String productSize;
+
+
     private Boolean hasVariants;
     private Boolean isCustomizable;
     private Boolean isExchange;           // boolean – frontend can send true/false
@@ -363,5 +366,13 @@ public class CreateProductRequestDto {
 
     public void setHeight(Double height) {
         this.height = height;
+    }
+
+    public String getProductSize() {
+        return productSize;
+    }
+
+    public void setProductSize(String productSize) {
+        this.productSize = productSize;
     }
 }

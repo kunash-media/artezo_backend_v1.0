@@ -100,6 +100,9 @@ public class CartResponse {
         private String customFieldsJson;
         private LocalDateTime createdAt;
 
+        private String productCategory; // ← just add here, no DB change
+
+
         private String productImageUrl;
 
 
@@ -221,6 +224,14 @@ public class CartResponse {
 
         public void setProductImageUrl(String productImageUrl) {
             this.productImageUrl = productImageUrl;
+        }
+
+        public String getProductCategory() {
+            return productCategory;
+        }
+
+        public void setProductCategory(String productCategory) {
+            this.productCategory = productCategory;
         }
     }
 }

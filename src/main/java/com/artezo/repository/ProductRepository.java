@@ -149,4 +149,8 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             "AND p.currentStock > 0 " +
             "ORDER BY p.productPrimeId DESC")
     Page<ProductEntity> findAllTrendingProducts(Pageable pageable);
+
+    //batch query
+    @Query("SELECT p.productPrimeId, p.productCategory FROM ProductEntity p WHERE p.productPrimeId IN :productIds")
+    List<Object[]> findCategoriesByProductIds(@Param("productIds") List<Long> productIds);
 }

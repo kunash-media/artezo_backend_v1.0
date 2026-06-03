@@ -1,5 +1,7 @@
 package com.artezo.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,8 @@ public class ProductResponseDto {
     private String brandName;
     private String productCategory;
     private String productSubCategory;
+
+    private String productSize;
 
     private String productVideoUrl;
 
@@ -37,7 +41,13 @@ public class ProductResponseDto {
     private List<String> aboutItem;
 
     private Map<String, String> specifications;
-    private Map<String, Object> additionalInfo;   // flexible – can hold String, numbers, etc.
+
+
+//    private Map<String, Object> additionalInfo;   // flexible – can hold String, numbers, etc.
+
+    // To this:
+    @JsonRawValue
+    private String additionalInfo;
 
     private Map<String, String> faq;
 
@@ -229,11 +239,20 @@ public class ProductResponseDto {
         this.specifications = specifications;
     }
 
-    public Map<String, Object> getAdditionalInfo() {
+//    public Map<String, Object> getAdditionalInfo() {
+//        return additionalInfo;
+//    }
+//
+//    public void setAdditionalInfo(Map<String, Object> additionalInfo) {
+//        this.additionalInfo = additionalInfo;
+//    }
+
+
+    public String getAdditionalInfo() {
         return additionalInfo;
     }
 
-    public void setAdditionalInfo(Map<String, Object> additionalInfo) {
+    public void setAdditionalInfo(String additionalInfo) {
         this.additionalInfo = additionalInfo;
     }
 
@@ -396,5 +415,13 @@ public class ProductResponseDto {
 
     public void setHeight(Double height) {
         this.height = height;
+    }
+
+    public String getProductSize() {
+        return productSize;
+    }
+
+    public void setProductSize(String productSize) {
+        this.productSize = productSize;
     }
 }

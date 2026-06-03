@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -241,11 +243,26 @@ public class CartServiceImpl implements CartService {
     private CartResponse buildCartResponse(Long cartId, Long userId, String status) {
         List<CartItemEntity> items = cartItemRepository.findByCart_Id(cartId);
 
+        // ✅ Batch fetch — single query, no N+1
+        List<Long> productIds = items.stream()
+                .map(CartItemEntity::getProductId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, String> categoryMap = productIds.isEmpty()
+                ? Map.of()
+                : productRepository.findCategoriesByProductIds(productIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (String) row[1],
+                        (a, b) -> a
+                ));
+
         List<CartResponse.CartItemResponse> itemResponses = items.stream()
                 .map(item -> {
-                    String imageUrl = item.getProductImageUrl();   // ← Use stored URL if available
-
-                    // Fallback logic (only if stored URL is missing - rare after migration)
+                    String imageUrl = item.getProductImageUrl();
                     if (imageUrl == null && item.getProductId() != null) {
                         if (item.getVariantId() != null && !item.getVariantId().isEmpty()) {
                             imageUrl = "/api/products/" + item.getProductId()
@@ -270,7 +287,8 @@ public class CartServiceImpl implements CartService {
                             .itemTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                             .customFieldsJson(item.getCustomFieldsJson())
                             .createdAt(item.getCreatedAt())
-                            .productImageUrl(imageUrl)          // ← Always populated
+                            .productImageUrl(imageUrl)
+                            .productCategory(categoryMap.getOrDefault(item.getProductId(), null)) // ← ADD THIS
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -280,12 +298,9 @@ public class CartServiceImpl implements CartService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalMrp = items.stream()
-                .map(i -> {
-                    if (i.getMrpPrice() == null) {
-                        return BigDecimal.ZERO;
-                    }
-                    return i.getMrpPrice().multiply(BigDecimal.valueOf(i.getQuantity()));
-                })
+                .map(i -> i.getMrpPrice() == null
+                        ? BigDecimal.ZERO
+                        : i.getMrpPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return CartResponse.builder()

@@ -200,9 +200,12 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     @Transactional(readOnly = true)
     public boolean isInWishlist(Long userId, Long productId, String variantId) {
-        return wishlistRepository.findByUser_UserId(userId).stream()
-                .anyMatch(w -> wishlistItemRepository.existsByWishlist_IdAndProductIdAndVariantId(
-                        w.getId(), productId, variantId));
+        if (variantId == null) {
+            // product-level check — any variant counts
+            return wishlistItemRepository.existsByUserIdAndProductId(userId, productId);
+        }
+        // exact variant check
+        return wishlistItemRepository.existsByUserIdAndProductIdAndVariantId(userId, productId, variantId);
     }
 
     @Override

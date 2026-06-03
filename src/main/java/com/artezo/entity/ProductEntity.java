@@ -23,6 +23,7 @@ public class ProductEntity {
     private String brandName;
     private String productCategory;
     private String productSubCategory;
+    private String productSize;
 
     private boolean underTrendCategory;
 
@@ -115,7 +116,7 @@ public class ProductEntity {
     public ProductEntity(){}
 
     public ProductEntity(Long productPrimeId, String productStrId, String productName, String brandName,
-                         String productCategory, String productSubCategory,
+                         String productCategory, String productSubCategory, String productSize,
                          boolean underTrendCategory, boolean isDeleted, boolean hasVariants,
                          boolean isCustomizable, boolean isExchange, String currentSku,
                          String selectedColor, Double currentSellingPrice, Double currentMrpPrice,
@@ -132,6 +133,7 @@ public class ProductEntity {
         this.brandName = brandName;
         this.productCategory = productCategory;
         this.productSubCategory = productSubCategory;
+        this.productSize = productSize;
         this.underTrendCategory = underTrendCategory;
         this.isDeleted = isDeleted;
         this.hasVariants = hasVariants;
@@ -483,5 +485,13 @@ public class ProductEntity {
 
     public void setHeight(Double height) {
         this.height = height;
+    }
+
+    public String getProductSize() {
+        return productSize;
+    }
+
+    public void setProductSize(String productSize) {
+        this.productSize = productSize;
     }
 }
