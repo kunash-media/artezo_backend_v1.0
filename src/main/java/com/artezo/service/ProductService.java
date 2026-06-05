@@ -86,4 +86,6 @@ public interface ProductService {
 
 
     Page<ProductCategoryResponse> getTrendingProducts(int page, int size);
+
+    List<String> getSubCategoriesByCategory(String productCategory);
 }

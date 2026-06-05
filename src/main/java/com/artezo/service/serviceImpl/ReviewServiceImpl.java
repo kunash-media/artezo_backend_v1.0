@@ -13,6 +13,8 @@ import com.artezo.repository.OrderRepository;
 import com.artezo.exceptions.ReviewNotFoundException;
 import com.artezo.exceptions.MediaUploadException;
 import com.artezo.service.ReviewService;
+import com.artezo.service.compression.ImageCompressor;
+import com.artezo.service.compression.VideoCompressor;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -108,85 +110,209 @@ public class ReviewServiceImpl implements ReviewService {
         return ReviewResponseDto.fromEntity(savedReview);
     }
 
-    private void handleImageWithCompression(ReviewEntity review, MultipartFile image) {
-        try {
-            long originalSize = image.getSize();
-            System.out.println("📸 Original image size: " + (originalSize / 1024) + "KB (" + String.format("%.2f", originalSize / (1024.0 * 1024.0)) + " MB)");
+//    private void handleImageWithCompression(ReviewEntity review, MultipartFile image) {
+//        try {
+//            long originalSize = image.getSize();
+//            System.out.println("📸 Original image size: " + (originalSize / 1024) + "KB (" + String.format("%.2f", originalSize / (1024.0 * 1024.0)) + " MB)");
+//
+//            if (originalSize > MAX_IMAGE_SIZE) {
+//                throw new MediaUploadException("Image size exceeds 5MB limit");
+//            }
+//
+//            byte[] compressedBytes = compressImageInMemory(image.getBytes());
+//            long compressedSize = compressedBytes.length;
+//
+//            double originalMB = originalSize / (1024.0 * 1024.0);
+//            double compressedMB = compressedSize / (1024.0 * 1024.0);
+//            double savedPercent = ((originalMB - compressedMB) / originalMB) * 100;
+//
+//            System.out.println("✅ Image compressed: " + String.format("%.2f", originalMB) + "MB → " +
+//                    String.format("%.2f", compressedMB) + "MB (Saved " + String.format("%.1f", savedPercent) + "%)");
+//
+//            review.setImageOriginalSize(originalSize);
+//            review.setImageCompressedSize(compressedSize);
+//            review.setImageSize(compressedSize);
+//            review.setImageData(compressedBytes);
+//            review.setImageContentType("image/jpeg");
+//            review.setImageName(image.getOriginalFilename());
+//
+//        } catch (Exception e) {
+//            throw new MediaUploadException("Failed to compress image: " + e.getMessage(), e);
+//        }
+//    }
 
-            if (originalSize > MAX_IMAGE_SIZE) {
-                throw new MediaUploadException("Image size exceeds 5MB limit");
+
+    // ReviewServiceImpl.java — replace handleImageWithCompression
+
+    private void handleImageWithCompression(ReviewEntity review, MultipartFile imageFile) {
+        if (imageFile == null || imageFile.isEmpty()) return;
+
+        File stableTempFile = null;
+        File compressedFile = null;
+
+        try {
+            // ── Read multipart stream immediately before Tomcat cleans it up ──
+            String originalName = imageFile.getOriginalFilename();
+            String suffix = (originalName != null && originalName.contains("."))
+                    ? originalName.substring(originalName.lastIndexOf('.'))
+                    : ".jpg";
+
+            stableTempFile = File.createTempFile("artezo_image_", suffix,
+                    new File(System.getProperty("java.io.tmpdir")));
+            stableTempFile.deleteOnExit();
+
+            try (InputStream in = imageFile.getInputStream();
+                 OutputStream out = new FileOutputStream(stableTempFile)) {
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
             }
 
-            byte[] compressedBytes = compressImageInMemory(image.getBytes());
-            long compressedSize = compressedBytes.length;
+            long originalKB = stableTempFile.length() / 1024;
+            System.out.println("📸 Original image: " + originalKB + "KB");
 
-            double originalMB = originalSize / (1024.0 * 1024.0);
-            double compressedMB = compressedSize / (1024.0 * 1024.0);
-            double savedPercent = ((originalMB - compressedMB) / originalMB) * 100;
+            String outputDir = System.getProperty("java.io.tmpdir") + File.separator + "artezo_images" + File.separator;
+            ImageCompressor compressor = new ImageCompressor();
+            compressedFile = compressor.compress(stableTempFile, outputDir);
 
-            System.out.println("✅ Image compressed: " + String.format("%.2f", originalMB) + "MB → " +
-                    String.format("%.2f", compressedMB) + "MB (Saved " + String.format("%.1f", savedPercent) + "%)");
+            byte[] imageBytes = Files.readAllBytes(compressedFile.toPath());
+            review.setImageData(imageBytes);
 
-            review.setImageOriginalSize(originalSize);
-            review.setImageCompressedSize(compressedSize);
-            review.setImageSize(compressedSize);
-            review.setImageData(compressedBytes);
-            review.setImageContentType("image/jpeg");
-            review.setImageName(image.getOriginalFilename());
+            long compressedKB = compressedFile.length() / 1024;
+            double savedPct = ((double)(originalKB - compressedKB) / originalKB) * 100;
+            System.out.printf("✅ Image compressed: %.2fMB → %.2fMB (Saved %.1f%%)%n",
+                    originalKB / 1024.0, compressedKB / 1024.0, savedPct);
 
-        } catch (Exception e) {
-            throw new MediaUploadException("Failed to compress image: " + e.getMessage(), e);
+        } catch (IOException e) {
+            System.err.println("⚠️ Image processing failed, saving review without image: " + e.getMessage());
+            review.setImageData(null);
+
+        } finally {
+            if (stableTempFile != null && stableTempFile.exists()) stableTempFile.delete();
+            if (compressedFile != null && compressedFile.exists()
+                    && !compressedFile.equals(stableTempFile)) compressedFile.delete();
         }
     }
 
-    private void handleVideoWithCompression(ReviewEntity review, MultipartFile video) {
+
+//    private void handleVideoWithCompression(ReviewEntity review, MultipartFile video) {
+//        try {
+//            long originalSize = video.getSize();
+//            double originalMB = originalSize / (1024.0 * 1024.0);
+//
+//            System.out.println("🎬 Original video size: " + String.format("%.2f", originalMB) + "MB");
+//
+//            if (originalSize > MAX_VIDEO_SIZE) {
+//                throw new MediaUploadException("Video size exceeds 5MB limit. Your video: " + String.format("%.2f", originalMB) + "MB");
+//            }
+//
+//            byte[] videoBytes;
+//            long compressedSize;
+//
+//            if (originalSize > TARGET_VIDEO_SIZE) {
+//                System.out.println("🎬 Compressing video (target: <2MB)...");
+//                videoBytes = compressVideoUsingFFmpeg(video);
+//                compressedSize = videoBytes.length;
+//
+//                double compressedMB = compressedSize / (1024.0 * 1024.0);
+//                double savedPercent = ((originalMB - compressedMB) / originalMB) * 100;
+//
+//                System.out.println("✅ Video compressed: " + String.format("%.2f", originalMB) + "MB → " +
+//                        String.format("%.2f", compressedMB) + "MB (Saved " + String.format("%.1f", savedPercent) + "%)");
+//            } else {
+//                videoBytes = video.getBytes();
+//                compressedSize = originalSize;
+//                System.out.println("🎬 Video already under 2MB, skipping compression");
+//            }
+//
+//            review.setVideoOriginalSize(originalSize);
+//            review.setVideoCompressedSize(compressedSize);
+//            review.setVideoSize(compressedSize);
+//            review.setVideoData(videoBytes);
+//            review.setVideoContentType("video/mp4");
+//            review.setVideoName(video.getOriginalFilename());
+//
+//        } catch (Exception e) {
+//            System.err.println("⚠️ Video compression failed, storing original: " + e.getMessage());
+//            try {
+//                review.setVideoOriginalSize(video.getSize());
+//                review.setVideoCompressedSize(video.getSize());
+//                review.setVideoSize(video.getSize());
+//                review.setVideoData(video.getBytes());
+//                review.setVideoContentType(video.getContentType());
+//                review.setVideoName(video.getOriginalFilename());
+//            } catch (IOException ex) {
+//                throw new MediaUploadException("Failed to process video: " + ex.getMessage(), ex);
+//            }
+//        }
+//    }
+
+    // ReviewServiceImpl.java — replace handleVideoWithCompression entirely
+
+    private void handleVideoWithCompression(ReviewEntity review, MultipartFile videoFile) {
+        if (videoFile == null || videoFile.isEmpty()) return;
+
+        File stableTempFile = null;
+        File compressedFile = null;
+
         try {
-            long originalSize = video.getSize();
-            double originalMB = originalSize / (1024.0 * 1024.0);
+            // ── STEP 1: Read multipart stream into a stable temp file IMMEDIATELY ──
+            // Tomcat's DiskFileItem temp file is deleted after request parsing.
+            // We must copy bytes out before that window closes.
+            String originalName = videoFile.getOriginalFilename();
+            String suffix = (originalName != null && originalName.contains("."))
+                    ? originalName.substring(originalName.lastIndexOf('.'))
+                    : ".mp4";
 
-            System.out.println("🎬 Original video size: " + String.format("%.2f", originalMB) + "MB");
+            stableTempFile = File.createTempFile("artezo_video_", suffix,
+                    new File(System.getProperty("java.io.tmpdir")));
+            stableTempFile.deleteOnExit(); // JVM cleanup safety net
 
-            if (originalSize > MAX_VIDEO_SIZE) {
-                throw new MediaUploadException("Video size exceeds 5MB limit. Your video: " + String.format("%.2f", originalMB) + "MB");
+            try (InputStream in = videoFile.getInputStream();
+                 OutputStream out = new FileOutputStream(stableTempFile)) {
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
             }
 
-            byte[] videoBytes;
-            long compressedSize;
+            long fileSizeMB = stableTempFile.length() / (1024 * 1024);
+            System.out.println("🎬 Original video size: " + fileSizeMB + "MB (stable temp: " + stableTempFile.getAbsolutePath() + ")");
 
-            if (originalSize > TARGET_VIDEO_SIZE) {
+            // ── STEP 2: Compress if ffmpeg is available ──
+            String outputDir = System.getProperty("java.io.tmpdir") + File.separator + "artezo_videos" + File.separator;
+            VideoCompressor compressor = new VideoCompressor();
+
+            if (compressor.isFFmpegAvailable()) {
                 System.out.println("🎬 Compressing video (target: <2MB)...");
-                videoBytes = compressVideoUsingFFmpeg(video);
-                compressedSize = videoBytes.length;
-
-                double compressedMB = compressedSize / (1024.0 * 1024.0);
-                double savedPercent = ((originalMB - compressedMB) / originalMB) * 100;
-
-                System.out.println("✅ Video compressed: " + String.format("%.2f", originalMB) + "MB → " +
-                        String.format("%.2f", compressedMB) + "MB (Saved " + String.format("%.1f", savedPercent) + "%)");
+                compressedFile = compressor.compress(stableTempFile, outputDir);
             } else {
-                videoBytes = video.getBytes();
-                compressedSize = originalSize;
-                System.out.println("🎬 Video already under 2MB, skipping compression");
+                System.out.println("⚠️ FFmpeg not available — storing original video as-is");
+                compressedFile = stableTempFile;  // use the stable copy directly
             }
 
-            review.setVideoOriginalSize(originalSize);
-            review.setVideoCompressedSize(compressedSize);
-            review.setVideoSize(compressedSize);
+            // ── STEP 3: Read compressed bytes into entity ──
+            byte[] videoBytes = Files.readAllBytes(compressedFile.toPath());
             review.setVideoData(videoBytes);
-            review.setVideoContentType("video/mp4");
-            review.setVideoName(video.getOriginalFilename());
 
-        } catch (Exception e) {
-            System.err.println("⚠️ Video compression failed, storing original: " + e.getMessage());
-            try {
-                review.setVideoOriginalSize(video.getSize());
-                review.setVideoCompressedSize(video.getSize());
-                review.setVideoSize(video.getSize());
-                review.setVideoData(video.getBytes());
-                review.setVideoContentType(video.getContentType());
-                review.setVideoName(video.getOriginalFilename());
-            } catch (IOException ex) {
-                throw new MediaUploadException("Failed to process video: " + ex.getMessage(), ex);
+            double originalMB  = stableTempFile.length() / (1024.0 * 1024.0);
+            double compressedMB = compressedFile.length() / (1024.0 * 1024.0);
+            double saved = ((originalMB - compressedMB) / originalMB) * 100;
+            System.out.printf("✅ Video stored: %.2fMB → %.2fMB (saved %.1f%%)%n",
+                    originalMB, compressedMB, saved);
+
+        } catch (IOException e) {
+            // Don't let video failure kill the review — log and continue without video
+            System.err.println("⚠️ Video processing failed, saving review without video: " + e.getMessage());
+            review.setVideoData(null);  // graceful degradation
+
+        } finally {
+            // ── STEP 4: Clean up temp files ──
+            if (stableTempFile != null && stableTempFile.exists()) {
+                stableTempFile.delete();
+            }
+            if (compressedFile != null && compressedFile.exists()
+                    && !compressedFile.equals(stableTempFile)) {
+                compressedFile.delete();
             }
         }
     }

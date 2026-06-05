@@ -9,7 +9,11 @@ public class VideoCompressor {
 
     private static final long MAX_VIDEO_SIZE = 2 * 1024 * 1024; // 2MB
     private static final long SKIP_THRESHOLD = 1 * 1024 * 1024; // 1MB - skip compression
-    private static final String FFMPEG_PATH = "C:\\ffmpeg-master-latest-win64-gpl-shared\\bin\\ffmpeg.exe";
+//    private static final String FFMPEG_PATH = "C:\\ffmpeg-master-latest-win64-gpl-shared\\bin\\ffmpeg.exe";
+
+    // VideoCompressor.java — fix the path constant
+    private static final String FFMPEG_PATH =
+            "C:\\ffmpeg-master-latest-win64-gpl-shared\\bin\\ffmpeg.exe";
 
     // 🔴 TIMEOUT SETTINGS
     private static final int COMPRESSION_TIMEOUT_SECONDS = 60;
@@ -165,12 +169,27 @@ public class VideoCompressor {
     /**
      * Helper method to check if FFmpeg is available
      */
+//    public boolean isFFmpegAvailable() {
+//        try {
+//            Process process = Runtime.getRuntime().exec(FFMPEG_PATH + " -version");
+//            boolean finished = process.waitFor(5, TimeUnit.SECONDS);
+//            return finished && process.exitValue() == 0;
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
+    // VideoCompressor.java — replace isFFmpegAvailable()
     public boolean isFFmpegAvailable() {
         try {
-            Process process = Runtime.getRuntime().exec(FFMPEG_PATH + " -version");
+            ProcessBuilder pb = new ProcessBuilder(FFMPEG_PATH, "-version");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            // Drain stdout so the process doesn't block on a full buffer
+            process.getInputStream().transferTo(OutputStream.nullOutputStream());
             boolean finished = process.waitFor(5, TimeUnit.SECONDS);
             return finished && process.exitValue() == 0;
         } catch (Exception e) {
+            System.err.println("⚠️ FFmpeg availability check failed: " + e.getMessage());
             return false;
         }
     }

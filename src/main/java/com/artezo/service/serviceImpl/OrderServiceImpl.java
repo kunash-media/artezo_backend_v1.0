@@ -18,6 +18,7 @@ import com.artezo.service.OrderService;
 import com.artezo.service.ShiprocketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,30 @@ public class OrderServiceImpl implements OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);
 
 
+    @Value("${tax.gst-rate:18.0}")
+    private Double gstRate;
+
+    @Value("${tax.calculate-by-state:true}")
+    private boolean calculateByState;
+
+    @Value("${shipping.enabled:true}")
+    private boolean shippingEnabled;
+
+    @Value("${shipping.default-free-threshold:500}")
+    private Double freeShippingThreshold;
+
+    @Value("${shipping.base-charge:50}")
+    private Double baseShippingCharge;
+
+    @Value("${shipping.per-kg-charge:10}")
+    private Double perKgShippingCharge;
+
+    @Value("${convenience-fee.enabled:false}")
+    private boolean convenienceFeeEnabled;
+
+    @Value("${convenience-fee.percentage:0.0}")
+    private Double convenienceFeePercent;
+
     private final OrderRepository   orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository    userRepository;
@@ -55,9 +80,278 @@ public class OrderServiceImpl implements OrderService {
         this.emailService = emailService;
     }
 
+
+
+    /**
+     * AMAZON-STYLE PRICING CALCULATION
+     * Calculates tax, shipping, fees like big ecommerce does
+     * Returns complete pricing breakdown
+     */
+    private Map<String, Double> calculatePricingBreakdown(
+            OrderItemEntity item,
+            String shippingState,
+            String shippingPincode) {
+
+        log.info("═══════════════════════════════════════════════════════");
+        log.info("  CALCULATING PRICING (E-COM-STYLE)");
+        log.info("═══════════════════════════════════════════════════════");
+
+        Map<String, Double> pricing = new HashMap<>();
+
+        // 1. ITEM SUBTOTAL
+        double subTotal = item.getItemTotal();
+        log.info("► Subtotal (Product × Qty): ₹{}", subTotal);
+
+        // 2. TAX CALCULATION (GST)
+        double tax = 0.0;
+        if (calculateByState) {
+            // State-based GST (all states in India = 18% for most products)
+            // In real scenario, lookup state-specific rate from DB
+            tax = subTotal * (gstRate / 100.0);
+        } else {
+            tax = subTotal * (gstRate / 100.0);
+        }
+        log.info("► Tax ({}% GST): ₹{}", gstRate, String.format("%.2f", tax));
+
+        // 3. SHIPPING CALCULATION
+        double shippingCharges = 0.0;
+        if (shippingEnabled) {
+            // Free shipping above threshold
+            if (subTotal >= freeShippingThreshold) {
+                shippingCharges = 0.0;
+                log.info("► Shipping: ₹0 (FREE — Order > ₹{})", freeShippingThreshold);
+            } else {
+                // Calculate based on weight
+                double weight = item.getWeight() != null ? item.getWeight() : 0.5;
+                shippingCharges = baseShippingCharge + (weight * perKgShippingCharge);
+                log.info("► Shipping: ₹{} (Base ₹{} + {} kg × ₹{}/kg)",
+                        String.format("%.2f", shippingCharges),
+                        baseShippingCharge,
+                        weight,
+                        perKgShippingCharge);
+            }
+        }
+
+        // 4. CONVENIENCE FEE
+        double convenienceFee = 0.0;
+        if (convenienceFeeEnabled && convenienceFeePercent > 0) {
+            convenienceFee = (subTotal + tax + shippingCharges) * (convenienceFeePercent / 100.0);
+            log.info("► Convenience Fee ({}%): ₹{}",
+                    convenienceFeePercent,
+                    String.format("%.2f", convenienceFee));
+        } else {
+            log.info("► Convenience Fee: ₹0 (Disabled)");
+        }
+
+        // 5. DISCOUNTS (if any from coupon/promo)
+        double discountAmount = 0.0;
+        double couponDiscount = 0.0;
+        // These would come from request if applicable
+
+        // 6. FINAL AMOUNT
+        //  double finalAmount = subTotal + tax + shippingCharges + convenienceFee
+        //        - discountAmount - couponDiscount;
+
+        // CORRECT FORMULA for Indian E-Commerce
+        // Final = Subtotal(selling price) + Tax + Shipping + Convenience - Coupon Only
+        double finalAmount = subTotal // already at selling price
+                + tax
+                + shippingCharges
+                + convenienceFee
+                - couponDiscount; // ONLY deduct new coupon codes
+
+        log.info("───────────────────────────────────────────────────────");
+        log.info("  FINAL CALCULATION (CORRECT FORMULA)");
+        log.info("───────────────────────────────────────────────────────");
+        log.info("  Subtotal (Selling Price) ₹{}", String.format("%.2f", subTotal));
+        log.info("  + Tax (GST)              ₹{}", String.format("%.2f", tax));
+        log.info("  + Shipping               ₹{}", String.format("%.2f", shippingCharges));
+        log.info("  + Convenience/COD Fee    ₹{}", String.format("%.2f", convenienceFee));
+        log.info("  - Coupon Discount        ₹{}", String.format("%.2f", couponDiscount));
+        log.info("  = FINAL AMOUNT           ₹{}", String.format("%.2f", finalAmount));
+        log.info("═══════════════════════════════════════════════════════");
+
+
+        log.info("───────────────────────────────────────────────────────");
+        log.info("  PRICING BREAKDOWN");
+        log.info("───────────────────────────────────────────────────────");
+        log.info("  Subtotal              ₹{}", String.format("%.2f", subTotal));
+        log.info("  + Tax (GST)           ₹{}", String.format("%.2f", tax));
+        log.info("  + Shipping            ₹{}", String.format("%.2f", shippingCharges));
+        log.info("  + Convenience Fee     ₹{}", String.format("%.2f", convenienceFee));
+        log.info("  - Discounts           ₹{}", String.format("%.2f", discountAmount));
+        log.info("───────────────────────────────────────────────────────");
+        log.info("  = FINAL AMOUNT        ₹{}", String.format("%.2f", finalAmount));
+        log.info("═══════════════════════════════════════════════════════");
+
+        pricing.put("subTotal", subTotal);
+        pricing.put("tax", tax);
+        pricing.put("shippingCharges", shippingCharges);
+        pricing.put("convenienceFee", convenienceFee);
+        pricing.put("discountAmount", discountAmount);
+        pricing.put("couponDiscount", couponDiscount);
+        pricing.put("finalAmount", finalAmount);
+
+        return pricing;
+    }
+
+    /**
+     * VALIDATE PRICING — ensure calculated amount matches paid amount
+     * Critical for fraud prevention
+     */
+    private void validatePricingAmount(Map<String, Double> calculated, Double paidAmount) {
+        Double calculatedFinal = calculated.get("finalAmount");
+
+        // Allow 1 rupee variance (rounding errors)
+        double variance = Math.abs(calculatedFinal - paidAmount);
+
+        if (variance > 1.0) {
+            log.error("╔════════════════════════════════════════════════════╗");
+            log.error("║  ⚠️  AMOUNT MISMATCH — FRAUD ALERT              ║");
+            log.error("╚════════════════════════════════════════════════════╝");
+            log.error("► Calculated: ₹{}", calculatedFinal);
+            log.error("► Paid:       ₹{}", paidAmount);
+            log.error("► Variance:   ₹{}", variance);
+
+            throw new OrderException(
+                    String.format("Amount mismatch — calculated ₹%.2f but paid ₹%.2f",
+                            calculatedFinal, paidAmount),
+                    "AMOUNT_MISMATCH"
+            );
+        }
+
+        log.info("✅ Pricing validation PASSED — variance: ₹{}", variance);
+    }
+
     // ────────────────────────────────────────────────────────────────────────
     //  CREATE ORDER — Cart Flow
     // ────────────────────────────────────────────────────────────────────────
+
+//    @Override
+//    @Transactional
+//    public OrderResponse createOrder(Long userId, CreateOrderRequest request) {
+//        log.info("Creating order for userId: {}", userId);
+//
+//        // 1. Fetch user
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(() -> new OrderException("User not found", "USER_NOT_FOUND"));
+//
+//        // 2. Build order items + validate stock
+//        List<OrderItemEntity> orderItems = new ArrayList<>();
+//        double subTotal = 0.0;
+//
+//        for (CreateOrderRequest.OrderItemRequest itemReq : request.getItems()) {
+//            ProductEntity product = productRepository.findByProductStrId(itemReq.getProductStrId())
+//                    .orElseThrow(() -> new OrderException(
+//                            "Product not found: " + itemReq.getProductStrId(), "PRODUCT_NOT_FOUND"));
+//            OrderItemEntity item = buildOrderItem(product, itemReq);
+//            orderItems.add(item);
+//            subTotal += item.getItemTotal();
+//        }
+//
+//        // 3. Calculate final amount
+//        double discountAmount  = orZero(request.getDiscountAmount());
+//        double couponDiscount  = orZero(request.getCouponDiscount());
+//        double tax             = orZero(request.getTax());
+//        double convenienceFee  = orZero(request.getConvenienceFee());
+//        double shippingCharges = orZero(request.getShippingCharges());
+//        double giftwrapCharges = request.isGiftWrap() ? orZero(request.getGiftwrapCharges()) : 0.0;
+//
+//        // double finalAmount = subTotal - discountAmount - couponDiscount
+//        // + tax + convenienceFee + shippingCharges + giftwrapCharges;
+//
+//        //--------------- PATCH ADDED  -----------//
+//        // CORRECT — productDiscount is already baked into item prices
+//        // Formula: Subtotal(at selling price) + Tax + Shipping + Convenience/COD Fee - Additional Coupons
+//        double finalAmount = subTotal // already at discounted selling price
+//                + tax // GST on subtotal
+//                + shippingCharges // shipping charges (0 if free)
+//                + convenienceFee // COD fee (100 if COD, else 0)
+//                - couponDiscount; // only deduct NEW coupon codes, not product discount
+//
+//        // 4. Build OrderEntity
+//        OrderEntity order = new OrderEntity();
+//        order.setUser(user);
+//        order.setOrderStatus(OrderStatus.PLACED);
+//        order.setPaymentStatus(PaymentStatus.PENDING);
+//        order.setPaymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()));
+//        order.setPaymentMode(request.getPaymentMode() != null
+//                ? PaymentMode.valueOf(request.getPaymentMode()) : null);
+//        order.setRazorpayPaymentId(request.getRazorpayPaymentId());
+//        order.setRazorpayOrderId(request.getRazorpayOrderId());
+//
+//        order.setCustomerName(request.getCustomerName());
+//        order.setCustomerPhone(request.getCustomerPhone());
+//        order.setCustomerEmail(request.getCustomerEmail());
+//        order.setShippingAddress1(request.getShippingAddress1());
+//        order.setShippingAddress2(request.getShippingAddress2());
+//        order.setShippingCity(request.getShippingCity());
+//        order.setShippingState(request.getShippingState());
+//        order.setShippingPincode(request.getShippingPincode());
+//        order.setShippingCountry("India");
+//
+//        order.setSubTotal(subTotal);
+//        order.setDiscountAmount(discountAmount);
+//        order.setDiscountPercent(request.getDiscountPercent());
+//        order.setCouponCode(request.getCouponCode());
+//        order.setCouponDiscount(couponDiscount);
+//        order.setTax(tax);
+//        order.setConvenienceFee(convenienceFee);
+//        order.setShippingCharges(shippingCharges);
+//        order.setGiftWrap(request.isGiftWrap());
+//        order.setGiftwrapCharges(giftwrapCharges);
+//        order.setFinalAmount(finalAmount);
+//        order.setOrderNotes(request.getOrderNotes());
+//        order.setOrderFlow(OrderFlow.CART);
+//        order.setShippingStatus(ShippingStatus.NEW);
+//
+//        for (OrderItemEntity item : orderItems) {
+//            item.setOrder(order);
+//        }
+//        order.setOrderItems(orderItems);
+//
+//        // 5. Save to DB — PENDING
+//        OrderEntity savedOrder = orderRepository.save(order);
+//        log.info("Order saved to DB: {} — calling Shiprocket...", savedOrder.getOrderStrId());
+//
+//        // 6. Call Shiprocket + Send Email on Success
+//        try {
+//            ShiprocketOrderResponse srResponse = shiprocketService.createOrder(savedOrder);
+//
+//            // Update order with Shiprocket details
+//            savedOrder.setShiprocketOrderId(srResponse.getOrderId());
+//            savedOrder.setShiprocketShipmentId(srResponse.getShipmentId());
+//            savedOrder.setOrderStatus(OrderStatus.PLACED);
+//
+//            if (srResponse.getAwbCode() != null && !srResponse.getAwbCode().isEmpty()) {
+//                savedOrder.setAwbNumber(srResponse.getAwbCode());
+//            }
+//            if (srResponse.getCourierName() != null) {
+//                savedOrder.setCourierName(srResponse.getCourierName());
+//            }
+//
+//            if (request.getRazorpayPaymentId() != null) {
+//                savedOrder.setPaymentStatus(PaymentStatus.PAID);
+//            }
+//
+//            decreaseStock(savedOrder.getOrderItems());
+//            orderRepository.save(savedOrder);
+//
+//            log.info("Order {} placed — SR Order ID: {}", savedOrder.getOrderStrId(), srResponse.getOrderId());
+//
+//            // ==================== SEND EMAIL ON SUCCESS ====================
+//            sendOrderConfirmationEmail(savedOrder);
+//
+//        } catch (Exception e) {
+//            log.error("Shiprocket createOrder failed for {} — saved as PENDING: {}",
+//                    savedOrder.getOrderStrId(), e.getMessage());
+//
+//            savedOrder.setOrderStatus(OrderStatus.PENDING);
+//            orderRepository.save(savedOrder);
+//        }
+//
+//        return mapToOrderResponse(savedOrder);
+//    }
 
     @Override
     @Transactional
@@ -81,16 +375,39 @@ public class OrderServiceImpl implements OrderService {
             subTotal += item.getItemTotal();
         }
 
-        // 3. Calculate final amount
-        double discountAmount  = orZero(request.getDiscountAmount());
-        double couponDiscount  = orZero(request.getCouponDiscount());
-        double tax             = orZero(request.getTax());
-        double convenienceFee  = orZero(request.getConvenienceFee());
-        double shippingCharges = orZero(request.getShippingCharges());
+        // ───────────────────────────────────────────────────────────────────
+        // 3. CORRECTED: Calculate final amount with proper formula
+        // ───────────────────────────────────────────────────────────────────
+        // NOTE: discountAmount from request is for DISPLAY ONLY
+        // It represents MRP-to-selling-price difference, which is ALREADY
+        // reflected in the itemTotal. We DO NOT subtract it again.
+        //
+        // CORRECT FORMULA:
+        // finalAmount = subTotal + tax + shipping + codFee - couponDiscount
+        // ───────────────────────────────────────────────────────────────────
+
+        double couponDiscount  = orZero(request.getCouponDiscount()); // ✅ Only new coupons
+        double tax             = orZero(request.getTax());             // ✅ From request
+        double convenienceFee  = orZero(request.getConvenienceFee());  // ✅ From request
+        double shippingCharges = orZero(request.getShippingCharges()); // ✅ From request
         double giftwrapCharges = request.isGiftWrap() ? orZero(request.getGiftwrapCharges()) : 0.0;
 
-        double finalAmount = subTotal - discountAmount - couponDiscount
-                + tax + convenienceFee + shippingCharges + giftwrapCharges;
+        // ✅ CORRECT FORMULA: subTotal + tax + shipping + codFee - coupon
+        // DO NOT subtract discountAmount — it's already in the price!
+        double finalAmount = subTotal          // already at selling price
+                + tax                          // GST on subtotal
+                + shippingCharges              // shipping charges (0 if free)
+                + convenienceFee               // COD fee (100 if COD, 0 if online)
+                - couponDiscount;              // only deduct NEW coupon codes
+
+        log.info("✅ Order Pricing Calculated:");
+        log.info("  Subtotal:        ₹{}", String.format("%.2f", subTotal));
+        log.info("  Tax (18% GST):    ₹{}", String.format("%.2f", tax));
+        log.info("  Shipping:        ₹{}", String.format("%.2f", shippingCharges));
+        log.info("  COD Fee:         ₹{}", String.format("%.2f", convenienceFee));
+        log.info("  Coupon Discount: ₹{}", String.format("%.2f", couponDiscount));
+        log.info("  ──────────────────────");
+        log.info("  Final Amount:    ₹{}", String.format("%.2f", finalAmount));
 
         // 4. Build OrderEntity
         OrderEntity order = new OrderEntity();
@@ -113,17 +430,18 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingPincode(request.getShippingPincode());
         order.setShippingCountry("India");
 
+        // ✅ CORRECTED PRICING STORAGE
         order.setSubTotal(subTotal);
-        order.setDiscountAmount(discountAmount);
-        order.setDiscountPercent(request.getDiscountPercent());
+        order.setDiscountAmount(0.0);                      // ✅ Always 0
+        order.setDiscountPercent(0.0);                     // ✅ Always 0
         order.setCouponCode(request.getCouponCode());
-        order.setCouponDiscount(couponDiscount);
+        order.setCouponDiscount(couponDiscount);           // ✅ Only new coupons
         order.setTax(tax);
-        order.setConvenienceFee(convenienceFee);
+        order.setConvenienceFee(convenienceFee);           // ✅ COD fee
         order.setShippingCharges(shippingCharges);
         order.setGiftWrap(request.isGiftWrap());
         order.setGiftwrapCharges(giftwrapCharges);
-        order.setFinalAmount(finalAmount);
+        order.setFinalAmount(finalAmount);                 // ✅ Now positive!
         order.setOrderNotes(request.getOrderNotes());
         order.setOrderFlow(OrderFlow.CART);
         order.setShippingStatus(ShippingStatus.NEW);
@@ -197,7 +515,14 @@ public class OrderServiceImpl implements OrderService {
                     orderStrId,
                     totalAmount,
                     orderItemsForEmail,
-                    mobile
+                    mobile,
+                    savedOrder.getSubTotal(),           // ← new
+                    savedOrder.getDiscountAmount(),      // ← new
+                    savedOrder.getCouponDiscount(),      // ← new
+                    savedOrder.getTax(),                 // ← new
+                    savedOrder.getShippingCharges(),     // ← new
+                    savedOrder.getConvenienceFee(),      // ← new
+                    savedOrder.getGiftwrapCharges()      // ← new
             );
 
             log.info("Order confirmation email sent successfully to: {}", customerEmail);
@@ -225,37 +550,129 @@ public class OrderServiceImpl implements OrderService {
     // ────────────────────────────────────────────────────────────────────────
     //  CONFIRM BUY NOW ORDER — Buy Now Flow
     // ────────────────────────────────────────────────────────────────────────
+//    @Override
+//    @Transactional
+//    public OrderResponse confirmBuyNowOrder(Long userId, BuyNowConfirmRequest request) {
+//        log.info("Confirming Buy Now order for userId: {}, SR Order: {}",
+//                userId, request.getShiprocketOrderId());
+//
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(() -> new OrderException("User not found", "USER_NOT_FOUND"));
+//
+//        ProductEntity product = productRepository.findByProductStrId(request.getProductStrId())
+//                .orElseThrow(() -> new OrderException(
+//                        "Product not found: " + request.getProductStrId(), "PRODUCT_NOT_FOUND"));
+//
+//        CreateOrderRequest.OrderItemRequest itemReq = new CreateOrderRequest.OrderItemRequest();
+//        itemReq.setProductStrId(request.getProductStrId());
+//        itemReq.setVariantId(request.getVariantId());
+//        itemReq.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
+//
+//        OrderItemEntity item = buildOrderItem(product, itemReq);
+//
+//        OrderEntity order = new OrderEntity();
+////        order.setOrderStrId(generateOrderStrId());
+//        order.setUser(user);
+//        order.setOrderStatus(OrderStatus.PLACED);
+//        order.setPaymentStatus(PaymentStatus.PAID);
+//        order.setPaymentMethod(PaymentMethod.PREPAID);
+//        order.setPaymentMode(PaymentMode.RAZORPAY);
+//        order.setRazorpayPaymentId(request.getRazorpayPaymentId());
+//        order.setOrderFlow(OrderFlow.BUY_NOW);
+//        order.setShippingStatus(ShippingStatus.NEW);
+//
+//        order.setCustomerName(request.getCustomerName());
+//        order.setCustomerPhone(request.getCustomerPhone());
+//        order.setCustomerEmail(request.getCustomerEmail());
+//        order.setShippingAddress1(request.getShippingAddress1());
+//        order.setShippingAddress2(request.getShippingAddress2());
+//        order.setShippingCity(request.getShippingCity());
+//        order.setShippingState(request.getShippingState());
+//        order.setShippingPincode(request.getShippingPincode());
+//        order.setShippingCountry("India");
+//
+//        order.setSubTotal(item.getItemTotal());
+//        order.setFinalAmount(request.getAmount());
+//
+//        order.setShiprocketOrderId(request.getShiprocketOrderId() != null
+//                ? Long.parseLong(request.getShiprocketOrderId()) : null);
+//        order.setShiprocketShipmentId(request.getShiprocketShipmentId() != null
+//                ? Long.parseLong(request.getShiprocketShipmentId()) : null);
+//
+//        item.setOrder(order);
+//        order.setOrderItems(List.of(item));
+//
+//        decreaseStock(List.of(item));
+//
+//        OrderEntity saved = orderRepository.save(order);
+//        log.info("Buy Now order saved: {}", saved.getOrderStrId());
+//
+//        return mapToOrderResponse(saved);
+//    }
+
+
     @Override
     @Transactional
     public OrderResponse confirmBuyNowOrder(Long userId, BuyNowConfirmRequest request) {
-        log.info("Confirming Buy Now order for userId: {}, SR Order: {}",
-                userId, request.getShiprocketOrderId());
+        log.info("╔════════════════════════════════════════════════════╗");
+        log.info("║     BUY NOW — ORDER CONFIRMATION STARTED           ║");
+        log.info("╚════════════════════════════════════════════════════╝");
+        log.info("► User ID        : {}", userId);
+        log.info("► SR Order ID    : {}", request.getShiprocketOrderId());
+        log.info("► Payment ID     : {}", request.getRazorpayPaymentId());
+        log.info("► Product        : {}", request.getProductStrId());
+        log.info("► Quantity       : {}", request.getQuantity());
+        log.info("► Amount Paid    : ₹{}", request.getAmount());
 
+        // 1. VALIDATE USER
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new OrderException("User not found", "USER_NOT_FOUND"));
+                .orElseThrow(() -> {
+                    log.error("❌ User not found: {}", userId);
+                    return new OrderException("User not found", "USER_NOT_FOUND");
+                });
+        log.info("✅ User validated: {}", user.getEmail());
 
+        // 2. FETCH PRODUCT
         ProductEntity product = productRepository.findByProductStrId(request.getProductStrId())
-                .orElseThrow(() -> new OrderException(
-                        "Product not found: " + request.getProductStrId(), "PRODUCT_NOT_FOUND"));
+                .orElseThrow(() -> {
+                    log.error("❌ Product not found: {}", request.getProductStrId());
+                    return new OrderException(
+                            "Product not found: " + request.getProductStrId(),
+                            "PRODUCT_NOT_FOUND");
+                });
+        log.info("✅ Product found: {} ({})", product.getProductName(), product.getProductStrId());
 
+        // 3. BUILD ORDER ITEM WITH STOCK VALIDATION
         CreateOrderRequest.OrderItemRequest itemReq = new CreateOrderRequest.OrderItemRequest();
         itemReq.setProductStrId(request.getProductStrId());
         itemReq.setVariantId(request.getVariantId());
         itemReq.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
 
         OrderItemEntity item = buildOrderItem(product, itemReq);
+        log.info("✅ Order item built: {} × {}", item.getProductName(), item.getQuantity());
 
+        // 4. CALCULATE PRICING (AMAZON-STYLE)
+        Map<String, Double> pricingBreakdown = calculatePricingBreakdown(
+                item,
+                request.getShippingState(),
+                request.getShippingPincode()
+        );
+
+        // 5. VALIDATE AMOUNT — Critical security check
+        validatePricingAmount(pricingBreakdown, request.getAmount());
+
+        // 6. CREATE ORDER ENTITY
         OrderEntity order = new OrderEntity();
-//        order.setOrderStrId(generateOrderStrId());
         order.setUser(user);
         order.setOrderStatus(OrderStatus.PLACED);
-        order.setPaymentStatus(PaymentStatus.PAID);
+        order.setPaymentStatus(PaymentStatus.PAID);  // ✅ Already paid by SR
         order.setPaymentMethod(PaymentMethod.PREPAID);
         order.setPaymentMode(PaymentMode.RAZORPAY);
         order.setRazorpayPaymentId(request.getRazorpayPaymentId());
         order.setOrderFlow(OrderFlow.BUY_NOW);
         order.setShippingStatus(ShippingStatus.NEW);
 
+        // Customer details
         order.setCustomerName(request.getCustomerName());
         order.setCustomerPhone(request.getCustomerPhone());
         order.setCustomerEmail(request.getCustomerEmail());
@@ -266,21 +683,49 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingPincode(request.getShippingPincode());
         order.setShippingCountry("India");
 
-        order.setSubTotal(item.getItemTotal());
-        order.setFinalAmount(request.getAmount());
+        // 7. SET ALL PRICING COMPONENTS (NOT JUST SUBTOTAL + FINAL)
+        order.setSubTotal(pricingBreakdown.get("subTotal"));
+        order.setTax(pricingBreakdown.get("tax"));
+        order.setShippingCharges(pricingBreakdown.get("shippingCharges"));
+        order.setConvenienceFee(pricingBreakdown.get("convenienceFee"));
+        order.setDiscountAmount(pricingBreakdown.get("discountAmount"));
+        order.setCouponDiscount(pricingBreakdown.get("couponDiscount"));
+        order.setFinalAmount(pricingBreakdown.get("finalAmount"));
+        order.setGiftWrap(false);
 
+        // Shiprocket references
         order.setShiprocketOrderId(request.getShiprocketOrderId() != null
                 ? Long.parseLong(request.getShiprocketOrderId()) : null);
         order.setShiprocketShipmentId(request.getShiprocketShipmentId() != null
                 ? Long.parseLong(request.getShiprocketShipmentId()) : null);
 
+        // Set item relationship
         item.setOrder(order);
         order.setOrderItems(List.of(item));
 
+        // 8. DECREASE STOCK
         decreaseStock(List.of(item));
+        log.info("✅ Stock decreased for variant: {}", item.getVariantId());
 
+        // 9. SAVE TO DATABASE
         OrderEntity saved = orderRepository.save(order);
-        log.info("Buy Now order saved: {}", saved.getOrderStrId());
+        log.info("╔════════════════════════════════════════════════════╗");
+        log.info("║  ✅ ORDER SAVED TO DATABASE SUCCESSFULLY          ║");
+        log.info("╚════════════════════════════════════════════════════╝");
+        log.info("► Order ID        : {}", saved.getOrderStrId());
+        log.info("► Final Amount    : ₹{}", saved.getFinalAmount());
+        log.info("► Status          : {}", saved.getOrderStatus());
+
+        // 10. SEND EMAIL (LIKE CART FLOW DOES)
+        try {
+            sendOrderConfirmationEmail(saved);
+            log.info("✅ Order confirmation email sent");
+        } catch (Exception emailEx) {
+            log.error("⚠️  Email sending failed (non-blocking): {}", emailEx.getMessage());
+            // Do NOT throw — email failure should not rollback order
+        }
+
+        log.info("═══════════════════════════════════════════════════════");
 
         return mapToOrderResponse(saved);
     }
@@ -687,6 +1132,7 @@ public class OrderServiceImpl implements OrderService {
             List<OrderResponse.OrderItemResponse> itemResponses = order.getOrderItems()
                     .stream().map(i -> {
                         OrderResponse.OrderItemResponse ir = new OrderResponse.OrderItemResponse();
+
                         ir.setProductStrId(i.getProductStrId());
                         ir.setProductName(i.getProductName());
                         ir.setSku(i.getSku());
@@ -706,6 +1152,7 @@ public class OrderServiceImpl implements OrderService {
                                     .ifPresent(product -> {
                                         Long primeId = product.getProductPrimeId();
                                         String variantId = i.getVariantId();
+                                        ir.setProductPrimeId(primeId);   // ← ADD THIS LINE — was never called
 
                                         if (variantId != null && !variantId.isBlank()) {
                                             // variant order — check if variant has main image
@@ -932,6 +1379,5 @@ public class OrderServiceImpl implements OrderService {
         log.info("Return request cancelled for order {}", orderStrId);
         return mapToOrderResponse(saved);
     }
-
 
 }

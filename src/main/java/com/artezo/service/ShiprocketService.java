@@ -318,18 +318,57 @@ public class ShiprocketService {
         );
 
         // Pricing
-        req.setSubTotal(order.getSubTotal());
+//        req.setSubTotal(order.getSubTotal());
+//        req.setShippingCharges(order.getShippingCharges() != null ? order.getShippingCharges() : 0.0);
+//        req.setGiftwrapCharges(order.getGiftwrapCharges() != null ? order.getGiftwrapCharges() : 0.0);
+//        req.setTransactionCharges(order.getConvenienceFee() != null ? order.getConvenienceFee() : 0.0);
+//
+//
+//        //✅ FIX — combine both discounts
+//        double totalDiscount = (order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0)
+//                + (order.getCouponDiscount() != null ? order.getCouponDiscount() : 0.0);
+//
+//        req.setTotalDiscount(totalDiscount);
+
+
+        // ────────────────────────────────────────────────────────────────
+        // Pricing — CORRECTED to match order finalAmount
+        // ────────────────────────────────────────────────────────────────
+        // ✅ IMPORTANT: Include TAX in the subTotal sent to Shiprocket
+        // Reason: Shiprocket doesn't have a separate tax field
+        // So we need to include tax in the subtotal so the total matches
+
+        // Our system: finalAmount = subTotal + tax + shipping + codFee - coupon
+        // But Shiprocket expects: finalAmount = subTotal + shipping + transaction_charges - discount
+        // Since Shiprocket doesn't understand tax separately, we include it in subTotal
+
+        double subTotalWithTax = order.getSubTotal() + (order.getTax() != null ? order.getTax() : 0.0);
+
+        req.setSubTotal(subTotalWithTax);  // ✅ NOW INCLUDES TAX
         req.setShippingCharges(order.getShippingCharges() != null ? order.getShippingCharges() : 0.0);
         req.setGiftwrapCharges(order.getGiftwrapCharges() != null ? order.getGiftwrapCharges() : 0.0);
         req.setTransactionCharges(order.getConvenienceFee() != null ? order.getConvenienceFee() : 0.0);
 
-        //req.setTotalDiscount(order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0);
-
-        //✅ FIX — combine both discounts
         double totalDiscount = (order.getDiscountAmount() != null ? order.getDiscountAmount() : 0.0)
                 + (order.getCouponDiscount() != null ? order.getCouponDiscount() : 0.0);
 
         req.setTotalDiscount(totalDiscount);
+
+        log.info("✅ Shiprocket Pricing Breakdown:");
+        log.info("  SubTotal (excl tax):    ₹{}", String.format("%.2f", order.getSubTotal()));
+        log.info("  + Tax (18%):            ₹{}", String.format("%.2f", order.getTax() != null ? order.getTax() : 0.0));
+        log.info("  ──────────────────────────");
+        log.info("  SubTotal (with tax):    ₹{}", String.format("%.2f", subTotalWithTax));
+        log.info("  + Shipping:             ₹{}", String.format("%.2f", order.getShippingCharges() != null ? order.getShippingCharges() : 0.0));
+        log.info("  + Transaction Charges:  ₹{}", String.format("%.2f", order.getConvenienceFee() != null ? order.getConvenienceFee() : 0.0));
+        log.info("  - Discounts:            ₹{}", String.format("%.2f", totalDiscount));
+        log.info("  ──────────────────────────");
+
+        double srTotal = subTotalWithTax + (order.getShippingCharges() != null ? order.getShippingCharges() : 0.0)
+                + (order.getConvenienceFee() != null ? order.getConvenienceFee() : 0.0) - totalDiscount;
+
+        log.info("  SR Payable Amount:      ₹{}", String.format("%.2f", srTotal));
+        log.info("  Our DB Payable Amount:  ₹{}", String.format("%.2f", order.getFinalAmount()));
 
         // Order Items — map each OrderItemEntity → ShiprocketOrderItem
         List<ShiprocketOrderRequest.ShiprocketOrderItem> srItems = order.getOrderItems()
@@ -364,11 +403,41 @@ public class ShiprocketService {
     /**
      * Maps a single OrderItemEntity → ShiprocketOrderItem
      */
+//    private ShiprocketOrderRequest.ShiprocketOrderItem mapToSrItem(OrderItemEntity item) {
+//        ShiprocketOrderRequest.ShiprocketOrderItem srItem =
+//                new ShiprocketOrderRequest.ShiprocketOrderItem();
+//
+//        // Append color/size to name for variant products so SR panel shows it clearly
+//        String displayName = item.getProductName();
+//        if (item.getColor() != null && !item.getColor().isEmpty()) {
+//            displayName += " - " + item.getColor();
+//        }
+//        if (item.getSize() != null && !item.getSize().isEmpty()
+//                && !item.getSize().equalsIgnoreCase("Standard")) {
+//            displayName += " / " + item.getSize();
+//        }
+//
+//        srItem.setName(displayName);
+//        srItem.setSku(item.getSku());
+//        srItem.setUnits(item.getQuantity());
+//        srItem.setSellingPrice(String.valueOf(item.getSellingPrice()));
+//        srItem.setDiscount(item.getDiscount() != null ? String.valueOf(item.getDiscount()) : "0");
+//        srItem.setHsn(item.getHsnCode());
+//
+//        return srItem;
+//    }
+
+
+    /**
+     * Maps OrderItemEntity to Shiprocket order item format
+     * ✅ IMPORTANT: DO NOT send product discount to Shiprocket
+     * The discount is already reflected in the selling price
+     */
     private ShiprocketOrderRequest.ShiprocketOrderItem mapToSrItem(OrderItemEntity item) {
         ShiprocketOrderRequest.ShiprocketOrderItem srItem =
                 new ShiprocketOrderRequest.ShiprocketOrderItem();
 
-        // Append color/size to name for variant products so SR panel shows it clearly
+        // Append color/size to name for variant products
         String displayName = item.getProductName();
         if (item.getColor() != null && !item.getColor().isEmpty()) {
             displayName += " - " + item.getColor();
@@ -381,9 +450,20 @@ public class ShiprocketService {
         srItem.setName(displayName);
         srItem.setSku(item.getSku());
         srItem.setUnits(item.getQuantity());
+
+        // ✅ CORRECT: Send selling price (already discounted)
         srItem.setSellingPrice(String.valueOf(item.getSellingPrice()));
-        srItem.setDiscount(item.getDiscount() != null ? String.valueOf(item.getDiscount()) : "0");
+
+        // ✅ IMPORTANT: DO NOT send product discount to Shiprocket
+        // The discount (MRP - Selling Price) is ALREADY in the selling price
+        // Shiprocket expects: discount ≤ selling_price
+        // We send 0 because the discount is baked into the price
+        srItem.setDiscount("0");  // ✅ CHANGED from item.getDiscount() to "0"
+
         srItem.setHsn(item.getHsnCode());
+
+        log.info("SR Item mapped: {} × {} @ ₹{} (discount: ₹0, already in price)",
+                displayName, item.getQuantity(), item.getSellingPrice());
 
         return srItem;
     }

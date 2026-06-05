@@ -153,4 +153,12 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     //batch query
     @Query("SELECT p.productPrimeId, p.productCategory FROM ProductEntity p WHERE p.productPrimeId IN :productIds")
     List<Object[]> findCategoriesByProductIds(@Param("productIds") List<Long> productIds);
+
+    @Query(value = "SELECT DISTINCT p.productSubCategory FROM ProductEntity p " +
+            "WHERE p.productCategory = :productCategory " +
+            "AND p.isDeleted = false " +
+            "AND p.productSubCategory IS NOT NULL " +
+            "AND p.productSubCategory != '' " +
+            "ORDER BY p.productSubCategory ASC")
+    List<String> findDistinctSubCategoriesByCategory(@Param("productCategory") String productCategory);
 }

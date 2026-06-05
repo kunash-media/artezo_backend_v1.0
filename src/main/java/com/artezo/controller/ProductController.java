@@ -1,10 +1,7 @@
 package com.artezo.controller;
 
 import com.artezo.dto.request.*;
-import com.artezo.dto.response.BulkUploadResponse;
-import com.artezo.dto.response.ProductCategoryResponse;
-import com.artezo.dto.response.ProductResponseDto;
-import com.artezo.dto.response.ProductSearchResultDto;
+import com.artezo.dto.response.*;
 import com.artezo.entity.ProductEntity;
 import com.artezo.entity.ProductVariantEntity;
 import com.artezo.entity.VariantMockupImageEntity;
@@ -43,6 +40,38 @@ public class ProductController {
     public ProductController(ProductService productService, ProductRepository productRepository) {
         this.productService = productService;
         this.productRepository = productRepository;
+    }
+
+
+    @GetMapping("/sub-categories")
+    public ResponseEntity<?> getSubCategoriesByCategory(
+            @RequestParam(name = "productCategory") String productCategory,
+            HttpServletRequest request) {
+
+        log.info("Fetching sub-categories for category: {}", productCategory);
+
+        try {
+            if (productCategory == null || productCategory.trim().isEmpty()) {
+                log.warn("Empty productCategory parameter received");
+                return ResponseEntity.badRequest()
+                        .body(new SubCategoriesResponse(false, "Product category is required", null));
+            }
+
+            List<String> subCategories = productService.getSubCategoriesByCategory(productCategory);
+
+            log.info("Successfully fetched {} sub-categories for category: {}",
+                    subCategories.size(), productCategory);
+
+            return ResponseEntity.ok(new SubCategoriesResponse(
+                    true,
+                    "Sub-categories fetched successfully",
+                    subCategories
+            ));
+        } catch (Exception e) {
+            log.error("Error fetching sub-categories for category: {}", productCategory, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new SubCategoriesResponse(false, "Error fetching sub-categories", null));
+        }
     }
 
     // ──────────────────────────────────────────────────────────

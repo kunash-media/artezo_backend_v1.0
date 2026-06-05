@@ -57,6 +57,35 @@ public class ProductServiceImpl implements ProductService {
         this.recentViewService = recentViewService;
     }
 
+    @Override
+    public List<String> getSubCategoriesByCategory(String productCategory) {
+        log.debug("Service: Retrieving sub-categories for category: {}", productCategory);
+
+        try {
+            List<String> subCategories = productRepository
+                    .findDistinctSubCategoriesByCategory(productCategory.trim());
+
+            if (subCategories == null || subCategories.isEmpty()) {
+                log.warn("No sub-categories found for category: {}", productCategory);
+                return new ArrayList<>();
+            }
+
+            // Remove null/empty values and sort
+            List<String> filtered = subCategories.stream()
+                    .filter(sub -> sub != null && !sub.trim().isEmpty())
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+
+            log.debug("Found {} sub-categories for category: {}", filtered.size(), productCategory);
+            return filtered;
+
+        } catch (Exception e) {
+            log.error("Error in service layer while fetching sub-categories", e);
+            throw new RuntimeException("Failed to fetch sub-categories", e);
+        }
+    }
+
     // ────────────────────────────────────────────────
     //             URL generators
     // ────────────────────────────────────────────────

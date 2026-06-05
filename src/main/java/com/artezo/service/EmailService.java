@@ -10,11 +10,23 @@ public interface EmailService {
     void sendOtpEmail(String toEmail, String otp, String message);
 
     // EmailService.java (Interface)
-    void sendOrderConfirmationEmail(
-            String toEmail,
-            String customerName,
-            String orderId,
-            BigDecimal totalAmount,
-            List<OrderResponse.OrderItemResponse> orderItems,  // Changed name + type
-            String mobile);
+//    void sendOrderConfirmationEmail(
+//            String toEmail,
+//            String customerName,
+//            String orderId,
+//            BigDecimal totalAmount,
+//            List<OrderResponse.OrderItemResponse> orderItems,  // Changed name + type
+//            String mobile);
+
+    void sendOrderConfirmationEmail(String toEmail, String customerName, String orderId,
+                                    BigDecimal totalAmount,
+                                    List<OrderResponse.OrderItemResponse> orderItems,
+                                    String mobile,
+                                    Double subTotal,
+                                    Double discountAmount,
+                                    Double couponDiscount,
+                                    Double tax,
+                                    Double shippingCharges,
+                                    Double convenienceFee,
+                                    Double giftwrapCharges);
 }

@@ -400,6 +400,7 @@ public class OrderResponse {
     // ── Inner: Item Response ──────────────────────────────────────────────
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class OrderItemResponse {
+
         private String productStrId;
         private String productName;
         private String sku;
