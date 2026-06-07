@@ -4,6 +4,7 @@ import com.artezo.bcrypt.BcryptEncoderConfig;
 import com.artezo.dto.request.UserPatchDTO;
 import com.artezo.dto.request.UserRegistrationDTO;
 import com.artezo.dto.response.UserResponseDTO;
+import com.artezo.dto.response.UserSummaryDto;
 import com.artezo.dto.stats.orders.OrderStats;
 import com.artezo.entity.ShippingAddressEntity;
 import com.artezo.entity.UserEntity;
@@ -17,6 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -82,6 +86,18 @@ public class UserServiceImpl implements UserService {
         log.info("[UserService] registerUser() - default address created, shippingId={}", savedAddress.getShippingId());
 
         return buildResponse(savedUser, savedAddress.getShippingId());
+    }
+
+    public List<UserSummaryDto> getUserSummary() {
+        return userRepository.findAll().stream().map(u -> {
+            UserSummaryDto dto = new UserSummaryDto();
+            dto.setUserId(u.getUserId());
+            dto.setFirstName(u.getFirstName());
+            dto.setLastName(u.getLastName());
+            dto.setEmail(u.getEmail());
+            dto.setUserStatus(u.getUserStatus() != null ? u.getUserStatus().toString() : null);
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     // ─────────────────────────────────────────────────────────────

@@ -68,7 +68,7 @@ public class CouponEntity {
     @Column(name = "category_name")
     private String categoryName;
 
-    // NEW: many products se link (Type 1 — specific products)
+    // NEW: many products link (Type 1 — specific products)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "coupon_products",
@@ -76,6 +76,15 @@ public class CouponEntity {
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     private List<ProductEntity> products = new ArrayList<>();
+
+    // Variant-level specificity (Type 2 — specific SKUs/variants within a product)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "coupon_product_variants",
+            joinColumns = @JoinColumn(name = "coupon_id"),
+            inverseJoinColumns = @JoinColumn(name = "variant_db_id")
+    )
+    private List<ProductVariantEntity> allowedVariants = new ArrayList<>();
 
     // NEW: allowed users list
     @ManyToMany(fetch = FetchType.LAZY)
@@ -152,4 +161,14 @@ public class CouponEntity {
 
     public List<UserEntity> getAllowedUsers() { return allowedUsers; }
     public void setAllowedUsers(List<UserEntity> allowedUsers) { this.allowedUsers = allowedUsers; }
+
+
+
+    public List<ProductVariantEntity> getAllowedVariants() {
+        return allowedVariants;
+    }
+
+    public void setAllowedVariants(List<ProductVariantEntity> allowedVariants) {
+        this.allowedVariants = allowedVariants;
+    }
 }

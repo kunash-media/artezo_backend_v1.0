@@ -3,6 +3,7 @@ package com.artezo.controller;
 import com.artezo.dto.request.UserPatchDTO;
 import com.artezo.dto.request.UserRegistrationDTO;
 import com.artezo.dto.response.UserResponseDTO;
+import com.artezo.dto.response.UserSummaryDto;
 import com.artezo.service.UserService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -41,6 +43,11 @@ public class UserController {
             log.error("[Controller] register - failed, reason={}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<List<UserSummaryDto>> getUserSummary() {
+        return ResponseEntity.ok(userService.getUserSummary());
     }
 
     // ─────────────────────────────────────────────────────────────

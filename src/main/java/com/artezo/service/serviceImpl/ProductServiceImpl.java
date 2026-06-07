@@ -101,6 +101,41 @@ public class ProductServiceImpl implements ProductService {
         return "/api/products/" + productPrimeId + "/variant/" + variantId + "/main";
     }
 
+    // REPLACE the two Base64 blocks with URL references
+
+    public Page<ProductVariantSummaryDto> getProductVariantSummary(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("productPrimeId").ascending());
+
+        return productRepository.findByIsDeletedFalse(pageable)
+                .map(product -> {
+                    ProductVariantSummaryDto dto = new ProductVariantSummaryDto();
+                    dto.setProductPrimeId(product.getProductPrimeId());
+                    dto.setProductStrId(product.getProductStrId());
+                    dto.setProductName(product.getProductName());
+                    dto.setProductCategory(product.getProductCategory());
+                    dto.setProductSubCategory(product.getProductSubCategory());
+                    dto.setMainImageUrl(mainImageUrl(product.getProductPrimeId()));
+
+                    List<ProductVariantSummaryDto.VariantSummary> variantSummaries =
+                            product.getVariants().stream().map(v -> {
+                                ProductVariantSummaryDto.VariantSummary vs = new ProductVariantSummaryDto.VariantSummary();
+                                vs.setVariantDbId(v.getId());
+                                vs.setVariantId(v.getVariantId());
+                                vs.setColor(v.getColor());
+                                vs.setSize(v.getSize());
+                                vs.setPrice(v.getPrice());
+                                vs.setMrp(v.getMrp());
+                                vs.setStock(v.getStock());
+                                vs.setMainImageUrl(variantMainImageUrl(product.getProductPrimeId(), v.getVariantId()));
+                                return vs;
+                            }).collect(Collectors.toList());
+
+                    dto.setVariants(variantSummaries);
+                    return dto;
+                });
+    }
+
+
     // ────────────────────────────────────────────────
     //            CREATE PRODUCT + INVENTORY SYNC
     // ────────────────────────────────────────────────

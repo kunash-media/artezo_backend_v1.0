@@ -7,6 +7,7 @@ import com.artezo.repository.*;
 import com.artezo.service.CartService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,12 +41,36 @@ public class CartServiceImpl implements CartService {
         this.productRepository = productRepository;
     }
 
+
+    // ── Scheduled: remove abandoned carts older than 30 days ─────────
+    @Scheduled(cron = "0 0 2 * * *") // runs at 2AM daily
+    @Transactional
+    public void cleanupAbandonedCarts() {
+        logger.info("[CART] Running abandoned cart cleanup");
+        // Optional: implement if you add a createdAt field to CartEntity
+        // cartRepository.deleteByStatusAndCreatedAtBefore(
+        //     CartEntity.CartStatus.ACTIVE,
+        //     LocalDateTime.now().minusDays(30)
+        // );
+    }
+
     @Override
     @Transactional
     public CartResponse addToCart(AddToCartRequest request) {
         logger.info("[CART] Adding item to cart | userId={}, productId={}", request.getUserId(), request.getProductId());
 
         CartEntity cart = getOrCreateCart(request.getUserId(), request.getSessionId());
+
+        // ── Guard: quantity cap ──────────────────────────────────────────
+        if (request.getQuantity() != null && request.getQuantity() > 50) {
+            throw new RuntimeException("Quantity exceeds allowed limit of 50");
+        }
+
+        // ── Guard: cart item limit ───────────────────────────────────────
+        Integer itemCount = cartItemRepository.countByCartId(cart.getId());
+        if (itemCount != null && itemCount >= 100) {
+            throw new RuntimeException("Cart item limit of 100 reached");
+        }
 
         Optional<CartItemEntity> existing = cartItemRepository
                 .findByCart_IdAndProductIdAndVariantId(cart.getId(), request.getProductId(), request.getVariantId());

@@ -1,10 +1,7 @@
 package com.artezo.service;
 
 import com.artezo.dto.request.CreateProductRequestDto;
-import com.artezo.dto.response.ProductSearchResultDto;
-import com.artezo.dto.response.ProductCategoryResponse;
-import com.artezo.dto.response.BulkUploadResponse;
-import com.artezo.dto.response.ProductResponseDto;
+import com.artezo.dto.response.*;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
 import com.artezo.exceptions.ProductCreateResult;
 import com.artezo.exceptions.ProductNotFoundException;
@@ -88,4 +85,6 @@ public interface ProductService {
     Page<ProductCategoryResponse> getTrendingProducts(int page, int size);
 
     List<String> getSubCategoriesByCategory(String productCategory);
+
+    Page<ProductVariantSummaryDto> getProductVariantSummary(int page, int size);
 }

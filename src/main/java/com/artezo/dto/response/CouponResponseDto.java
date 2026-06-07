@@ -28,6 +28,8 @@ public class CouponResponseDto {
     private List<Long> productIds;
     private List<Long> userIds;
 
+    private List<Long> variantIds;
+
     public CouponResponseDto() {}
 
     // ---- Getters & Setters ----
@@ -93,4 +95,20 @@ public class CouponResponseDto {
 
     public List<Long> getUserIds() { return userIds; }
     public void setUserIds(List<Long> userIds) { this.userIds = userIds; }
+
+    public List<Long> getVariantIds() {
+        return variantIds;
+    }
+
+    public void setVariantIds(List<Long> variantIds) {
+        this.variantIds = variantIds;
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
 }

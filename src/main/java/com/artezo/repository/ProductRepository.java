@@ -161,4 +161,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
             "AND p.productSubCategory != '' " +
             "ORDER BY p.productSubCategory ASC")
     List<String> findDistinctSubCategoriesByCategory(@Param("productCategory") String productCategory);
+
+    Page<ProductEntity> findByIsDeletedFalse(Pageable pageable);
 }

@@ -799,4 +799,13 @@ public class ProductController {
         return ResponseEntity.ok(trendingProducts);
     }
 
+    // ADD to ProductController
+
+    @GetMapping("/summary")
+    public ResponseEntity<Page<ProductVariantSummaryDto>> getProductVariantSummary(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(productService.getProductVariantSummary(page, size));
+    }
+
 }

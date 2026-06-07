@@ -25,6 +25,9 @@ public class CouponRequestDto {
     private Boolean freeShipping;
     private Boolean couponUsed = false;
 
+
+    private List<Long> variantIds;
+
     public CouponRequestDto() {
     }
 
@@ -171,5 +174,21 @@ public class CouponRequestDto {
 
     public void setCouponUsed(Boolean couponUsed) {
         this.couponUsed = couponUsed;
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
+    public List<Long> getVariantIds() {
+        return variantIds;
+    }
+
+    public void setVariantIds(List<Long> variantIds) {
+        this.variantIds = variantIds;
     }
 }

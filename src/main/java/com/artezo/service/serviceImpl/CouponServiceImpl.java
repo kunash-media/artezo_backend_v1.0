@@ -2,14 +2,8 @@ package com.artezo.service.serviceImpl;
 
 import com.artezo.dto.request.CouponRequestDto;
 import com.artezo.dto.response.CouponResponseDto;
-import com.artezo.entity.CouponEntity;
-import com.artezo.entity.CouponUserUsage;
-import com.artezo.entity.ProductEntity;
-import com.artezo.entity.UserEntity;
-import com.artezo.repository.CouponRepository;
-import com.artezo.repository.CouponUserUsageRepository;
-import com.artezo.repository.ProductRepository;
-import com.artezo.repository.UserRepository;
+import com.artezo.entity.*;
+import com.artezo.repository.*;
 import com.artezo.service.CouponService;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -28,15 +22,18 @@ public class CouponServiceImpl implements CouponService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final CouponUserUsageRepository usageRepository;
+    private final ProductVariantRepository variantRepository;
 
-    public CouponServiceImpl(CouponRepository couponRepository,
-                             UserRepository userRepository,
+
+    public CouponServiceImpl(CouponRepository couponRepository, UserRepository userRepository,
                              ProductRepository productRepository,
-                             CouponUserUsageRepository usageRepository) {
+                             CouponUserUsageRepository usageRepository,
+                             ProductVariantRepository variantRepository) {
         this.couponRepository = couponRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.usageRepository = usageRepository;
+        this.variantRepository = variantRepository;
     }
 
     @Override
@@ -90,6 +87,12 @@ public class CouponServiceImpl implements CouponService {
         if (requestDto.getUserIds() != null && !requestDto.getUserIds().isEmpty()) {
             List<UserEntity> users = userRepository.findAllById(requestDto.getUserIds());
             coupon.setAllowedUsers(users);
+        }
+
+        // ADD after the allowedUsers block in createCoupon()
+        if (requestDto.getVariantIds() != null && !requestDto.getVariantIds().isEmpty()) {
+            List<ProductVariantEntity> variants = variantRepository.findAllById(requestDto.getVariantIds());
+            coupon.setAllowedVariants(variants);
         }
 
         CouponEntity saved = couponRepository.save(coupon);
@@ -159,6 +162,12 @@ public class CouponServiceImpl implements CouponService {
         if (requestDto.getUserIds() != null) {
             List<UserEntity> users = userRepository.findAllById(requestDto.getUserIds());
             coupon.setAllowedUsers(users);
+        }
+
+        // ADD after the allowedUsers block in updateCoupon()
+        if (requestDto.getVariantIds() != null) {
+            List<ProductVariantEntity> variants = variantRepository.findAllById(requestDto.getVariantIds());
+            coupon.setAllowedVariants(variants);
         }
 
         return convertToResponseDto(couponRepository.save(coupon));
@@ -309,6 +318,15 @@ public class CouponServiceImpl implements CouponService {
             response.setUserIds(
                     coupon.getAllowedUsers().stream()
                             .map(UserEntity::getUserId)
+                            .collect(Collectors.toList())
+            );
+        }
+
+        // ADD after the userIds block in convertToResponseDto()
+        if (coupon.getAllowedVariants() != null) {
+            response.setVariantIds(
+                    coupon.getAllowedVariants().stream()
+                            .map(ProductVariantEntity::getId)
                             .collect(Collectors.toList())
             );
         }

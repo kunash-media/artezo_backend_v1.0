@@ -45,7 +45,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(htmlContent, true);
 
             // Try to add logo, but don't fail if it doesn't exist
-            addLogoIfExists(helper);
+            addOtpLogoIfExists(helper);
 
             mailSender.send(messageOtp);
             logger.info("OTP email sent successfully to: {}", toEmail);
@@ -81,9 +81,10 @@ public class EmailServiceImpl implements EmailService {
                     tax, shippingCharges, convenienceFee, giftwrapCharges
             );
             helper.setText(htmlContent, true);
-            addLogoIfExists(helper);
 
+            addLogoIfExists(helper);
             mailSender.send(message);
+
             logger.info("Order confirmation email sent successfully to: {} for order: {}", toEmail, orderId);
         } catch (MessagingException e) {
             logger.error("Failed to send order confirmation email to {} for order {}: {}", toEmail, orderId, e.getMessage());
@@ -95,20 +96,52 @@ public class EmailServiceImpl implements EmailService {
      * Attempts to add logo as inline attachment if the file exists
      * If file doesn't exist, logs a warning but doesn't throw an exception
      */
+//    private void addLogoIfExists(MimeMessageHelper helper) {
+//        try {
+//            ClassPathResource logoResource = new ClassPathResource("static/Images/artezo_logo.jpg");
+//            if (logoResource.exists() && logoResource.isReadable()) {
+//                helper.addInline("logo", logoResource);
+//                logger.info("Logo added successfully to email from: {}", logoResource.getURL());
+//            } else {
+//                logger.warn("Logo file not found or not readable at static/Images/Logo.png - email will be sent without logo");
+//                logger.warn("Logo resource exists: {}, Logo resource readable: {}",
+//                        logoResource.exists(), logoResource.isReadable());
+//            }
+//        } catch (Exception e) {
+//            logger.warn("Could not add logo to email: {} - email will be sent without logo", e.getMessage());
+//            logger.debug("Full exception: ", e);
+//        }
+//    }
+
+
+    /**
+     * Adds default logo for Order emails
+     */
     private void addLogoIfExists(MimeMessageHelper helper) {
+        addLogoWithName(helper, "artezo_logo.jpg");
+    }
+
+    /**
+     * Adds blue background logo for OTP emails
+     */
+    private void addOtpLogoIfExists(MimeMessageHelper helper) {
+        addLogoWithName(helper, "artezo-logo-blue-bg.png");
+    }
+
+    /**
+     * Generic method to add logo by filename
+     */
+    private void addLogoWithName(MimeMessageHelper helper, String logoFileName) {
         try {
-            ClassPathResource logoResource = new ClassPathResource("static/Images/artezo_logo.jpg");
+            ClassPathResource logoResource = new ClassPathResource("static/Images/" + logoFileName);
             if (logoResource.exists() && logoResource.isReadable()) {
                 helper.addInline("logo", logoResource);
-                logger.info("Logo added successfully to email from: {}", logoResource.getURL());
+                logger.info("Logo added successfully: {}", logoFileName);
             } else {
-                logger.warn("Logo file not found or not readable at static/Images/Logo.png - email will be sent without logo");
-                logger.warn("Logo resource exists: {}, Logo resource readable: {}",
-                        logoResource.exists(), logoResource.isReadable());
+                logger.warn("Logo file not found or not readable: static/Images/{}", logoFileName);
             }
         } catch (Exception e) {
-            logger.warn("Could not add logo to email: {} - email will be sent without logo", e.getMessage());
-            logger.debug("Full exception: ", e);
+            logger.warn("Could not add logo {} to email: {}", logoFileName, e.getMessage());
         }
     }
 
@@ -245,25 +278,11 @@ public class EmailServiceImpl implements EmailService {
                     .append("<span class='product-label'>Qty</span>")
                     .append("<span class='product-value'>").append(qty).append("</span>")
                     .append("</div>")
-//                    .append("<div class='product-row'>")
-//                    .append("<span class='product-label'>MRP</span>")
-//                    .append("<span class='product-value' style='text-decoration:line-through; color:#999;'>&#8377;")
-//                    .append(String.format("%.2f", mrpPrice)).append("</span>")
-//                    .append("</div>")
                     .append("<div class='product-row'>")
                     .append("<span class='product-label'>Price</span>")
                     .append("<span class='product-value' style='color:#133F53; font-weight:600;'>&#8377;")
                     .append(String.format("%.2f", unitPrice)).append("</span>")
                     .append("</div>");
-
-            //    if (savedAmt > 0.01) {
-            //        productDetailsList
-            //          .append("<div class='product-row'>")
-            //          .append("<span class='product-label'>You save</span>")
-            //          .append("<span class='product-value' style='color:#1a8a4a; font-weight:600;'>&#8377;")
-            //          .append(String.format("%.2f", savedAmt)).append("</span>")
-            //          .append("</div>");
-            //     }
 
             productDetailsList
                     .append("<div class='product-row' style='border-top:1.5px solid #D89F34; padding-top:8px; margin-top:4px;'>")
