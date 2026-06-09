@@ -342,9 +342,13 @@ public class ShiprocketService {
         // But Shiprocket expects: finalAmount = subTotal + shipping + transaction_charges - discount
         // Since Shiprocket doesn't understand tax separately, we include it in subTotal
 
-        double subTotalWithTax = order.getSubTotal() + (order.getTax() != null ? order.getTax() : 0.0);
+//        double subTotalWithTax = order.getSubTotal() + (order.getTax() != null ? order.getTax() : 0.0);
+//        req.setSubTotal(subTotalWithTax);  // ✅ NOW INCLUDES TAX
 
-        req.setSubTotal(subTotalWithTax);  // ✅ NOW INCLUDES TAX
+        double subTotalWithTax = order.getSubTotal(); // GST already in selling price — no separate tax addition
+
+        req.setSubTotal(subTotalWithTax);
+
         req.setShippingCharges(order.getShippingCharges() != null ? order.getShippingCharges() : 0.0);
         req.setGiftwrapCharges(order.getGiftwrapCharges() != null ? order.getGiftwrapCharges() : 0.0);
         req.setTransactionCharges(order.getConvenienceFee() != null ? order.getConvenienceFee() : 0.0);
@@ -355,10 +359,14 @@ public class ShiprocketService {
         req.setTotalDiscount(totalDiscount);
 
         log.info("✅ Shiprocket Pricing Breakdown:");
-        log.info("  SubTotal (excl tax):    ₹{}", String.format("%.2f", order.getSubTotal()));
-        log.info("  + Tax (18%):            ₹{}", String.format("%.2f", order.getTax() != null ? order.getTax() : 0.0));
+//        log.info("  SubTotal (excl tax):    ₹{}", String.format("%.2f", order.getSubTotal()));
+//        log.info("  + Tax (18%):            ₹{}", String.format("%.2f", order.getTax() != null ? order.getTax() : 0.0));
+//        log.info("  ──────────────────────────");
+//        log.info("  SubTotal (with tax):    ₹{}", String.format("%.2f", subTotalWithTax));
+        log.info("  SubTotal (GST inclusive): ₹{}", String.format("%.2f", order.getSubTotal()));
+        log.info("  Tax: ₹0 (already in selling price)");
         log.info("  ──────────────────────────");
-        log.info("  SubTotal (with tax):    ₹{}", String.format("%.2f", subTotalWithTax));
+        log.info("  SubTotal sent to SR:    ₹{}", String.format("%.2f", subTotalWithTax));
         log.info("  + Shipping:             ₹{}", String.format("%.2f", order.getShippingCharges() != null ? order.getShippingCharges() : 0.0));
         log.info("  + Transaction Charges:  ₹{}", String.format("%.2f", order.getConvenienceFee() != null ? order.getConvenienceFee() : 0.0));
         log.info("  - Discounts:            ₹{}", String.format("%.2f", totalDiscount));

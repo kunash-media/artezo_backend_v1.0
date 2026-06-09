@@ -387,7 +387,7 @@ public class OrderServiceImpl implements OrderService {
         // ───────────────────────────────────────────────────────────────────
 
         double couponDiscount  = orZero(request.getCouponDiscount()); // ✅ Only new coupons
-        double tax             = orZero(request.getTax());             // ✅ From request
+        double tax             =    0.0;             // orZero(request.getTax()) ✅ From request
         double convenienceFee  = orZero(request.getConvenienceFee());  // ✅ From request
         double shippingCharges = orZero(request.getShippingCharges()); // ✅ From request
         double giftwrapCharges = request.isGiftWrap() ? orZero(request.getGiftwrapCharges()) : 0.0;
@@ -395,14 +395,16 @@ public class OrderServiceImpl implements OrderService {
         // ✅ CORRECT FORMULA: subTotal + tax + shipping + codFee - coupon
         // DO NOT subtract discountAmount — it's already in the price!
         double finalAmount = subTotal          // already at selling price
-                + tax                          // GST on subtotal
+                //  + tax                          // GST on subtotal
                 + shippingCharges              // shipping charges (0 if free)
                 + convenienceFee               // COD fee (100 if COD, 0 if online)
                 - couponDiscount;              // only deduct NEW coupon codes
 
         log.info("✅ Order Pricing Calculated:");
         log.info("  Subtotal:        ₹{}", String.format("%.2f", subTotal));
-        log.info("  Tax (18% GST):    ₹{}", String.format("%.2f", tax));
+//        log.info("  Tax (18% GST):    ₹{}", String.format("%.2f", tax));
+
+        log.info("  Tax (GST):        ₹0 (included in selling price)");
         log.info("  Shipping:        ₹{}", String.format("%.2f", shippingCharges));
         log.info("  COD Fee:         ₹{}", String.format("%.2f", convenienceFee));
         log.info("  Coupon Discount: ₹{}", String.format("%.2f", couponDiscount));
@@ -436,7 +438,7 @@ public class OrderServiceImpl implements OrderService {
         order.setDiscountPercent(0.0);                     // ✅ Always 0
         order.setCouponCode(request.getCouponCode());
         order.setCouponDiscount(couponDiscount);           // ✅ Only new coupons
-        order.setTax(tax);
+        order.setTax(0.0);    //tax
         order.setConvenienceFee(convenienceFee);           // ✅ COD fee
         order.setShippingCharges(shippingCharges);
         order.setGiftWrap(request.isGiftWrap());

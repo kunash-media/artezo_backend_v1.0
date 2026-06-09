@@ -40,11 +40,9 @@ public class CustomCategoryServiceImpl implements CustomCategoryService {
 
         if (repository.existsByProductCategoryIgnoreCase(request.getProductCategory())) {
             logger.warn("Duplicate category name attempted: {}", request.getProductCategory());
-            try {
-                throw new DuplicateCategoryException("Category with name '" + request.getProductCategory() + "' already exists");
-            } catch (DuplicateCategoryException e) {
-                throw new RuntimeException(e);
-            }
+            throw new DuplicateCategoryException(
+                    "Category with name '" + request.getProductCategory() + "' already exists"
+            );
         }
 
         CustomCategoryEntity entity = mapToEntity(request);

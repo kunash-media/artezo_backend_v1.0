@@ -79,10 +79,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DuplicateCategoryException.class)
-    public ResponseEntity<Map<String, Object>> handleDuplicate(DuplicateCategoryException ex) {
-        log.warn("Duplicate category: {}", ex.getMessage());
-        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    public ResponseEntity<ApiResponse<?>> handleDuplicateCategoryException(DuplicateCategoryException ex) {
+        log.warn("Duplicate category attempt: {}", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage(), "DUPLICATE_CATEGORY"));
     }
+
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<?> handleNoResourceFound(NoResourceFoundException ex) {

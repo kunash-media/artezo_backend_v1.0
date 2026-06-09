@@ -13,6 +13,8 @@ import com.artezo.service.ProductService;
 import com.artezo.service.RecentViewService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -45,6 +47,9 @@ public class ProductServiceImpl implements ProductService {
     private final InstallationStepRepository installationStepRepository;
     private final InventoryRepository inventoryRepository;
     private final RecentViewService recentViewService;
+
+    @PersistenceContext                          // ← ADD THIS
+    private EntityManager entityManager;
 
     private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
 
@@ -501,6 +506,25 @@ public class ProductServiceImpl implements ProductService {
                                 .map(VariantMockupImageEntity::getImageData)
                                 .collect(Collectors.toList())
                 );
+            }
+
+            // Clear and flush
+//            entity.getVariants().clear();
+//            productRepository.saveAndFlush(entity);
+
+            // ── Detach variants from coupon junction table before clearing ──
+            List<Long> existingVariantIds = entity.getVariants().stream()
+                    .map(ProductVariantEntity::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            if (!existingVariantIds.isEmpty()) {
+                entityManager.createNativeQuery(
+                                "DELETE FROM coupon_product_variants WHERE variant_db_id IN (:ids)"
+                        )
+                        .setParameter("ids", existingVariantIds)
+                        .executeUpdate();
+                entityManager.flush();
             }
 
             // Clear and flush
