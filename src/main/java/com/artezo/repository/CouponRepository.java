@@ -51,4 +51,31 @@ public interface CouponRepository extends JpaRepository<CouponEntity, Long> {
 
     @Query("SELECT c FROM CouponEntity c WHERE c.validTo < :now")
     List<CouponEntity> findExpiredCoupons(@Param("now") LocalDateTime now);
+
+
+//    @Query("SELECT DISTINCT c FROM CouponEntity c " +
+//            "LEFT JOIN FETCH c.products p " +
+//            "LEFT JOIN FETCH c.allowedUsers " +
+//            "LEFT JOIN FETCH c.allowedVariants " +
+//            "WHERE p.productPrimeId = :productPrimeId AND c.isActive = true")
+//    List<CouponEntity> findActiveByProductPrimeId(@Param("productPrimeId") Long productPrimeId);
+
+    // Step 1: fetch coupons + products only
+    @Query("SELECT DISTINCT c FROM CouponEntity c " +
+            "LEFT JOIN FETCH c.products p " +
+            "WHERE p.productPrimeId = :productPrimeId AND c.isActive = true")
+    List<CouponEntity> findActiveByProductPrimeId(@Param("productPrimeId") Long productPrimeId);
+
+    // Step 2: hydrate allowedUsers for a given coupon id
+    @Query("SELECT DISTINCT c FROM CouponEntity c " +
+            "LEFT JOIN FETCH c.allowedUsers " +
+            "WHERE c.couponId = :couponId")
+    Optional<CouponEntity> findWithAllowedUsers(@Param("couponId") Long couponId);
+
+    // Step 3: hydrate allowedVariants for a given coupon id
+    @Query("SELECT DISTINCT c FROM CouponEntity c " +
+            "LEFT JOIN FETCH c.allowedVariants " +
+            "WHERE c.couponId = :couponId")
+    Optional<CouponEntity> findWithAllowedVariants(@Param("couponId") Long couponId);
+
 }

@@ -266,4 +266,13 @@ public class CouponController {
 
         return ResponseEntity.badRequest().body(errorResponse);
     }
+
+
+    @GetMapping("/get-by-product")
+    public ResponseEntity<List<CouponResponseDto>> getCouponsByUserAndProduct(
+            @RequestParam Long userId,
+            @RequestParam Long productPrimeId) {
+        List<CouponResponseDto> coupons = couponService.getCouponsByUserAndProduct(userId, productPrimeId);
+        return ResponseEntity.ok(coupons);
+    }
 }

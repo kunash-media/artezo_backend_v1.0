@@ -1,7 +1,10 @@
 package com.artezo.service;
 
 import com.artezo.dto.request.AddToCartRequest;
+import com.artezo.dto.request.RemoveCartItemsRequest;
 import com.artezo.dto.response.CartResponse;
+
+import java.util.List;
 
 public interface CartService {
 
@@ -22,4 +25,6 @@ public interface CartService {
 
 
     int getCartCount(Long userId);
+
+    CartResponse removeItems(Long userId, List<RemoveCartItemsRequest.CartItemIdentifier> items);
 }

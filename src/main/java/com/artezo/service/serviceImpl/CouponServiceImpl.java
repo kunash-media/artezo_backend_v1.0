@@ -5,13 +5,14 @@ import com.artezo.dto.response.CouponResponseDto;
 import com.artezo.entity.*;
 import com.artezo.repository.*;
 import com.artezo.service.CouponService;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CouponServiceImpl implements CouponService {
@@ -332,5 +333,83 @@ public class CouponServiceImpl implements CouponService {
         }
 
         return response;
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CouponResponseDto> getCouponsByUserAndProduct(Long userId, Long productPrimeId) {
+        // Step 1: base coupons with products
+        List<CouponEntity> coupons = couponRepository.findActiveByProductPrimeId(productPrimeId);
+
+        return coupons.stream().map(c -> {
+            Long cid = c.getCouponId();
+
+            // Step 2: hydrate allowedUsers separately
+            List<UserEntity> users = couponRepository.findWithAllowedUsers(cid)
+                    .map(CouponEntity::getAllowedUsers)
+                    .orElse(Collections.emptyList());
+
+            // Step 3: hydrate allowedVariants separately
+            List<ProductVariantEntity> variants = couponRepository.findWithAllowedVariants(cid)
+                    .map(CouponEntity::getAllowedVariants)
+                    .orElse(Collections.emptyList());
+
+            return mapToDto(c, userId, users, variants);
+        }).collect(Collectors.toList());
+    }
+
+    private CouponResponseDto mapToDto(CouponEntity c, Long userId,
+                                       List<UserEntity> users,
+                                       List<ProductVariantEntity> variants) {
+        CouponResponseDto dto = new CouponResponseDto();
+
+        dto.setCouponId(c.getCouponId());
+        dto.setCouponCode(c.getCouponCode());
+        dto.setDescription(c.getDescription());
+        dto.setDiscountType(c.getDiscountType());
+        dto.setDiscountValue(c.getDiscountValue());
+        dto.setMinOrderAmount(c.getMinOrderAmount());
+        dto.setMaxDiscountAmount(c.getMaxDiscountAmount());
+        dto.setValidFrom(c.getValidFrom());
+        dto.setValidTo(c.getValidTo());
+        dto.setUsageLimit(c.getUsageLimit());
+        dto.setUsagePerCustomer(c.getUsagePerCustomer());
+        dto.setUsedCount(c.getUsedCount());
+        dto.setIsActive(c.getIsActive());
+        dto.setExcludeSaleItems(c.getExcludeSaleItems());
+        dto.setFreeShipping(c.getFreeShipping());
+        dto.setCreatedAt(c.getCreatedAt());
+        dto.setCouponType(c.getCouponType());
+        dto.setCategoryName(c.getCategoryName());
+
+        // couponUsed — check CouponUserUsage table is the right approach,
+        // but for now derive from allowedUsers hydrated list
+        boolean usedByThisUser = users.stream()
+                .anyMatch(u -> u.getUserId().equals(userId));
+        dto.setCouponUsed(Boolean.TRUE.equals(c.getCouponUsed()) || usedByThisUser);
+
+        // product IDs from already-fetched products on entity
+        dto.setProductIds(
+                c.getProducts().stream()
+                        .map(ProductEntity::getProductPrimeId)
+                        .collect(Collectors.toList())
+        );
+
+        // variant IDs from separately hydrated list
+        dto.setVariantIds(
+                variants.stream()
+                        .map(ProductVariantEntity::getId)
+                        .collect(Collectors.toList())
+        );
+
+        // user IDs from separately hydrated list
+        dto.setUserIds(
+                users.stream()
+                        .map(UserEntity::getUserId)
+                        .collect(Collectors.toList())
+        );
+
+        return dto;
     }
 }

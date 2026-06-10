@@ -2,6 +2,7 @@ package com.artezo.repository;
 
 import com.artezo.entity.CartItemEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,5 +25,9 @@ public interface CartItemRepository extends JpaRepository<CartItemEntity, Long> 
     // ADD THIS NEW METHOD
     @Query("SELECT COUNT(ci) FROM CartItemEntity ci WHERE ci.cart.id = :cartId")
     Integer countByCartId(@Param("cartId") Long cartId);
+
+    @Modifying
+    @Query(value = "DELETE FROM cart_items WHERE cart_id = :cartId AND (product_id, IFNULL(variant_id, '')) IN (:pairs)", nativeQuery = true)
+    void deleteByCartIdAndPairs(@Param("cartId") Long cartId, @Param("pairs") List<String> pairs);
 
 }

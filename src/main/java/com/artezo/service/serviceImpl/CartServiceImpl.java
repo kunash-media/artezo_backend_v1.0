@@ -1,6 +1,7 @@
 package com.artezo.service.serviceImpl;
 
 import com.artezo.dto.request.AddToCartRequest;
+import com.artezo.dto.request.RemoveCartItemsRequest;
 import com.artezo.dto.response.CartResponse;
 import com.artezo.entity.*;
 import com.artezo.repository.*;
@@ -166,6 +167,26 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() -> new RuntimeException("Cart not found for userId: " + userId));
 
         cartItemRepository.deleteByCart_IdAndProductIdAndVariantId(cart.getId(), productId, variantId);
+        return buildCartResponse(cart.getId(), userId, cart.getStatus().name());
+    }
+
+    //=== perticular bulk clear ====//
+    @Override
+    @Transactional
+    public CartResponse removeItems(Long userId, List<RemoveCartItemsRequest.CartItemIdentifier> items) {
+        logger.info("[CART] Removing multiple items | userId={}, count={}", userId, items.size());
+
+        CartEntity cart = cartRepository.findByUser_UserIdAndStatus(userId, CartEntity.CartStatus.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("Cart not found for userId: " + userId));
+
+        for (RemoveCartItemsRequest.CartItemIdentifier item : items) {
+            cartItemRepository.deleteByCart_IdAndProductIdAndVariantId(
+                    cart.getId(),
+                    item.getProductId(),
+                    item.getVariantId()  // null safe — matches your existing repo method
+            );
+        }
+
         return buildCartResponse(cart.getId(), userId, cart.getStatus().name());
     }
 

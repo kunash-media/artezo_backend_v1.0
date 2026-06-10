@@ -24,4 +24,6 @@ public interface CouponService {
 
     List<CouponResponseDto> getUserCoupons(Long userId);
     List<CouponResponseDto> getProductCoupons(Long productId);
+
+    List<CouponResponseDto> getCouponsByUserAndProduct(Long userId, Long productPrimeId);
 }

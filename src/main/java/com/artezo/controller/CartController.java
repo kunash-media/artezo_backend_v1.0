@@ -1,6 +1,7 @@
 package com.artezo.controller;
 
 import com.artezo.dto.request.AddToCartRequest;
+import com.artezo.dto.request.RemoveCartItemsRequest;
 import com.artezo.dto.response.CartResponse;
 import com.artezo.dto.response.CountResponse;
 import com.artezo.exceptions.ApiResponse;
@@ -105,6 +106,23 @@ public class CartController {
             log.warn("[CART] Remove item failed | userId={}, productId={} | reason={}", userId, productId, ex.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Failed to remove item: " + ex.getMessage()));
+        }
+    }
+
+
+    // DELETE /api/v1/cart/remove-checkout-items
+    @DeleteMapping("/remove-checkout-items")
+    public ResponseEntity<ApiResponse<CartResponse>> removeItems(
+            @RequestBody RemoveCartItemsRequest request) {
+        log.info("[CART] Remove multiple items | userId={}, count={}", request.getUserId(), request.getItems().size());
+        try {
+            CartResponse cart = cartService.removeItems(request.getUserId(), request.getItems());
+            log.info("[CART] Items removed | userId={}, count={}", request.getUserId(), request.getItems().size());
+            return ResponseEntity.ok(ApiResponse.success("Items removed from cart successfully", cart));
+        } catch (RuntimeException ex) {
+            log.warn("[CART] Remove items failed | userId={} | reason={}", request.getUserId(), ex.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Failed to remove items: " + ex.getMessage()));
         }
     }
 
