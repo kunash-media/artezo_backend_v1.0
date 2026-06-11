@@ -42,6 +42,61 @@ public class CouponController {
         return new ResponseEntity<>(createdCoupon, HttpStatus.CREATED);
     }
 
+    // CouponController.java — add this endpoint
+
+    @GetMapping("/validate-coupon/v2")
+    public ResponseEntity<Map<String, Object>> validateCouponV2(
+            @RequestParam String couponCode,
+            @RequestParam Double orderAmount,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Long productId) {
+
+        String reason  = couponService.validateCouponWithReason(couponCode, orderAmount, userId, productId);
+        boolean isValid = "VALID".equals(reason);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("couponCode",   couponCode);
+        response.put("valid",        isValid);
+        response.put("reason",       reason);
+        response.put("orderAmount",  orderAmount);
+        response.put("timestamp",    java.time.LocalDateTime.now().toString());
+
+        if (isValid) {
+            CouponResponseDto coupon = couponService.getCouponByCode(couponCode);
+
+            double discount = 0;
+            if ("PERCENTAGE".equalsIgnoreCase(coupon.getDiscountType())) {
+                discount = orderAmount * coupon.getDiscountValue() / 100.0;
+                if (coupon.getMaxDiscountAmount() != null) {
+                    discount = Math.min(discount, coupon.getMaxDiscountAmount());
+                }
+            } else if ("FLAT".equalsIgnoreCase(coupon.getDiscountType())) {
+                discount = coupon.getDiscountValue();
+            }
+            discount = Math.min(discount, orderAmount); // can't exceed order value
+
+            response.put("coupon",        coupon);
+            response.put("discountAmount", Math.round(discount * 100.0) / 100.0);
+            response.put("finalAmount",    Math.round((orderAmount - discount) * 100.0) / 100.0);
+            response.put("message",        "Coupon applied successfully");
+        } else {
+            Map<String, String> messages = new HashMap<>();
+            messages.put("INVALID_CODE",         "Invalid coupon code");
+            messages.put("INACTIVE",             "This coupon is no longer active");
+            messages.put("NOT_STARTED",          "This coupon is not valid yet");
+            messages.put("EXPIRED",              "This coupon has expired");
+            messages.put("MIN_ORDER_NOT_MET",    "Minimum order amount not met for this coupon");
+            messages.put("GLOBALLY_EXHAUSTED",   "This coupon has been fully redeemed");
+            messages.put("USER_NOT_ELIGIBLE",    "You are not eligible for this coupon");
+            messages.put("ALREADY_USED",         "You have already used this coupon");
+            messages.put("PRODUCT_NOT_ELIGIBLE", "This coupon does not apply to the selected product");
+
+            response.put("message", messages.getOrDefault(reason, "Coupon cannot be applied"));
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/get-all-coupons")
     public ResponseEntity<List<CouponResponseDto>> getAllCoupons() {
         LOGGER.info("Received request to fetch all coupons");

@@ -26,4 +26,9 @@ public interface CouponService {
     List<CouponResponseDto> getProductCoupons(Long productId);
 
     List<CouponResponseDto> getCouponsByUserAndProduct(Long userId, Long productPrimeId);
+
+    // CouponService.java — add this method to the interface
+    String validateCouponWithReason(String code, Double orderAmount, Long userId, Long productId);
+
+
 }

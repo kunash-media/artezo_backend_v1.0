@@ -21,18 +21,31 @@ import java.util.concurrent.ConcurrentHashMap;
 @Order(1)
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private final Map<String, Bucket> buckets    = new ConcurrentHashMap<>();
-    private final Map<String, Bucket> addBuckets = new ConcurrentHashMap<>(); // ← ADD
+    // General cart/wishlist reads: 60/min
+    private final Map<String, Bucket> generalBuckets = new ConcurrentHashMap<>();
 
-    private Bucket createBucket() {
+    // Write operations (add, update-quantity, remove, clear): 20/min
+    private final Map<String, Bucket> writeBuckets = new ConcurrentHashMap<>();
+
+    // Mutation-heavy ops (move-from-wishlist): 10/min
+    private final Map<String, Bucket> heavyBuckets = new ConcurrentHashMap<>();
+
+    private Bucket createGeneralBucket() {
         return Bucket.builder()
-                .addLimit(Bandwidth.classic(30, Refill.intervally(30, Duration.ofMinutes(1))))
+                .addLimit(Bandwidth.classic(60, Refill.greedy(60, Duration.ofMinutes(1))))
                 .build();
     }
 
-    private Bucket createAddBucket() { // ← ADD
+    private Bucket createWriteBucket() {
+        // 20 writes per minute — covers rapid qty tapping
         return Bucket.builder()
-                .addLimit(Bandwidth.classic(10, Refill.intervally(10, Duration.ofMinutes(1))))
+                .addLimit(Bandwidth.classic(20, Refill.greedy(20, Duration.ofMinutes(1))))
+                .build();
+    }
+
+    private Bucket createHeavyBucket() {
+        return Bucket.builder()
+                .addLimit(Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1))))
                 .build();
     }
 
@@ -42,26 +55,50 @@ public class RateLimitFilter extends OncePerRequestFilter {
                                     FilterChain chain)
             throws ServletException, IOException {
 
-        String ip = getClientIp(request);
+        // Key by IP + userId param so different users on same network
+        // don't share a bucket (e.g. office/family wifi)
+        String ip     = getClientIp(request);
+        String userId = request.getParameter("userId");
+        String key    = userId != null ? ip + ":" + userId : ip;
 
-        // ── Stricter bucket for add endpoints ──────────────────── ← ADD
-        String path = request.getRequestURI();
-        boolean isAddEndpoint = path.endsWith("/cart/add") || path.endsWith("/wishlist/add");
+        String path   = request.getRequestURI();
+        String method = request.getMethod();
 
-        Bucket bucket = isAddEndpoint
-                ? addBuckets.computeIfAbsent(ip, k -> createAddBucket())
-                : buckets.computeIfAbsent(ip, k -> createBucket());
-        // ───────────────────────────────────────────────────────────
+        Bucket bucket = resolveBucket(path, method, key);
 
         if (bucket.tryConsume(1)) {
             chain.doFilter(request, response);
         } else {
             response.setStatus(429);
             response.setContentType("application/json");
+            response.addHeader("Retry-After", "20");
             response.getWriter().write(
-                    "{\"success\":false,\"message\":\"Too many requests. Please slow down.\"}"
+                    "{\"success\":false,\"message\":\"Too many requests. Please wait a moment.\",\"retryAfter\":20}"
             );
         }
+    }
+
+    private Bucket resolveBucket(String path, String method, String key) {
+        // Heavy mutations
+        if (path.endsWith("/cart/move-from-wishlist")) {
+            return heavyBuckets.computeIfAbsent(key + ":heavy", k -> createHeavyBucket());
+        }
+
+        // Write operations — THIS is what was missing for update-quantity
+        boolean isWrite = path.endsWith("/cart/add")
+                || path.endsWith("/cart/update-quantity")   // ← was not here before
+                || path.endsWith("/cart/remove")
+                || path.endsWith("/cart/remove-checkout-items")
+                || path.endsWith("/cart/clear")
+                || path.endsWith("/wishlist/add")
+                || path.endsWith("/wishlist/remove");
+
+        if (isWrite) {
+            return writeBuckets.computeIfAbsent(key + ":write", k -> createWriteBucket());
+        }
+
+        // GET endpoints (fetch cart, count, session)
+        return generalBuckets.computeIfAbsent(key + ":general", k -> createGeneralBucket());
     }
 
     private String getClientIp(HttpServletRequest request) {
@@ -78,9 +115,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return !(path.contains("/api/v1/cart") || path.contains("/api/v1/wishlist"));
     }
 
-    @Scheduled(fixedDelay = 3600000) // ← ADD: clears every hour
+    @Scheduled(fixedDelay = 3_600_000) // cleanup every hour
     public void cleanupBuckets() {
-        buckets.clear();
-        addBuckets.clear();
+        generalBuckets.clear();
+        writeBuckets.clear();
+        heavyBuckets.clear();
     }
 }

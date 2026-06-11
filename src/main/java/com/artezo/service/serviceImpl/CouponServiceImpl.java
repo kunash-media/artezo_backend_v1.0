@@ -98,38 +98,38 @@ public class CouponServiceImpl implements CouponService {
 
         CouponEntity saved = couponRepository.save(coupon);
         LOGGER.info("Coupon created: " + saved.getCouponId());
-        return convertToResponseDto(saved);
+        return convertToResponseDto(saved,null);
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public CouponResponseDto getCouponById(Long couponId) {
         CouponEntity coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new RuntimeException("Coupon not found: " + couponId));
-        return convertToResponseDto(coupon);
+        return convertToResponseDto(coupon, null); // ← admin fetch, no user context
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public CouponResponseDto getCouponByCode(String couponCode) {
         CouponEntity coupon = couponRepository.findByCouponCode(couponCode)
                 .orElseThrow(() -> new RuntimeException("Coupon not found: " + couponCode));
-        return convertToResponseDto(coupon);
+        return convertToResponseDto(coupon, null); // ← used by validate endpoint, no user context needed
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<CouponResponseDto> getAllCoupons() {
         return couponRepository.findAll().stream()
-                .map(this::convertToResponseDto)
+                .map(coupon -> convertToResponseDto(coupon, null)) // ← lambda, not method ref
                 .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<CouponResponseDto> getActiveCoupons() {
         return couponRepository.findActiveCoupons(LocalDateTime.now()).stream()
-                .map(this::convertToResponseDto)
+                .map(coupon -> convertToResponseDto(coupon, null)) // ← lambda, not method ref
                 .collect(Collectors.toList());
     }
 
@@ -171,7 +171,7 @@ public class CouponServiceImpl implements CouponService {
             coupon.setAllowedVariants(variants);
         }
 
-        return convertToResponseDto(couponRepository.save(coupon));
+        return convertToResponseDto(couponRepository.save(coupon),null);
     }
 
     @Override
@@ -207,7 +207,7 @@ public class CouponServiceImpl implements CouponService {
             usageRepository.save(usage);
         }
 
-        return convertToResponseDto(coupon);
+        return convertToResponseDto(coupon,null);
     }
 
     @Override
@@ -271,22 +271,30 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<CouponResponseDto> getUserCoupons(Long userId) {
         return couponRepository.findActiveCouponsForUser(userId).stream()
-                .map(this::convertToResponseDto)
+                .filter(coupon -> {
+                    if (coupon.getUsagePerCustomer() == null) return true;
+                    return usageRepository
+                            .findByCouponIdAndUserId(coupon.getCouponId(), userId)
+                            .map(u -> u.getUsedCount() < coupon.getUsagePerCustomer())
+                            .orElse(true); // never used by this user = eligible
+                })
+                .map(coupon -> convertToResponseDto(coupon, userId)) // ← pass userId
                 .collect(Collectors.toList());
     }
-
     @Override
     @Transactional
     public List<CouponResponseDto> getProductCoupons(Long productId) {
         return couponRepository.findCouponsByProduct(productId).stream()
-                .map(this::convertToResponseDto)
+                .map(coupon -> convertToResponseDto(coupon,null))   // Explicit call instead of method reference
                 .collect(Collectors.toList());
     }
 
-    private CouponResponseDto convertToResponseDto(CouponEntity coupon) {
+
+
+    private CouponResponseDto convertToResponseDto(CouponEntity coupon, Long userId) {
         CouponResponseDto response = new CouponResponseDto();
         response.setCouponId(coupon.getCouponId());
         response.setCouponCode(coupon.getCouponCode());
@@ -304,9 +312,22 @@ public class CouponServiceImpl implements CouponService {
         response.setExcludeSaleItems(coupon.getExcludeSaleItems());
         response.setFreeShipping(coupon.getFreeShipping());
         response.setCreatedAt(coupon.getCreatedAt());
-        response.setCouponUsed(coupon.getCouponUsed());
         response.setCouponType(coupon.getCouponType());
         response.setCategoryName(coupon.getCategoryName());
+
+        // ── couponUsed: reflects THIS user's state, not a global flag ────────────
+        boolean globallyExhausted = coupon.getUsageLimit() != null
+                && coupon.getUsedCount() >= coupon.getUsageLimit();
+
+        boolean userExhausted = false;
+        if (userId != null && coupon.getUsagePerCustomer() != null) {
+            userExhausted = usageRepository
+                    .findByCouponIdAndUserId(coupon.getCouponId(), userId)
+                    .map(u -> u.getUsedCount() >= coupon.getUsagePerCustomer())
+                    .orElse(false);
+        }
+        response.setCouponUsed(globallyExhausted || userExhausted);
+        // ─────────────────────────────────────────────────────────────────────────
 
         if (coupon.getProducts() != null) {
             response.setProductIds(
@@ -322,8 +343,6 @@ public class CouponServiceImpl implements CouponService {
                             .collect(Collectors.toList())
             );
         }
-
-        // ADD after the userIds block in convertToResponseDto()
         if (coupon.getAllowedVariants() != null) {
             response.setVariantIds(
                     coupon.getAllowedVariants().stream()
@@ -336,28 +355,85 @@ public class CouponServiceImpl implements CouponService {
     }
 
 
+    // CouponServiceImpl.java
+// REPLACE the existing getCouponsByUserAndProduct method
+
     @Override
     @Transactional(readOnly = true)
     public List<CouponResponseDto> getCouponsByUserAndProduct(Long userId, Long productPrimeId) {
-        // Step 1: base coupons with products
         List<CouponEntity> coupons = couponRepository.findActiveByProductPrimeId(productPrimeId);
 
-        return coupons.stream().map(c -> {
-            Long cid = c.getCouponId();
+        return coupons.stream()
+                .filter(coupon -> {
+                    // filter out coupons this user has already exhausted
+                    if (coupon.getUsagePerCustomer() == null) return true;
+                    return usageRepository
+                            .findByCouponIdAndUserId(coupon.getCouponId(), userId)
+                            .map(u -> u.getUsedCount() < coupon.getUsagePerCustomer())
+                            .orElse(true);
+                })
+                .map(c -> {
+                    Long cid = c.getCouponId();
 
-            // Step 2: hydrate allowedUsers separately
-            List<UserEntity> users = couponRepository.findWithAllowedUsers(cid)
-                    .map(CouponEntity::getAllowedUsers)
-                    .orElse(Collections.emptyList());
+                    List<UserEntity> users = couponRepository.findWithAllowedUsers(cid)
+                            .map(CouponEntity::getAllowedUsers)
+                            .orElse(Collections.emptyList());
 
-            // Step 3: hydrate allowedVariants separately
-            List<ProductVariantEntity> variants = couponRepository.findWithAllowedVariants(cid)
-                    .map(CouponEntity::getAllowedVariants)
-                    .orElse(Collections.emptyList());
+                    List<ProductVariantEntity> variants = couponRepository.findWithAllowedVariants(cid)
+                            .map(CouponEntity::getAllowedVariants)
+                            .orElse(Collections.emptyList());
 
-            return mapToDto(c, userId, users, variants);
-        }).collect(Collectors.toList());
+                    return mapToDto(c, userId, users, variants);
+                })
+                .collect(Collectors.toList());
     }
+
+    // CouponServiceImpl.java — add this method
+
+    @Override
+    @Transactional(readOnly = true)
+    public String validateCouponWithReason(String code, Double orderAmount, Long userId, Long productId) {
+        CouponEntity coupon = couponRepository.findByCouponCode(code).orElse(null);
+        if (coupon == null)                    return "INVALID_CODE";
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (!Boolean.TRUE.equals(coupon.getIsActive()))         return "INACTIVE";
+        if (now.isBefore(coupon.getValidFrom()))                return "NOT_STARTED";
+        if (now.isAfter(coupon.getValidTo()))                   return "EXPIRED";
+        if (coupon.getMinOrderAmount() != null
+                && orderAmount < coupon.getMinOrderAmount())    return "MIN_ORDER_NOT_MET";
+        if (coupon.getUsageLimit() != null
+                && coupon.getUsedCount() >= coupon.getUsageLimit()) return "GLOBALLY_EXHAUSTED";
+
+        if (userId != null) {
+            // user whitelist check
+            if (!coupon.getAllowedUsers().isEmpty()) {
+                boolean allowed = coupon.getAllowedUsers().stream()
+                        .anyMatch(u -> u.getUserId().equals(userId));
+                if (!allowed) return "USER_NOT_ELIGIBLE";
+            }
+
+            // per-customer limit check
+            if (coupon.getUsagePerCustomer() != null) {
+                boolean exhausted = usageRepository
+                        .findByCouponIdAndUserId(coupon.getCouponId(), userId)
+                        .map(u -> u.getUsedCount() >= coupon.getUsagePerCustomer())
+                        .orElse(false);
+                if (exhausted) return "ALREADY_USED";
+            }
+        }
+
+        if (productId != null && !coupon.getProducts().isEmpty()) {
+            boolean productAllowed = coupon.getProducts().stream()
+                    .anyMatch(p -> p.getProductPrimeId().equals(productId));
+            if (!productAllowed) return "PRODUCT_NOT_ELIGIBLE";
+        }
+
+        return "VALID";
+    }
+
+
 
     private CouponResponseDto mapToDto(CouponEntity c, Long userId,
                                        List<UserEntity> users,
@@ -383,27 +459,30 @@ public class CouponServiceImpl implements CouponService {
         dto.setCouponType(c.getCouponType());
         dto.setCategoryName(c.getCategoryName());
 
-        // couponUsed — check CouponUserUsage table is the right approach,
-        // but for now derive from allowedUsers hydrated list
-        boolean usedByThisUser = users.stream()
-                .anyMatch(u -> u.getUserId().equals(userId));
-        dto.setCouponUsed(Boolean.TRUE.equals(c.getCouponUsed()) || usedByThisUser);
+        // ── couponUsed: derived from CouponUserUsage, not the entity flag ────────
+        boolean globallyExhausted = c.getUsageLimit() != null
+                && c.getUsedCount() >= c.getUsageLimit();
 
-        // product IDs from already-fetched products on entity
+        boolean userExhausted = false;
+        if (userId != null && c.getUsagePerCustomer() != null) {
+            userExhausted = usageRepository
+                    .findByCouponIdAndUserId(c.getCouponId(), userId)
+                    .map(u -> u.getUsedCount() >= c.getUsagePerCustomer())
+                    .orElse(false);
+        }
+        dto.setCouponUsed(globallyExhausted || userExhausted);
+        // ─────────────────────────────────────────────────────────────────────────
+
         dto.setProductIds(
                 c.getProducts().stream()
                         .map(ProductEntity::getProductPrimeId)
                         .collect(Collectors.toList())
         );
-
-        // variant IDs from separately hydrated list
         dto.setVariantIds(
                 variants.stream()
                         .map(ProductVariantEntity::getId)
                         .collect(Collectors.toList())
         );
-
-        // user IDs from separately hydrated list
         dto.setUserIds(
                 users.stream()
                         .map(UserEntity::getUserId)
