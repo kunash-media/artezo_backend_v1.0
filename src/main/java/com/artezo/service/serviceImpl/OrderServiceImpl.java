@@ -10,9 +10,11 @@ import com.artezo.entity.*;
 import com.artezo.enum_status.*;
 import com.artezo.exceptions.OrderException;
 import com.artezo.exceptions.ResourceNotFoundException;
+import com.artezo.repository.CouponRepository;
 import com.artezo.repository.OrderRepository;
 import com.artezo.repository.ProductRepository;
 import com.artezo.repository.UserRepository;
+import com.artezo.service.CouponService;
 import com.artezo.service.EmailService;
 import com.artezo.service.OrderService;
 import com.artezo.service.ShiprocketService;
@@ -68,16 +70,21 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository    userRepository;
     private final ShiprocketService shiprocketService;
     private final EmailService emailService;
+    private final CouponService couponService;
+    private final CouponRepository couponRepository;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             ProductRepository productRepository,
                             UserRepository userRepository,
-                            ShiprocketService shiprocketService, EmailService emailService) {
+                            ShiprocketService shiprocketService, EmailService emailService,
+                            CouponService couponService, CouponRepository couponRepository) {
         this.orderRepository   = orderRepository;
         this.productRepository = productRepository;
         this.userRepository    = userRepository;
         this.shiprocketService = shiprocketService;
         this.emailService = emailService;
+        this.couponService = couponService;
+        this.couponRepository = couponRepository;
     }
 
 
@@ -227,132 +234,6 @@ public class OrderServiceImpl implements OrderService {
     //  CREATE ORDER — Cart Flow
     // ────────────────────────────────────────────────────────────────────────
 
-//    @Override
-//    @Transactional
-//    public OrderResponse createOrder(Long userId, CreateOrderRequest request) {
-//        log.info("Creating order for userId: {}", userId);
-//
-//        // 1. Fetch user
-//        UserEntity user = userRepository.findById(userId)
-//                .orElseThrow(() -> new OrderException("User not found", "USER_NOT_FOUND"));
-//
-//        // 2. Build order items + validate stock
-//        List<OrderItemEntity> orderItems = new ArrayList<>();
-//        double subTotal = 0.0;
-//
-//        for (CreateOrderRequest.OrderItemRequest itemReq : request.getItems()) {
-//            ProductEntity product = productRepository.findByProductStrId(itemReq.getProductStrId())
-//                    .orElseThrow(() -> new OrderException(
-//                            "Product not found: " + itemReq.getProductStrId(), "PRODUCT_NOT_FOUND"));
-//            OrderItemEntity item = buildOrderItem(product, itemReq);
-//            orderItems.add(item);
-//            subTotal += item.getItemTotal();
-//        }
-//
-//        // 3. Calculate final amount
-//        double discountAmount  = orZero(request.getDiscountAmount());
-//        double couponDiscount  = orZero(request.getCouponDiscount());
-//        double tax             = orZero(request.getTax());
-//        double convenienceFee  = orZero(request.getConvenienceFee());
-//        double shippingCharges = orZero(request.getShippingCharges());
-//        double giftwrapCharges = request.isGiftWrap() ? orZero(request.getGiftwrapCharges()) : 0.0;
-//
-//        // double finalAmount = subTotal - discountAmount - couponDiscount
-//        // + tax + convenienceFee + shippingCharges + giftwrapCharges;
-//
-//        //--------------- PATCH ADDED  -----------//
-//        // CORRECT — productDiscount is already baked into item prices
-//        // Formula: Subtotal(at selling price) + Tax + Shipping + Convenience/COD Fee - Additional Coupons
-//        double finalAmount = subTotal // already at discounted selling price
-//                + tax // GST on subtotal
-//                + shippingCharges // shipping charges (0 if free)
-//                + convenienceFee // COD fee (100 if COD, else 0)
-//                - couponDiscount; // only deduct NEW coupon codes, not product discount
-//
-//        // 4. Build OrderEntity
-//        OrderEntity order = new OrderEntity();
-//        order.setUser(user);
-//        order.setOrderStatus(OrderStatus.PLACED);
-//        order.setPaymentStatus(PaymentStatus.PENDING);
-//        order.setPaymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()));
-//        order.setPaymentMode(request.getPaymentMode() != null
-//                ? PaymentMode.valueOf(request.getPaymentMode()) : null);
-//        order.setRazorpayPaymentId(request.getRazorpayPaymentId());
-//        order.setRazorpayOrderId(request.getRazorpayOrderId());
-//
-//        order.setCustomerName(request.getCustomerName());
-//        order.setCustomerPhone(request.getCustomerPhone());
-//        order.setCustomerEmail(request.getCustomerEmail());
-//        order.setShippingAddress1(request.getShippingAddress1());
-//        order.setShippingAddress2(request.getShippingAddress2());
-//        order.setShippingCity(request.getShippingCity());
-//        order.setShippingState(request.getShippingState());
-//        order.setShippingPincode(request.getShippingPincode());
-//        order.setShippingCountry("India");
-//
-//        order.setSubTotal(subTotal);
-//        order.setDiscountAmount(discountAmount);
-//        order.setDiscountPercent(request.getDiscountPercent());
-//        order.setCouponCode(request.getCouponCode());
-//        order.setCouponDiscount(couponDiscount);
-//        order.setTax(tax);
-//        order.setConvenienceFee(convenienceFee);
-//        order.setShippingCharges(shippingCharges);
-//        order.setGiftWrap(request.isGiftWrap());
-//        order.setGiftwrapCharges(giftwrapCharges);
-//        order.setFinalAmount(finalAmount);
-//        order.setOrderNotes(request.getOrderNotes());
-//        order.setOrderFlow(OrderFlow.CART);
-//        order.setShippingStatus(ShippingStatus.NEW);
-//
-//        for (OrderItemEntity item : orderItems) {
-//            item.setOrder(order);
-//        }
-//        order.setOrderItems(orderItems);
-//
-//        // 5. Save to DB — PENDING
-//        OrderEntity savedOrder = orderRepository.save(order);
-//        log.info("Order saved to DB: {} — calling Shiprocket...", savedOrder.getOrderStrId());
-//
-//        // 6. Call Shiprocket + Send Email on Success
-//        try {
-//            ShiprocketOrderResponse srResponse = shiprocketService.createOrder(savedOrder);
-//
-//            // Update order with Shiprocket details
-//            savedOrder.setShiprocketOrderId(srResponse.getOrderId());
-//            savedOrder.setShiprocketShipmentId(srResponse.getShipmentId());
-//            savedOrder.setOrderStatus(OrderStatus.PLACED);
-//
-//            if (srResponse.getAwbCode() != null && !srResponse.getAwbCode().isEmpty()) {
-//                savedOrder.setAwbNumber(srResponse.getAwbCode());
-//            }
-//            if (srResponse.getCourierName() != null) {
-//                savedOrder.setCourierName(srResponse.getCourierName());
-//            }
-//
-//            if (request.getRazorpayPaymentId() != null) {
-//                savedOrder.setPaymentStatus(PaymentStatus.PAID);
-//            }
-//
-//            decreaseStock(savedOrder.getOrderItems());
-//            orderRepository.save(savedOrder);
-//
-//            log.info("Order {} placed — SR Order ID: {}", savedOrder.getOrderStrId(), srResponse.getOrderId());
-//
-//            // ==================== SEND EMAIL ON SUCCESS ====================
-//            sendOrderConfirmationEmail(savedOrder);
-//
-//        } catch (Exception e) {
-//            log.error("Shiprocket createOrder failed for {} — saved as PENDING: {}",
-//                    savedOrder.getOrderStrId(), e.getMessage());
-//
-//            savedOrder.setOrderStatus(OrderStatus.PENDING);
-//            orderRepository.save(savedOrder);
-//        }
-//
-//        return mapToOrderResponse(savedOrder);
-//    }
-
     @Override
     @Transactional
     public OrderResponse createOrder(Long userId, CreateOrderRequest request) {
@@ -482,6 +363,8 @@ public class OrderServiceImpl implements OrderService {
 
             log.info("Order {} placed — SR Order ID: {}", savedOrder.getOrderStrId(), srResponse.getOrderId());
 
+            // ── Increment coupon usage AFTER order is confirmed ───────────────────
+            incrementCouponUsageIfApplied(savedOrder.getCouponCode(), userId);
             // ==================== SEND EMAIL ON SUCCESS ====================
             sendOrderConfirmationEmail(savedOrder);
 
@@ -533,6 +416,33 @@ public class OrderServiceImpl implements OrderService {
             log.error("Failed to send order confirmation email for order {}: {}",
                     savedOrder.getOrderStrId(), emailEx.getMessage(), emailEx);
             // Do NOT throw — email failure should not rollback the order
+        }
+    }
+
+    /**
+     * Increment coupon usage count after a successful order.
+     * Called only once per order, only when a coupon was actually applied.
+     * Non-blocking — coupon failure must never rollback the order.
+     */
+    private void incrementCouponUsageIfApplied(String couponCode, Long userId) {
+        if (couponCode == null || couponCode.isBlank()) return;
+
+        try {
+            CouponEntity coupon = couponRepository.findByCouponCode(couponCode).orElse(null);
+            if (coupon == null) {
+                log.warn("[Coupon] Code '{}' not found during usage increment — skipping", couponCode);
+                return;
+            }
+
+            couponService.incrementUsedCount(coupon.getCouponId(), userId);
+
+            log.info("[Coupon] Usage incremented for code='{}', couponId={}, userId={}",
+                    couponCode, coupon.getCouponId(), userId);
+
+        } catch (Exception e) {
+            // Non-blocking — order is already placed, just log
+            log.error("[Coupon] Failed to increment usage for code='{}' — order still valid: {}",
+                    couponCode, e.getMessage());
         }
     }
 
