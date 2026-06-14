@@ -462,66 +462,6 @@ public class OrderServiceImpl implements OrderService {
     // ────────────────────────────────────────────────────────────────────────
     //  CONFIRM BUY NOW ORDER — Buy Now Flow
     // ────────────────────────────────────────────────────────────────────────
-//    @Override
-//    @Transactional
-//    public OrderResponse confirmBuyNowOrder(Long userId, BuyNowConfirmRequest request) {
-//        log.info("Confirming Buy Now order for userId: {}, SR Order: {}",
-//                userId, request.getShiprocketOrderId());
-//
-//        UserEntity user = userRepository.findById(userId)
-//                .orElseThrow(() -> new OrderException("User not found", "USER_NOT_FOUND"));
-//
-//        ProductEntity product = productRepository.findByProductStrId(request.getProductStrId())
-//                .orElseThrow(() -> new OrderException(
-//                        "Product not found: " + request.getProductStrId(), "PRODUCT_NOT_FOUND"));
-//
-//        CreateOrderRequest.OrderItemRequest itemReq = new CreateOrderRequest.OrderItemRequest();
-//        itemReq.setProductStrId(request.getProductStrId());
-//        itemReq.setVariantId(request.getVariantId());
-//        itemReq.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
-//
-//        OrderItemEntity item = buildOrderItem(product, itemReq);
-//
-//        OrderEntity order = new OrderEntity();
-////        order.setOrderStrId(generateOrderStrId());
-//        order.setUser(user);
-//        order.setOrderStatus(OrderStatus.PLACED);
-//        order.setPaymentStatus(PaymentStatus.PAID);
-//        order.setPaymentMethod(PaymentMethod.PREPAID);
-//        order.setPaymentMode(PaymentMode.RAZORPAY);
-//        order.setRazorpayPaymentId(request.getRazorpayPaymentId());
-//        order.setOrderFlow(OrderFlow.BUY_NOW);
-//        order.setShippingStatus(ShippingStatus.NEW);
-//
-//        order.setCustomerName(request.getCustomerName());
-//        order.setCustomerPhone(request.getCustomerPhone());
-//        order.setCustomerEmail(request.getCustomerEmail());
-//        order.setShippingAddress1(request.getShippingAddress1());
-//        order.setShippingAddress2(request.getShippingAddress2());
-//        order.setShippingCity(request.getShippingCity());
-//        order.setShippingState(request.getShippingState());
-//        order.setShippingPincode(request.getShippingPincode());
-//        order.setShippingCountry("India");
-//
-//        order.setSubTotal(item.getItemTotal());
-//        order.setFinalAmount(request.getAmount());
-//
-//        order.setShiprocketOrderId(request.getShiprocketOrderId() != null
-//                ? Long.parseLong(request.getShiprocketOrderId()) : null);
-//        order.setShiprocketShipmentId(request.getShiprocketShipmentId() != null
-//                ? Long.parseLong(request.getShiprocketShipmentId()) : null);
-//
-//        item.setOrder(order);
-//        order.setOrderItems(List.of(item));
-//
-//        decreaseStock(List.of(item));
-//
-//        OrderEntity saved = orderRepository.save(order);
-//        log.info("Buy Now order saved: {}", saved.getOrderStrId());
-//
-//        return mapToOrderResponse(saved);
-//    }
-
 
     @Override
     @Transactional

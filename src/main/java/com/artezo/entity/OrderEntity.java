@@ -48,6 +48,7 @@ public class OrderEntity {
     // ── PAYMENT ───────────────────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", length = 32)
     private PaymentStatus paymentStatus; // PENDING, PAID, FAILED, REFUNDED
 
     @Enumerated(EnumType.STRING)

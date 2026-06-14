@@ -808,4 +808,10 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductVariantSummary(page, size));
     }
 
+
+    @GetMapping("/category-meta")
+    public ResponseEntity<CategoryMetaDto> getCategoryMeta() {
+        return ResponseEntity.ok(productService.getAllCategoryMeta());
+    }
+
 }

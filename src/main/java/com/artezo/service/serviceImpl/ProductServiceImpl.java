@@ -2182,4 +2182,11 @@ public class ProductServiceImpl implements ProductService {
 
         return dto;
     }
+
+    @Override
+    public CategoryMetaDto getAllCategoryMeta() {
+        List<String> categories = productRepository.findDistinctCategories();
+        List<String> subCategories = productRepository.findDistinctSubCategories();
+        return new CategoryMetaDto(categories, subCategories);
+    }
 }

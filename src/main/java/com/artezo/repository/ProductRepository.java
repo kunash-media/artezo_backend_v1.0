@@ -163,4 +163,10 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     List<String> findDistinctSubCategoriesByCategory(@Param("productCategory") String productCategory);
 
     Page<ProductEntity> findByIsDeletedFalse(Pageable pageable);
+
+    @Query("SELECT DISTINCT p.productCategory FROM ProductEntity p WHERE p.isDeleted = false AND p.productCategory IS NOT NULL ORDER BY p.productCategory ASC")
+    List<String> findDistinctCategories();
+
+    @Query("SELECT DISTINCT p.productSubCategory FROM ProductEntity p WHERE p.isDeleted = false AND p.productSubCategory IS NOT NULL AND p.productSubCategory != '' ORDER BY p.productSubCategory ASC")
+    List<String> findDistinctSubCategories();
 }

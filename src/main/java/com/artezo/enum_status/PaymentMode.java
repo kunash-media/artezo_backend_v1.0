@@ -5,5 +5,10 @@ public enum PaymentMode {
     UPI,
     NETBANKING,
     CARD,
-    COD
+    COD,
+    PAID,
+    UNPAID,
+    PENDING,
+    FAILED,
+    REFUNDED
 }

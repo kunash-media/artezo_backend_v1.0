@@ -11,5 +11,7 @@ public enum PaymentStatus {
     COD,
     PAID,
     PENDING,
+    UNPAID,
+    REFUNDED
 
 }

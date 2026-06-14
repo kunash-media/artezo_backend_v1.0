@@ -1,5 +1,6 @@
 package com.artezo.service;
 
+import com.artezo.dto.request.CategoryMetaDto;
 import com.artezo.dto.request.CreateProductRequestDto;
 import com.artezo.dto.response.*;
 import com.artezo.exceptions.ProductAlreadyDeletedException;
@@ -87,4 +88,6 @@ public interface ProductService {
     List<String> getSubCategoriesByCategory(String productCategory);
 
     Page<ProductVariantSummaryDto> getProductVariantSummary(int page, int size);
+
+    CategoryMetaDto getAllCategoryMeta();
 }

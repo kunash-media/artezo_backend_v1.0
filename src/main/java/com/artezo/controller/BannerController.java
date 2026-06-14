@@ -141,7 +141,7 @@ public class BannerController {
         }
     }
 
-    @PutMapping(value = "/update-banner/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/update-banner/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BannerApiResponse<BannerResponseDto>> updateBanner(
             @PathVariable Long id,
             @RequestParam(value = "pageName", required = false) String pageName,

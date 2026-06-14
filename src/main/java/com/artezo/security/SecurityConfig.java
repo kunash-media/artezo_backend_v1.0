@@ -1,6 +1,7 @@
 package com.artezo.security;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.catalina.filters.CorsFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -91,7 +92,10 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:8080",
                 "http://localhost:8083",
-                "http://127.0.0.1:8083"
+                "http://127.0.0.1:8083",
+                "https://www.artezo.in",
+                "https://checkout.shiprocket.in",
+                "https://cdn.fastrr.com"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
@@ -103,6 +107,23 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
+//    @Bean
+//    public CorsFilter corsFilter() {
+//        CorsConfiguration config = new CorsConfiguration();
+//        config.setAllowedOrigins(List.of(
+//                "https://www.artezo.in",
+//                "https://checkout.shiprocket.in",
+//                "https://cdn.fastrr.com"
+//        ));
+//        config.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS"));
+//        config.setAllowedHeaders(List.of("*"));
+//        config.setAllowCredentials(true);
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/api/**", config);
+//        return new CorsFilter();
+//    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

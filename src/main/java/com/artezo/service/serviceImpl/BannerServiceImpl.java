@@ -14,9 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -273,26 +271,34 @@ public class BannerServiceImpl implements BannerService {
         }
 
         // Update slides
+        // Update slides
         if (request.getSlides() != null && !request.getSlides().isEmpty()) {
             log.info("Updating {} slides", request.getSlides().size());
 
-            // ✅ FIX: Don't clear the collection directly
-            // Instead, delete all existing slides using repository
+            // ── STEP 1: snapshot existing image bytes keyed by dotPosition BEFORE deletion ──
             List<BannerSlide> existingSlides = slideRepository.findByBannerPageId(id);
+            Map<Integer, byte[]> existingLeftMainImageByDot  = new HashMap<>();
+            Map<Integer, byte[]> existingRightTopImageByDot  = new HashMap<>();
+            for (BannerSlide existing : existingSlides) {
+                int dot = existing.getDotPosition() != null ? existing.getDotPosition() : 0;
+                if (existing.getLeftMainImage() != null && existing.getLeftMainImage().length > 0) {
+                    existingLeftMainImageByDot.put(dot, existing.getLeftMainImage());
+                }
+                if (existing.getRightTopImage() != null && existing.getRightTopImage().length > 0) {
+                    existingRightTopImageByDot.put(dot, existing.getRightTopImage());
+                }
+            }
+            log.info("Snapshotted images for {} existing slides before deletion", existingSlides.size());
 
+            // ── STEP 2: delete all existing slides ──
             if (!existingSlides.isEmpty()) {
-                // Delete all existing slides
                 slideRepository.deleteAll(existingSlides);
                 log.info("Deleted {} existing slides", existingSlides.size());
-
-                // Clear the reference in the page entity
                 page.getSlides().clear();
-
-                // Flush to ensure deletion is executed
                 slideRepository.flush();
             }
 
-            // Create new slides
+            // ── STEP 3: create new slides, falling back to snapshot when no new image sent ──
             List<BannerSlide> newSlides = new ArrayList<>();
 
             for (int i = 0; i < request.getSlides().size(); i++) {
@@ -305,38 +311,51 @@ public class BannerServiceImpl implements BannerService {
 
                 if (slideDto.getLeftMain() != null) {
                     slide.setLeftMainTitle(slideDto.getLeftMain().getTitle());
+                    slide.setLeftMainRedirectUrl(
+                            slideDto.getLeftMain().getRedirectUrl() != null
+                                    ? slideDto.getLeftMain().getRedirectUrl() : "#");
+
                     if (slideDto.getLeftMain().getImage() != null && slideDto.getLeftMain().getImage().length > 0) {
+                        // New image uploaded — use it
                         slide.setLeftMainImage(slideDto.getLeftMain().getImage());
-                        log.info("Slide {} leftMain image updated: {} bytes", i, slideDto.getLeftMain().getImage().length);
+                        log.info("Slide {} leftMain: new image {} bytes", i, slideDto.getLeftMain().getImage().length);
+                    } else if (existingLeftMainImageByDot.containsKey(dotPosition)) {
+                        // No new image — restore from snapshot
+                        slide.setLeftMainImage(existingLeftMainImageByDot.get(dotPosition));
+                        log.info("Slide {} leftMain: restored existing image from dotPosition {}", i, dotPosition);
                     }
-                    slide.setLeftMainRedirectUrl(slideDto.getLeftMain().getRedirectUrl() != null ?
-                            slideDto.getLeftMain().getRedirectUrl() : "#");
                 }
 
                 if (slideDto.getRightTop() != null) {
+                    slide.setRightTopRedirectUrl(
+                            slideDto.getRightTop().getRedirectUrl() != null
+                                    ? slideDto.getRightTop().getRedirectUrl() : "#");
+
                     if (slideDto.getRightTop().getImage() != null && slideDto.getRightTop().getImage().length > 0) {
+                        // New image uploaded — use it
                         slide.setRightTopImage(slideDto.getRightTop().getImage());
-                        log.info("Slide {} rightTop image updated: {} bytes", i, slideDto.getRightTop().getImage().length);
+                        log.info("Slide {} rightTop: new image {} bytes", i, slideDto.getRightTop().getImage().length);
+                    } else if (existingRightTopImageByDot.containsKey(dotPosition)) {
+                        // No new image — restore from snapshot
+                        slide.setRightTopImage(existingRightTopImageByDot.get(dotPosition));
+                        log.info("Slide {} rightTop: restored existing image from dotPosition {}", i, dotPosition);
                     }
-                    slide.setRightTopRedirectUrl(slideDto.getRightTop().getRedirectUrl() != null ?
-                            slideDto.getRightTop().getRedirectUrl() : "#");
                 }
 
                 if (slideDto.getRightCard() != null) {
-                    slide.setRightCardTitle(slideDto.getRightCard().getTitle() != null ?
-                            slideDto.getRightCard().getTitle() : "");
-                    slide.setRightCardDescription(slideDto.getRightCard().getDescription() != null ?
-                            slideDto.getRightCard().getDescription() : "");
+                    slide.setRightCardTitle(slideDto.getRightCard().getTitle() != null
+                            ? slideDto.getRightCard().getTitle() : "");
+                    slide.setRightCardDescription(slideDto.getRightCard().getDescription() != null
+                            ? slideDto.getRightCard().getDescription() : "");
                 }
 
                 newSlides.add(slide);
             }
 
-            // Save new slides
+            // ── STEP 4: save and set image URLs ──
             List<BannerSlide> savedSlides = slideRepository.saveAll(newSlides);
             log.info("Saved {} new slides", savedSlides.size());
 
-            // Set image URLs for new slides
             for (BannerSlide slide : savedSlides) {
                 if (slide.getLeftMainImage() != null && slide.getLeftMainImage().length > 0) {
                     slide.setLeftMainImageUrl("/api/banners/get-left-main-image/" + page.getId() + "/" + slide.getId());
@@ -348,12 +367,8 @@ public class BannerServiceImpl implements BannerService {
                 }
             }
 
-            // Update slides with URLs
             savedSlides = slideRepository.saveAll(savedSlides);
-
-            // ✅ FIX: Set the new slides collection properly
             page.setSlides(savedSlides);
-
             log.info("Slides updated successfully - {} slides saved", savedSlides.size());
         }
 
