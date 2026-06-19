@@ -2,6 +2,7 @@ package com.artezo.controller;
 
 import com.artezo.dto.request.BuyNowConfirmRequest;
 import com.artezo.dto.request.CreateOrderRequest;
+import com.artezo.dto.request.MagicCheckoutConfirmRequest;
 import com.artezo.dto.response.OrderResponse;
 import com.artezo.dto.response.OrderSummaryResponse;
 import com.artezo.exceptions.ApiResponse;
@@ -173,5 +174,19 @@ public class OrderController {
 
         OrderResponse response = orderService.cancelReturnRequest(userId, orderStrId);
         return ResponseEntity.ok(ApiResponse.success("Return request cancelled successfully", response));
+    }
+
+    // ADD after the confirmBuyNow endpoint:
+
+    // ── POST /api/orders/confirm-magic-checkout ────────────────────────────
+    // Razorpay Magic Checkout flow — called after payment verify
+    // X-User-Id is optional — guest orders have no userId
+    @PostMapping("/confirm-magic-checkout")
+    public ResponseEntity<ApiResponse<OrderResponse>> confirmMagicCheckout(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestBody MagicCheckoutConfirmRequest request) {
+
+        OrderResponse response = orderService.confirmMagicCheckoutOrder(userId, request);
+        return ResponseEntity.ok(ApiResponse.success("Order confirmed successfully", response));
     }
 }

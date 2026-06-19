@@ -139,6 +139,9 @@ public class SecurityConfig {
                             .requestMatchers("/api/admin/auth/**").permitAll()
                             .requestMatchers("/api/users/auth/**").permitAll()
                             .requestMatchers("/api/admin/**").authenticated()
+
+                            .requestMatchers("/api/payments/magic-webhook").permitAll()
+                            .requestMatchers("/api/orders/confirm-magic-checkout").permitAll()
                             .anyRequest().permitAll();
 
                     logger.info("Authorization rules: /api/admin/auth/** → permitAll, " +

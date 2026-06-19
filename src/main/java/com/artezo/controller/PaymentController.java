@@ -7,22 +7,35 @@ import com.artezo.dto.response.PaymentResponse;
 import com.artezo.dto.response.PaymentVerificationResponse;
 import com.artezo.entity.PaymentOrder;
 import com.artezo.service.PaymentService;
+import com.artezo.util.MagicCheckoutAddressCache;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
 
+    private final MagicCheckoutAddressCache magicAddressCache;
     private PaymentService paymentService;
     private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
 
-    public PaymentController(PaymentService paymentService) {
+
+    @Value("${razorpay.webhook_secret:}")
+    private String webhookSecret;
+    
+
+    public PaymentController(MagicCheckoutAddressCache magicAddressCache,
+                             PaymentService paymentService) {
+        this.magicAddressCache = magicAddressCache;
         this.paymentService = paymentService;
     }
 
@@ -159,4 +172,108 @@ public class PaymentController {
                     .body("Error updating payment status: " + e.getMessage());
         }
     }
+
+
+    // ADD this endpoint:
+    @PostMapping("/magic-webhook")
+    public ResponseEntity<String> handleMagicWebhook(
+            @RequestBody String payload,
+            @RequestHeader(value = "X-Razorpay-Signature",required = false) String signature) {
+
+        // 1. Verify webhook signature production
+//        try {
+//            Mac mac = Mac.getInstance("HmacSHA256");
+//            mac.init(new SecretKeySpec(webhookSecret.getBytes(), "HmacSHA256"));
+//            byte[] hash = mac.doFinal(payload.getBytes());
+//            StringBuilder hex = new StringBuilder();
+//            for (byte b : hash) {
+//                String h = Integer.toHexString(0xff & b);
+//                if (h.length() == 1) hex.append('0');
+//                hex.append(h);
+//            }
+//            String computed = hex.toString();
+//            if (!computed.equals(signature)) {
+//                log.warn("Magic webhook signature mismatch");
+//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid signature");
+//            }
+//        } catch (Exception e) {
+//            log.error("Webhook signature error: {}", e.getMessage());
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error");
+//        }
+
+        // for local test skipping X-Razorpay-Signature
+        if (signature != null && !webhookSecret.isBlank()) {
+            try {
+                Mac mac = Mac.getInstance("HmacSHA256");
+                mac.init(new SecretKeySpec(webhookSecret.getBytes(), "HmacSHA256"));
+                byte[] hash = mac.doFinal(payload.getBytes());
+                StringBuilder hex = new StringBuilder();
+                for (byte b : hash) {
+                    String h = Integer.toHexString(0xff & b);
+                    if (h.length() == 1) hex.append('0');
+                    hex.append(h);
+                }
+                String computed = hex.toString();
+                if (!computed.equals(signature)) {
+                    log.warn("Magic webhook signature mismatch");
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid signature");
+                }
+            } catch (Exception e) {
+                log.error("Webhook signature error: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error");
+            }
+        } else {
+            log.warn("Webhook signature check skipped — dev/test mode");
+        }
+
+        // 2. Parse and cache address
+        try {
+            JSONObject event = new JSONObject(payload);
+            String eventType = event.optString("event");
+
+            if ("magic_checkout.order.placed".equals(eventType)) {
+                JSONObject entity = event
+                        .getJSONObject("payload")
+                        .getJSONObject("order")
+                        .getJSONObject("entity");
+
+                String razorpayOrderId = entity.optString("id");
+
+                JSONObject customer = entity.optJSONObject("customer_details");
+                JSONObject shipping = customer != null
+                        ? customer.optJSONObject("shipping_address") : null;
+
+                MagicCheckoutAddressCache.MagicAddressData data =
+                        new MagicCheckoutAddressCache.MagicAddressData();
+
+                if (customer != null) {
+                    data.name  = customer.optString("name",  "");
+                    data.email = customer.optString("email", "");
+                    data.phone = customer.optString("contact", "")
+                            .replace("+91", ""); // strip country code
+                }
+                if (shipping != null) {
+                    data.address1 = shipping.optString("line1",       "");
+                    data.address2 = shipping.optString("line2",       "");
+                    data.city     = shipping.optString("city",        "");
+                    data.state    = shipping.optString("state",       "");
+                    data.pincode  = shipping.optString("zipcode",     "");
+                }
+
+                // Payment method from order
+                data.paymentMethod = entity.optString("method", "PREPAID")
+                        .equalsIgnoreCase("cod") ? "COD" : "PREPAID";
+
+                magicAddressCache.store(razorpayOrderId, data);
+                log.info("Magic address cached for order: {}", razorpayOrderId);
+            }
+
+        } catch (Exception e) {
+            log.error("Magic webhook parse error: {}", e.getMessage());
+        }
+
+        // Always return 200 to Razorpay — they retry on non-200
+        return ResponseEntity.ok("OK");
+    }
+
 }

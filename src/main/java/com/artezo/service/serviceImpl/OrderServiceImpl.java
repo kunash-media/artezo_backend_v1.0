@@ -2,6 +2,7 @@ package com.artezo.service.serviceImpl;
 
 import com.artezo.dto.request.BuyNowConfirmRequest;
 import com.artezo.dto.request.CreateOrderRequest;
+import com.artezo.dto.request.MagicCheckoutConfirmRequest;
 import com.artezo.dto.response.OrderResponse;
 import com.artezo.dto.response.OrderSummaryResponse;
 import com.artezo.dto.response.ShiprocketOrderResponse;
@@ -10,14 +11,12 @@ import com.artezo.entity.*;
 import com.artezo.enum_status.*;
 import com.artezo.exceptions.OrderException;
 import com.artezo.exceptions.ResourceNotFoundException;
-import com.artezo.repository.CouponRepository;
-import com.artezo.repository.OrderRepository;
-import com.artezo.repository.ProductRepository;
-import com.artezo.repository.UserRepository;
+import com.artezo.repository.*;
 import com.artezo.service.CouponService;
 import com.artezo.service.EmailService;
 import com.artezo.service.OrderService;
 import com.artezo.service.ShiprocketService;
+import com.artezo.util.MagicCheckoutAddressCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +26,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -65,6 +66,10 @@ public class OrderServiceImpl implements OrderService {
     @Value("${convenience-fee.percentage:0.0}")
     private Double convenienceFeePercent;
 
+    // ADD alongside your existing @Value fields in OrderServiceImpl:
+    @Value("${razorpay.key_secret:}")
+    private String razorpayKeySecret;
+
     private final OrderRepository   orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository    userRepository;
@@ -72,12 +77,17 @@ public class OrderServiceImpl implements OrderService {
     private final EmailService emailService;
     private final CouponService couponService;
     private final CouponRepository couponRepository;
+    private final CheckoutUserRepository checkoutUserRepository;
+
+    private final MagicCheckoutAddressCache magicAddressCache;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             ProductRepository productRepository,
                             UserRepository userRepository,
                             ShiprocketService shiprocketService, EmailService emailService,
-                            CouponService couponService, CouponRepository couponRepository) {
+                            CouponService couponService, CouponRepository couponRepository,
+                            CheckoutUserRepository checkoutUserRepository,
+                            MagicCheckoutAddressCache magicAddressCache) {
         this.orderRepository   = orderRepository;
         this.productRepository = productRepository;
         this.userRepository    = userRepository;
@@ -85,6 +95,8 @@ public class OrderServiceImpl implements OrderService {
         this.emailService = emailService;
         this.couponService = couponService;
         this.couponRepository = couponRepository;
+        this.checkoutUserRepository = checkoutUserRepository;
+        this.magicAddressCache = magicAddressCache;
     }
 
 
@@ -582,6 +594,255 @@ public class OrderServiceImpl implements OrderService {
         return mapToOrderResponse(saved);
     }
 
+
+    // ────────────────────────────────────────────────────────────────────────
+//  CONFIRM MAGIC CHECKOUT ORDER
+//  Called after: 1) createPaymentOrder  2) verifyPayment  3) THIS
+//  userId is null for guests — checkoutUser entity handles them
+// ────────────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public OrderResponse confirmMagicCheckoutOrder(Long userId, MagicCheckoutConfirmRequest request) {
+        log.info("╔════════════════════════════════════════════════════╗");
+        log.info("║   MAGIC CHECKOUT — ORDER CONFIRMATION STARTED      ║");
+        log.info("╚════════════════════════════════════════════════════╝");
+        log.info("► userId (logged-in) : {}", userId);
+        log.info("► razorpayPaymentId  : {}", request.getRazorpayPaymentId());
+        log.info("► razorpayOrderId    : {}", request.getRazorpayOrderId());
+        log.info("► phone              : {}", request.getCustomerPhone());
+        log.info("► product            : {}", request.getProductStrId());
+
+        // ── 1. SIGNATURE VERIFICATION ────────────────────────────────────────
+        // Re-verify here on order-confirm so we don't trust the frontend blindly.
+        // Uses same HMAC logic already proven in PaymentServiceImpl.
+        boolean signatureValid = verifyMagicSignature(
+                request.getRazorpayOrderId(),
+                request.getRazorpayPaymentId(),
+                request.getRazorpaySignature()
+        );
+        if (!signatureValid) {
+            log.error("❌ Signature verification FAILED — possible tamper attempt");
+            throw new OrderException("Invalid payment signature", "SIGNATURE_INVALID");
+        }
+        log.info("✅ Signature verified");
+
+        // ── 2. RESOLVE USER — registered OR guest ───────────────────────────
+        UserEntity registeredUser = null;
+        CheckoutUserEntity checkoutUser = null;
+
+        if (userId != null) {
+            registeredUser = userRepository.findById(userId).orElse(null);
+            log.info("✅ Logged-in user resolved: {}", userId);
+        }
+
+        if (registeredUser == null) {
+            // Guest path — upsert CheckoutUserEntity by phone (idempotent)
+            String phone = request.getCustomerPhone();
+            checkoutUser = checkoutUserRepository.findByPhone(phone)
+                    .orElse(new CheckoutUserEntity());
+
+            checkoutUser.setPhone(phone);
+            checkoutUser.setName(request.getCustomerName());
+            checkoutUser.setEmail(request.getCustomerEmail());
+            checkoutUser.setLastAddress1(request.getShippingAddress1());
+            checkoutUser.setLastAddress2(request.getShippingAddress2());
+            checkoutUser.setLastCity(request.getShippingCity());
+            checkoutUser.setLastState(request.getShippingState());
+            checkoutUser.setLastPincode(request.getShippingPincode());
+            checkoutUser.setLastCountry("India");
+            checkoutUser.setSource(CheckoutUserSource.MAGIC_CHECKOUT);
+
+            // Auto-link if a registered user already exists with this phone
+            CheckoutUserEntity finalCheckoutUser = checkoutUser;
+            userRepository.findByPhone(phone).ifPresent(existing -> {
+                finalCheckoutUser.setLinkedUser(existing);
+                log.info("► Auto-linked to registered user with same phone: {}", phone);
+            });
+
+            checkoutUser = checkoutUserRepository.save(checkoutUser);
+            log.info("✅ CheckoutUser upserted — id:{}, phone:{}", checkoutUser.getCheckoutUserId(), phone);
+        }
+
+        // ── 3. FETCH PRODUCT ─────────────────────────────────────────────────
+        ProductEntity product = productRepository.findByProductStrId(request.getProductStrId())
+                .orElseThrow(() -> new OrderException(
+                        "Product not found: " + request.getProductStrId(), "PRODUCT_NOT_FOUND"));
+
+        // ── 4. BUILD ORDER ITEM — reuses your existing buildOrderItem helper ──
+        CreateOrderRequest.OrderItemRequest itemReq = new CreateOrderRequest.OrderItemRequest();
+        itemReq.setProductStrId(request.getProductStrId());
+        itemReq.setVariantId(request.getVariantId());
+        itemReq.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
+
+        OrderItemEntity item = buildOrderItem(product, itemReq);
+        log.info("✅ Order item built: {} × {}", item.getProductName(), item.getQuantity());
+
+        // ── 5. CALCULATE + VALIDATE PRICING ─────────────────────────────────
+        Map<String, Double> pricing = calculatePricingBreakdown(
+                item,
+                request.getShippingState(),
+                request.getShippingPincode()
+        );
+        validatePricingAmount(pricing, request.getAmount());
+
+        // ── 6. BUILD ORDER ENTITY ─────────────────────────────────────────────
+        OrderEntity order = new OrderEntity();
+
+        // One of these will be non-null
+        order.setUser(registeredUser);
+        order.setCheckoutUser(checkoutUser);
+
+        order.setOrderStatus(OrderStatus.PLACED);
+
+        // COD → PENDING payment until delivery; else PAID
+        boolean isCod = "COD".equalsIgnoreCase(request.getPaymentMethod());
+        order.setPaymentStatus(isCod ? PaymentStatus.PENDING : PaymentStatus.PAID);
+
+        order.setPaymentMethod(isCod ? PaymentMethod.COD : PaymentMethod.PREPAID);
+        order.setPaymentMode(resolvePaymentMode(request.getPaymentMode(), isCod));
+        order.setRazorpayPaymentId(request.getRazorpayPaymentId());
+        order.setRazorpayOrderId(request.getRazorpayOrderId());
+        order.setOrderFlow(OrderFlow.MAGIC_CHECKOUT);
+        order.setShippingStatus(ShippingStatus.NEW);
+
+        // Address snapshot — exact column match to your OrderEntity
+        //        order.setCustomerName(request.getCustomerName());
+        //        order.setCustomerPhone(request.getCustomerPhone());
+        //        order.setCustomerEmail(request.getCustomerEmail());
+        //        order.setShippingAddress1(request.getShippingAddress1());
+        //        order.setShippingAddress2(request.getShippingAddress2());
+        //        order.setShippingCity(request.getShippingCity());
+        //        order.setShippingState(request.getShippingState());
+        //        order.setShippingPincode(request.getShippingPincode());
+        //        order.setShippingCountry("India");
+
+        // REPLACE WITH:
+        // Pull from webhook cache first — this is the address user selected in modal
+        // Falls back to whatever JS sent if webhook hasn't fired yet (rare)
+        MagicCheckoutAddressCache.MagicAddressData cached =
+                magicAddressCache.get(request.getRazorpayOrderId()).orElse(null);
+
+        order.setCustomerName(
+                cached != null && !cached.name.isBlank()  ? cached.name  : request.getCustomerName());
+        order.setCustomerPhone(
+                cached != null && !cached.phone.isBlank() ? cached.phone : request.getCustomerPhone());
+        order.setCustomerEmail(
+                cached != null && !cached.email.isBlank() ? cached.email : request.getCustomerEmail());
+        order.setShippingAddress1(
+                cached != null ? cached.address1 : request.getShippingAddress1());
+        order.setShippingAddress2(
+                cached != null ? cached.address2 : request.getShippingAddress2());
+        order.setShippingCity(
+                cached != null ? cached.city    : request.getShippingCity());
+        order.setShippingState(
+                cached != null ? cached.state   : request.getShippingState());
+        order.setShippingPincode(
+                cached != null ? cached.pincode : request.getShippingPincode());
+        order.setShippingCountry("India");
+
+        // Clean up cache after consuming
+        magicAddressCache.remove(request.getRazorpayOrderId());
+
+        // Pricing — from your calculatePricingBreakdown (same as confirmBuyNowOrder)
+        order.setSubTotal(pricing.get("subTotal"));
+        order.setTax(pricing.get("tax"));
+        order.setShippingCharges(
+                request.getShippingCharges() != null ? request.getShippingCharges() : pricing.get("shippingCharges")
+        );
+        order.setConvenienceFee(
+                request.getConvenienceFee() != null ? request.getConvenienceFee() : pricing.get("convenienceFee")
+        );
+        order.setDiscountAmount(0.0);
+        order.setDiscountPercent(0.0);
+        order.setCouponCode(request.getCouponCode());
+        order.setCouponDiscount(
+                request.getCouponDiscount() != null ? request.getCouponDiscount() : pricing.get("couponDiscount")
+        );
+        order.setGiftWrap(false);
+        order.setFinalAmount(pricing.get("finalAmount"));
+
+        item.setOrder(order);
+        order.setOrderItems(List.of(item));
+
+        // ── 7. SAVE TO DB ────────────────────────────────────────────────────
+        OrderEntity saved = orderRepository.save(order);
+        log.info("✅ Order saved — {}", saved.getOrderStrId());
+
+        // ── 8. SHIPROCKET PUSH — same as createOrder() ───────────────────────
+        try {
+            ShiprocketOrderResponse srResponse = shiprocketService.createOrder(saved);
+            saved.setShiprocketOrderId(srResponse.getOrderId());
+            saved.setShiprocketShipmentId(srResponse.getShipmentId());
+            if (srResponse.getAwbCode() != null && !srResponse.getAwbCode().isEmpty()) {
+                saved.setAwbNumber(srResponse.getAwbCode());
+            }
+            if (srResponse.getCourierName() != null) {
+                saved.setCourierName(srResponse.getCourierName());
+            }
+            saved.setOrderStatus(OrderStatus.PLACED);
+            decreaseStock(saved.getOrderItems());
+            orderRepository.save(saved);
+            log.info("✅ Shiprocket order created — SR ID: {}", srResponse.getOrderId());
+        } catch (Exception e) {
+            log.error("Shiprocket push failed for {} — saved as PENDING: {}",
+                    saved.getOrderStrId(), e.getMessage());
+            saved.setOrderStatus(OrderStatus.PENDING);
+            orderRepository.save(saved);
+        }
+
+        // ── 9. COUPON USAGE (only for logged-in users) ────────────────────────
+        if (userId != null) {
+            incrementCouponUsageIfApplied(saved.getCouponCode(), userId);
+        }
+
+        // ── 10. EMAIL ─────────────────────────────────────────────────────────
+        try {
+            sendOrderConfirmationEmail(saved);
+        } catch (Exception e) {
+            log.error("Email failed (non-blocking): {}", e.getMessage());
+        }
+
+        log.info("╔════════════════════════════════════════════════════╗");
+        log.info("║  ✅ MAGIC CHECKOUT ORDER COMPLETE — {}  ║", saved.getOrderStrId());
+        log.info("╚════════════════════════════════════════════════════╝");
+
+        return mapToOrderResponse(saved);
+    }
+
+    // ── Signature verify — mirrors PaymentServiceImpl logic exactly ───────────
+// Avoids cross-service dependency. Same HMAC-SHA256 pattern.
+    private boolean verifyMagicSignature(String orderId, String paymentId, String signature) {
+        try {
+            String payload = orderId + "|" + paymentId;
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKey = new SecretKeySpec(razorpayKeySecret.getBytes(), "HmacSHA256");
+            mac.init(secretKey);
+            byte[] hash = mac.doFinal(payload.getBytes());
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                String h = Integer.toHexString(0xff & b);
+                if (h.length() == 1) hex.append('0');
+                hex.append(h);
+            }
+            return hex.toString().equals(signature);
+        } catch (Exception e) {
+            log.error("Signature verification error: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    // ── Resolve PaymentMode safely ─────────────────────────────────────────────
+    private PaymentMode resolvePaymentMode(String mode, boolean isCod) {
+        if (isCod) return PaymentMode.COD;
+        if (mode == null || mode.isBlank()) return PaymentMode.RAZORPAY;
+        try {
+            return PaymentMode.valueOf(mode.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return PaymentMode.RAZORPAY;
+        }
+    }
+
     // ────────────────────────────────────────────────────────────────────────
     //  CANCEL ORDER
     // ────────────────────────────────────────────────────────────────────────
@@ -949,6 +1210,12 @@ public class OrderServiceImpl implements OrderService {
         res.setPaymentMethod(order.getPaymentMethod() != null ? order.getPaymentMethod().name() : null);
         res.setPaymentMode(order.getPaymentMode() != null ? order.getPaymentMode().name() : null);
         res.setOrderFlow(order.getOrderFlow() != null ? order.getOrderFlow().name() : null);
+
+        if (order.getCheckoutUser() != null) {
+            res.setCheckoutUserId(order.getCheckoutUser().getCheckoutUserId());
+            res.setCheckoutUserPhone(order.getCheckoutUser().getPhone());
+        }
+
         res.setCustomerName(order.getCustomerName());
         res.setCustomerPhone(order.getCustomerPhone());
         res.setCustomerEmail(order.getCustomerEmail());
@@ -1104,7 +1371,7 @@ public class OrderServiceImpl implements OrderService {
         // Fetch user stats (one extra query - very lightweight)
         OrderStats stats = orderRepository.getOrderStatsByUserId(order.getUser().getUserId());
 
-        response.setTotalOrdersCount(stats.getTotalOrdersCount());
+        response.setTotalOrdersCount(BigDecimal.valueOf(stats.getTotalOrdersCount()));
         response.setTotalSpent(stats.getTotalSpent());
 
         return response;

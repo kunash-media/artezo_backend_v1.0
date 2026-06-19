@@ -31,6 +31,11 @@ public class OrderSummaryResponse {
 
     private List<OrderItemSummary> orderItems;
 
+    // In OrderSummaryResponse.java — add these fields:
+    private String orderFlow;          // CART, BUY_NOW, MAGIC_CHECKOUT
+    private Long checkoutUserId;       // non-null = guest order
+    private String checkoutUserPhone;  // for admin to see guest phone quickly
+
 
     public String getOrderStrId() {
         return orderStrId;
@@ -182,6 +187,30 @@ public class OrderSummaryResponse {
 
     public void setOrderId(Long orderId) {
         this.orderId = orderId;
+    }
+
+    public String getOrderFlow() {
+        return orderFlow;
+    }
+
+    public void setOrderFlow(String orderFlow) {
+        this.orderFlow = orderFlow;
+    }
+
+    public Long getCheckoutUserId() {
+        return checkoutUserId;
+    }
+
+    public void setCheckoutUserId(Long checkoutUserId) {
+        this.checkoutUserId = checkoutUserId;
+    }
+
+    public String getCheckoutUserPhone() {
+        return checkoutUserPhone;
+    }
+
+    public void setCheckoutUserPhone(String checkoutUserPhone) {
+        this.checkoutUserPhone = checkoutUserPhone;
     }
 
     public static class OrderItemSummary {

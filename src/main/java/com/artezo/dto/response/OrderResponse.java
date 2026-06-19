@@ -63,8 +63,13 @@ public class OrderResponse {
     private LocalDateTime cancelledAt;
     private LocalDateTime deliveredAt;
 
-    private Long totalOrdersCount;     // total number of orders placed by this customer
+    private Long checkoutUserId;
+    private String checkoutUserPhone;
+
+    // ADD these two fields alongside your existing fields
+    private BigDecimal totalOrdersCount;
     private BigDecimal totalSpent;
+
 
     // getters and setters ...
 
@@ -381,11 +386,12 @@ public class OrderResponse {
         this.orderId = orderId;
     }
 
-    public Long getTotalOrdersCount() {
+
+    public BigDecimal getTotalOrdersCount() {
         return totalOrdersCount;
     }
 
-    public void setTotalOrdersCount(Long totalOrdersCount) {
+    public void setTotalOrdersCount(BigDecimal totalOrdersCount) {
         this.totalOrdersCount = totalOrdersCount;
     }
 
@@ -396,6 +402,24 @@ public class OrderResponse {
     public void setTotalSpent(BigDecimal totalSpent) {
         this.totalSpent = totalSpent;
     }
+
+    public Long getCheckoutUserId() {
+        return checkoutUserId;
+    }
+
+    public void setCheckoutUserId(Long checkoutUserId) {
+        this.checkoutUserId = checkoutUserId;
+    }
+
+    public String getCheckoutUserPhone() {
+        return checkoutUserPhone;
+    }
+
+    public void setCheckoutUserPhone(String checkoutUserPhone) {
+        this.checkoutUserPhone = checkoutUserPhone;
+    }
+
+
 
     // ── Inner: Item Response ──────────────────────────────────────────────
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -532,4 +556,6 @@ public class OrderResponse {
             this.productPrimeId = productPrimeId;
         }
     }
+
+
 }

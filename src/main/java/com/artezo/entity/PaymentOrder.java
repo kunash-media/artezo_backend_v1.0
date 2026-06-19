@@ -65,8 +65,8 @@ public class PaymentOrder {
         updatedAt = LocalDateTime.now();
     }
 
-
     public PaymentOrder(){}
+
 
     public PaymentOrder(Long id, String razorpayOrderId, String razorpayPaymentId,
                         String razorpaySignature, Integer amount, String currency,

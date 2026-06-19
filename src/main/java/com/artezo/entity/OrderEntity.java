@@ -31,9 +31,13 @@ public class OrderEntity {
     // ── USER REFERENCE ────────────────────────────────────────────────────────
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private UserEntity user;            // FK → your existing UserEntity
 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "checkout_user_id", nullable = true)
+    private CheckoutUserEntity checkoutUser;          // set for Magic Checkout guest orders
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
@@ -569,5 +573,13 @@ public class OrderEntity {
 
     public void setProduct(ProductEntity product) {
         this.product = product;
+    }
+
+    public CheckoutUserEntity getCheckoutUser() {
+        return checkoutUser;
+    }
+
+    public void setCheckoutUser(CheckoutUserEntity checkoutUser) {
+        this.checkoutUser = checkoutUser;
     }
 }

@@ -740,8 +740,8 @@ public class ProductController {
     }
 
     // ──────────────────────────────────────────────────────────
-//          SEARCH / AUTOCOMPLETE ENDPOINT
-// ──────────────────────────────────────────────────────────
+    //          SEARCH / AUTOCOMPLETE ENDPOINT
+    // ──────────────────────────────────────────────────────────
 
     @GetMapping("/search")
     public ResponseEntity<List<ProductSearchResultDto>> searchProducts(
@@ -807,7 +807,6 @@ public class ProductController {
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(productService.getProductVariantSummary(page, size));
     }
-
 
     @GetMapping("/category-meta")
     public ResponseEntity<CategoryMetaDto> getCategoryMeta() {

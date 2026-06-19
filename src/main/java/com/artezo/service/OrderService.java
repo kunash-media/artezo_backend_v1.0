@@ -2,6 +2,7 @@ package com.artezo.service;
 
 import com.artezo.dto.request.BuyNowConfirmRequest;
 import com.artezo.dto.request.CreateOrderRequest;
+import com.artezo.dto.request.MagicCheckoutConfirmRequest;
 import com.artezo.dto.response.OrderResponse;
 import com.artezo.dto.response.OrderSummaryResponse;
 import org.springframework.data.domain.Page;
@@ -83,4 +84,6 @@ public interface OrderService {
     OrderResponse cancelReturnRequest(Long userId, String orderStrId);
 
 
+    // ADD this method signature:
+    OrderResponse confirmMagicCheckoutOrder(Long userId, MagicCheckoutConfirmRequest request);
 }

@@ -23,7 +23,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByUserId(Long userId);
 
-
     List<UserEntity> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime since);
+
 
 }
