@@ -293,6 +293,7 @@ public class ProductServiceImpl implements ProductService {
      *        globalTags, addonKeys, description, aboutItem, full variant details
      */
     private ProductResponseDto mapToListResponseDto(ProductEntity e) {
+
         ProductResponseDto dto = new ProductResponseDto();
 
         dto.setProductPrimeId(e.getProductPrimeId());
@@ -396,7 +397,9 @@ public class ProductServiceImpl implements ProductService {
 
         if (request.getCustomFields() != null) {
             try {
-                entity.setCustomFields(objectMapper.writeValueAsString(request.getCustomFields()));
+//                entity.setCustomFields(objectMapper.writeValueAsString(request.getCustomFields()));
+                entity.setCustomFields(request.getCustomFields());
+
             } catch (Exception ex) {
                 log.error("Failed to serialize customFields", ex);
             }
@@ -856,7 +859,8 @@ public class ProductServiceImpl implements ProductService {
 
         if (r.getCustomFields() != null) {
             try {
-                e.setCustomFields(objectMapper.writeValueAsString(r.getCustomFields()));
+//                e.setCustomFields(objectMapper.writeValueAsString(r.getCustomFields()));
+                e.setCustomFields(r.getCustomFields());
             } catch (Exception ex) {
                 log.error("Failed to serialize customFields", ex);
                 e.setCustomFields("[]");
@@ -1404,10 +1408,16 @@ public class ProductServiceImpl implements ProductService {
                     // String customFields = validatedJsonOrNull(str(row, col, "custom fields"), "custom fields", productName);
 
                     //FIX custom fields parsing
-                    List<Object> customFields = parseJsonList(str(row, col, "custom fields"), "custom fields", productName);
+                    // List<Object> customFields = parseJsonList(str(row, col, "custom fields"), "custom fields", productName);
+
+                    // Store as raw JSON string — consistent with new DTO type
+                    String customFields = validatedJsonOrNull(str(row, col, "custom fields"), "custom fields", productName);
+
+                    String cfRaw = validatedJsonOrNull(str(row, col, "custom fields"), "custom fields", productName);
+
+
 
                     // ── IMAGES ────────────────────────────────────────────────
-
                     byte[]       mainImageBytes = resolveBytes(fileMap, str(row, col, "main image"),    "main image", productName, rowNumber);
                     List<byte[]> mockupBytes    = resolveBytesListBySemicolon(fileMap,
                             semicolonList(row, col, "mockup images"), "mockup", productName, rowNumber);
@@ -1587,7 +1597,16 @@ public class ProductServiceImpl implements ProductService {
                     dto.setSpecifications(specifications);
                     dto.setAdditionalInfo(additionalInfo);
                     dto.setFaq(faq);
-                    dto.setCustomFields(customFields);
+
+                    if (cfRaw != null) {
+                        try {
+                            dto.setCustomFields(String.valueOf(objectMapper.readTree(cfRaw)));
+                        } catch (Exception ex) {
+                            log.warn("Invalid customFields JSON for '{}' — skipping", productName);
+                        }
+                    }
+
+                    // dto.setCustomFields(customFields);
 
                     // Images
                     dto.setMainImage(mainImageBytes);

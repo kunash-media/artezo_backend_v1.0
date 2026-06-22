@@ -30,18 +30,16 @@ public class CartServiceImpl implements CartService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
 
+    private final CartItemCustomizationAssetRepository cartItemAssetRepository;
 
-    public CartServiceImpl(CartRepository cartRepository,
-                           CartItemRepository cartItemRepository,
-                           WishlistItemRepository wishlistItemRepository,
-                           UserRepository userRepository,ProductRepository productRepository) {
+    public CartServiceImpl(CartRepository cartRepository, CartItemRepository cartItemRepository, WishlistItemRepository wishlistItemRepository, UserRepository userRepository, ProductRepository productRepository, CartItemCustomizationAssetRepository cartItemAssetRepository) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.wishlistItemRepository = wishlistItemRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
+        this.cartItemAssetRepository = cartItemAssetRepository;
     }
-
 
     // ── Scheduled: remove abandoned carts older than 30 days ─────────
     @Scheduled(cron = "0 0 2 * * *") // runs at 2AM daily
@@ -318,6 +316,17 @@ public class CartServiceImpl implements CartService {
                         }
                     }
 
+                    // CUSTOMIZATION MULTI-IMAGE: fetch all slots for this cart item
+                    List<CartResponse.AssetSlotInfo> slots = item.getCustomizationAssets()
+                            .stream()
+                            .map(s -> new CartResponse.AssetSlotInfo(
+                                    s.getSlotNumber(),
+                                    s.getAsset().getAssetUuid(),
+                                    "/api/v1/customize/image/" + s.getAsset().getAssetUuid(),
+                                    s.getFieldName()
+                            ))
+                            .collect(Collectors.toList());
+
                     return CartResponse.CartItemResponse.builder()
                             .itemId(item.getId())
                             .productId(item.getProductId())
@@ -335,6 +344,8 @@ public class CartServiceImpl implements CartService {
                             .createdAt(item.getCreatedAt())
                             .productImageUrl(imageUrl)
                             .productCategory(categoryMap.getOrDefault(item.getProductId(), null)) // ← ADD THIS
+
+                            .customizationSlots(slots)
                             .build();
                 })
                 .collect(Collectors.toList());

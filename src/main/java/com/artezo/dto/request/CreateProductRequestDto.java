@@ -1,5 +1,9 @@
 package com.artezo.dto.request;
 
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,13 +61,29 @@ public class CreateProductRequestDto {
     private List<String> categoryPath = new ArrayList<>();
     private String youtubeUrl;
 
-    private List<Object> customFields;
+//    private List<Object> customFields;
+
+    // REPLACE WITH:
+    @JsonDeserialize(using = RawJsonDeserializer.class)
+    private String customFields;
 
     private String hsnCode;
     private Double weight;
     private Double length;
     private Double breadth;
     private Double height;
+
+    // ADD this static inner class at the bottom of CreateProductRequestDto:
+    static class RawJsonDeserializer extends StdDeserializer<String> {
+
+        public RawJsonDeserializer() { super(String.class); }
+
+        @Override
+        public String deserialize(JsonParser p, DeserializationContext ctx) {
+            return p.readValueAsTree().toString();
+        }
+    }
+
 
     public String getProductName() {
         return productName;
@@ -320,13 +340,17 @@ public class CreateProductRequestDto {
     }
 
 
-    public List<Object> getCustomFields() {
-        return customFields;
-    }
+//    public List<Object> getCustomFields() {
+//        return customFields;
+//    }
+//
+//    public void setCustomFields(List<Object> customFields) {
+//        this.customFields = customFields;
+//    }
 
-    public void setCustomFields(List<Object> customFields) {
-        this.customFields = customFields;
-    }
+    public String getCustomFields() { return customFields; }
+    public void setCustomFields(String customFields) { this.customFields = customFields; }
+
 
     public String getHsnCode() {
         return hsnCode;

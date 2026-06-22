@@ -79,27 +79,31 @@ public class OrderServiceImpl implements OrderService {
     private final CouponRepository couponRepository;
     private final CheckoutUserRepository checkoutUserRepository;
 
+    private final CustomizationAssetRepository customizationAssetRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+
+    private final CartItemCustomizationAssetRepository cartItemCustomizationAssetRepository;
+    private final OrderItemCustomizationAssetRepository orderItemCustomizationAssetRepository ;
+
     private final MagicCheckoutAddressCache magicAddressCache;
 
-    public OrderServiceImpl(OrderRepository orderRepository,
-                            ProductRepository productRepository,
-                            UserRepository userRepository,
-                            ShiprocketService shiprocketService, EmailService emailService,
-                            CouponService couponService, CouponRepository couponRepository,
-                            CheckoutUserRepository checkoutUserRepository,
-                            MagicCheckoutAddressCache magicAddressCache) {
-        this.orderRepository   = orderRepository;
+    public OrderServiceImpl(OrderRepository orderRepository, ProductRepository productRepository, UserRepository userRepository, ShiprocketService shiprocketService, EmailService emailService, CouponService couponService, CouponRepository couponRepository, CheckoutUserRepository checkoutUserRepository, CustomizationAssetRepository customizationAssetRepository, CartRepository cartRepository, CartItemRepository cartItemRepository, CartItemCustomizationAssetRepository cartItemCustomizationAssetRepository, OrderItemCustomizationAssetRepository orderItemCustomizationAssetRepository, MagicCheckoutAddressCache magicAddressCache) {
+        this.orderRepository = orderRepository;
         this.productRepository = productRepository;
-        this.userRepository    = userRepository;
+        this.userRepository = userRepository;
         this.shiprocketService = shiprocketService;
         this.emailService = emailService;
         this.couponService = couponService;
         this.couponRepository = couponRepository;
         this.checkoutUserRepository = checkoutUserRepository;
+        this.customizationAssetRepository = customizationAssetRepository;
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.cartItemCustomizationAssetRepository = cartItemCustomizationAssetRepository;
+        this.orderItemCustomizationAssetRepository = orderItemCustomizationAssetRepository;
         this.magicAddressCache = magicAddressCache;
     }
-
-
 
     /**
      * AMAZON-STYLE PRICING CALCULATION
@@ -251,11 +255,11 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse createOrder(Long userId, CreateOrderRequest request) {
         log.info("Creating order for userId: {}", userId);
 
-        // 1. Fetch user
+        // ── 1. Fetch user ─────────────────────────────────────────────────────
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new OrderException("User not found", "USER_NOT_FOUND"));
 
-        // 2. Build order items + validate stock
+        // ── 2. Build order items + validate stock ─────────────────────────────
         List<OrderItemEntity> orderItems = new ArrayList<>();
         double subTotal = 0.0;
 
@@ -268,35 +272,20 @@ public class OrderServiceImpl implements OrderService {
             subTotal += item.getItemTotal();
         }
 
-        // ───────────────────────────────────────────────────────────────────
-        // 3. CORRECTED: Calculate final amount with proper formula
-        // ───────────────────────────────────────────────────────────────────
-        // NOTE: discountAmount from request is for DISPLAY ONLY
-        // It represents MRP-to-selling-price difference, which is ALREADY
-        // reflected in the itemTotal. We DO NOT subtract it again.
-        //
-        // CORRECT FORMULA:
-        // finalAmount = subTotal + tax + shipping + codFee - couponDiscount
-        // ───────────────────────────────────────────────────────────────────
-
-        double couponDiscount  = orZero(request.getCouponDiscount()); // ✅ Only new coupons
-        double tax             =    0.0;             // orZero(request.getTax()) ✅ From request
-        double convenienceFee  = orZero(request.getConvenienceFee());  // ✅ From request
-        double shippingCharges = orZero(request.getShippingCharges()); // ✅ From request
+        // ── 3. Calculate final amount ─────────────────────────────────────────
+        double couponDiscount  = orZero(request.getCouponDiscount());
+        double tax             = 0.0;
+        double convenienceFee  = orZero(request.getConvenienceFee());
+        double shippingCharges = orZero(request.getShippingCharges());
         double giftwrapCharges = request.isGiftWrap() ? orZero(request.getGiftwrapCharges()) : 0.0;
 
-        // ✅ CORRECT FORMULA: subTotal + tax + shipping + codFee - coupon
-        // DO NOT subtract discountAmount — it's already in the price!
-        double finalAmount = subTotal          // already at selling price
-                //  + tax                          // GST on subtotal
-                + shippingCharges              // shipping charges (0 if free)
-                + convenienceFee               // COD fee (100 if COD, 0 if online)
-                - couponDiscount;              // only deduct NEW coupon codes
+        double finalAmount = subTotal
+                + shippingCharges
+                + convenienceFee
+                - couponDiscount;
 
         log.info("✅ Order Pricing Calculated:");
         log.info("  Subtotal:        ₹{}", String.format("%.2f", subTotal));
-//        log.info("  Tax (18% GST):    ₹{}", String.format("%.2f", tax));
-
         log.info("  Tax (GST):        ₹0 (included in selling price)");
         log.info("  Shipping:        ₹{}", String.format("%.2f", shippingCharges));
         log.info("  COD Fee:         ₹{}", String.format("%.2f", convenienceFee));
@@ -304,7 +293,7 @@ public class OrderServiceImpl implements OrderService {
         log.info("  ──────────────────────");
         log.info("  Final Amount:    ₹{}", String.format("%.2f", finalAmount));
 
-        // 4. Build OrderEntity
+        // ── 4. Build OrderEntity ──────────────────────────────────────────────
         OrderEntity order = new OrderEntity();
         order.setUser(user);
         order.setOrderStatus(OrderStatus.PLACED);
@@ -314,7 +303,6 @@ public class OrderServiceImpl implements OrderService {
                 ? PaymentMode.valueOf(request.getPaymentMode()) : null);
         order.setRazorpayPaymentId(request.getRazorpayPaymentId());
         order.setRazorpayOrderId(request.getRazorpayOrderId());
-
         order.setCustomerName(request.getCustomerName());
         order.setCustomerPhone(request.getCustomerPhone());
         order.setCustomerEmail(request.getCustomerEmail());
@@ -324,37 +312,128 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingState(request.getShippingState());
         order.setShippingPincode(request.getShippingPincode());
         order.setShippingCountry("India");
-
-        // ✅ CORRECTED PRICING STORAGE
         order.setSubTotal(subTotal);
-        order.setDiscountAmount(0.0);                      // ✅ Always 0
-        order.setDiscountPercent(0.0);                     // ✅ Always 0
+        order.setDiscountAmount(0.0);
+        order.setDiscountPercent(0.0);
         order.setCouponCode(request.getCouponCode());
-        order.setCouponDiscount(couponDiscount);           // ✅ Only new coupons
-        order.setTax(0.0);    //tax
-        order.setConvenienceFee(convenienceFee);           // ✅ COD fee
+        order.setCouponDiscount(couponDiscount);
+        order.setTax(0.0);
+        order.setConvenienceFee(convenienceFee);
         order.setShippingCharges(shippingCharges);
         order.setGiftWrap(request.isGiftWrap());
         order.setGiftwrapCharges(giftwrapCharges);
-        order.setFinalAmount(finalAmount);                 // ✅ Now positive!
+        order.setFinalAmount(finalAmount);
         order.setOrderNotes(request.getOrderNotes());
         order.setOrderFlow(OrderFlow.CART);
         order.setShippingStatus(ShippingStatus.NEW);
 
+        // ── 5. CUSTOMIZATION PATCH: collect slots — DO NOT save yet ──────────
+        // Problem: OrderItemEntity has no DB id until orderRepository.save() runs.
+        // Saving OrderItemCustomizationAssetEntity before that → TransientPropertyValueException.
+        // Solution: collect all slot data in a Map, persist AFTER order is saved.
+        //
+        // Map structure: OrderItemEntity → List of CartItem slots to transfer
+        // ─────────────────────────────────────────────────────────────────────
+        Map<OrderItemEntity, List<CartItemCustomizationAssetEntity>> pendingSlots
+                = new java.util.LinkedHashMap<>();
+
+        // Get active cart — needed to find CartItems with customization assets
+        // Returns null for guest users or if no active cart (non-customized orders)
+        CartEntity activeCart = cartRepository
+                .findByUser_UserIdAndStatus(userId, CartEntity.CartStatus.ACTIVE)
+                .orElse(null);
+
         for (OrderItemEntity item : orderItems) {
-            item.setOrder(order);
+            item.setOrder(order); // link item to order (no DB save yet)
+
+            // ── Skip customization check if no active cart ────────────────────
+            if (activeCart == null) continue;
+
+            cartItemRepository
+                    .findByCart_IdAndProductIdAndVariantId(
+                            activeCart.getId(),
+                            productRepository.findByProductStrId(item.getProductStrId())
+                                    .map(p -> p.getProductPrimeId()).orElse(null),
+                            item.getVariantId()
+                    )
+                    .ifPresent(cartItem -> {
+
+                        // ── Primary asset: set FK directly on OrderItem ───────────
+                        // This is safe — just setting a reference, no DB save yet
+                        if (cartItem.getCustomizationAsset() != null) {
+                            CustomizationAssetEntity primary = cartItem.getCustomizationAsset();
+                            item.setCustomizationAsset(primary);
+                            item.setCustomImagePath(primary.getFilePath()); // path snapshot
+                            // Mark primary asset ORDERED immediately — safe to save
+                            primary.setStatus(CustomizationAssetEntity.AssetStatus.ORDERED);
+                            primary.setExpiresAt(null);
+                            customizationAssetRepository.save(primary);
+                        }
+
+                        // ── Collect all slots for this cart item ──────────────────
+                        // DO NOT call orderItemCustomizationAssetRepository.save() here
+                        // item.id is still null — FK save will fail with TransientPropertyValueException
+                        // We store slots in pendingSlots map and save AFTER orderRepository.save()
+                        List<CartItemCustomizationAssetEntity> slots =
+                                cartItemCustomizationAssetRepository
+                                        .findByCartItem_IdOrderBySlotNumberAsc(cartItem.getId());
+
+                        if (!slots.isEmpty()) {
+                            pendingSlots.put(item, slots); // store for post-save processing
+                            log.info("[ORDER] Collected {} slots for productStrId={} — will save after order persist",
+                                    slots.size(), item.getProductStrId());
+                        }
+                    });
         }
+
         order.setOrderItems(orderItems);
 
-        // 5. Save to DB — PENDING
+        // ── 6. Save order to DB ───────────────────────────────────────────────
+        // After this line: order.id, all orderItem.id values are assigned by DB
+        // Now safe to save OrderItemCustomizationAssetEntity with valid FK references
         OrderEntity savedOrder = orderRepository.save(order);
         log.info("Order saved to DB: {} — calling Shiprocket...", savedOrder.getOrderStrId());
 
-        // 6. Call Shiprocket + Send Email on Success
+        // ── 7. NOW persist OrderItemCustomizationAssets ───────────────────────
+        // OrderItemEntity ids are now assigned — FK references are valid
+        // Loop through pendingSlots collected in step 5
+        if (!pendingSlots.isEmpty()) {
+            for (Map.Entry<OrderItemEntity, List<CartItemCustomizationAssetEntity>> entry
+                    : pendingSlots.entrySet()) {
+
+                OrderItemEntity savedItem   = entry.getKey();
+                List<CartItemCustomizationAssetEntity> cartSlots = entry.getValue();
+
+                for (CartItemCustomizationAssetEntity cartSlot : cartSlots) {
+
+                    // ── Build OrderItemCustomizationAssetEntity ────────────────
+                    OrderItemCustomizationAssetEntity orderSlot =
+                            new OrderItemCustomizationAssetEntity();
+                    orderSlot.setOrderItem(savedItem);              // ✅ id exists now
+                    orderSlot.setAsset(cartSlot.getAsset());
+                    orderSlot.setSlotNumber(cartSlot.getSlotNumber());
+                    orderSlot.setFieldName(cartSlot.getFieldName());
+                    orderItemCustomizationAssetRepository.save(orderSlot); // ✅ safe now
+
+                    // ── Mark each slot asset as ORDERED ───────────────────────
+                    cartSlot.getAsset().setStatus(
+                            CustomizationAssetEntity.AssetStatus.ORDERED);
+                    cartSlot.getAsset().setExpiresAt(null);
+                    customizationAssetRepository.save(cartSlot.getAsset());
+
+                    log.info("[ORDER] Slot {} asset transferred | orderStrId={}, assetUuid={}",
+                            cartSlot.getSlotNumber(),
+                            savedOrder.getOrderStrId(),
+                            cartSlot.getAsset().getAssetUuid());
+                }
+            }
+        }
+        // ── END CUSTOMIZATION PATCH ───────────────────────────────────────────
+
+        // ── 8. Call Shiprocket + Send Email on Success ────────────────────────
         try {
             ShiprocketOrderResponse srResponse = shiprocketService.createOrder(savedOrder);
 
-            // Update order with Shiprocket details
             savedOrder.setShiprocketOrderId(srResponse.getOrderId());
             savedOrder.setShiprocketShipmentId(srResponse.getShipmentId());
             savedOrder.setOrderStatus(OrderStatus.PLACED);
@@ -365,7 +444,6 @@ public class OrderServiceImpl implements OrderService {
             if (srResponse.getCourierName() != null) {
                 savedOrder.setCourierName(srResponse.getCourierName());
             }
-
             if (request.getRazorpayPaymentId() != null) {
                 savedOrder.setPaymentStatus(PaymentStatus.PAID);
             }
@@ -373,17 +451,15 @@ public class OrderServiceImpl implements OrderService {
             decreaseStock(savedOrder.getOrderItems());
             orderRepository.save(savedOrder);
 
-            log.info("Order {} placed — SR Order ID: {}", savedOrder.getOrderStrId(), srResponse.getOrderId());
+            log.info("Order {} placed — SR Order ID: {}",
+                    savedOrder.getOrderStrId(), srResponse.getOrderId());
 
-            // ── Increment coupon usage AFTER order is confirmed ───────────────────
             incrementCouponUsageIfApplied(savedOrder.getCouponCode(), userId);
-            // ==================== SEND EMAIL ON SUCCESS ====================
             sendOrderConfirmationEmail(savedOrder);
 
         } catch (Exception e) {
             log.error("Shiprocket createOrder failed for {} — saved as PENDING: {}",
                     savedOrder.getOrderStrId(), e.getMessage());
-
             savedOrder.setOrderStatus(OrderStatus.PENDING);
             orderRepository.save(savedOrder);
         }
@@ -466,6 +542,7 @@ public class OrderServiceImpl implements OrderService {
         dto.setQuantity(entity.getQuantity());
         dto.setSellingPrice(entity.getSellingPrice());
         dto.setItemTotal(entity.getItemTotal());
+
         // Add other fields if needed (color, sku, etc.)
 
         return dto;
@@ -1110,6 +1187,13 @@ public class OrderServiceImpl implements OrderService {
                                         }
                                     });
                         }
+
+                        // ── CUSTOMIZATION PATCH: admin orders list ────────────────────────────────
+                        if (i.getCustomizationAsset() != null) {
+                            ir.setProductImageUrl("/api/v1/customize/image/" +
+                                    i.getCustomizationAsset().getAssetUuid());
+                        }
+// ─────────────────────────────────────────────────────────────────────────
                         return ir;
                     }).collect(Collectors.toList());
 
@@ -1265,6 +1349,7 @@ public class OrderServiceImpl implements OrderService {
                         ir.setItemTotal(i.getItemTotal());
                         ir.setItemStatus(i.getItemStatus() != null ? i.getItemStatus().name() : null);
 
+
                         // ── PRODUCT IMAGE URL ─────────────────────────────────────────
                         if (i.getProductStrId() != null) {
                             productRepository.findByProductStrId(i.getProductStrId())
@@ -1272,6 +1357,8 @@ public class OrderServiceImpl implements OrderService {
                                         Long primeId = product.getProductPrimeId();
                                         String variantId = i.getVariantId();
                                         ir.setProductPrimeId(primeId);   // ← ADD THIS LINE — was never called
+
+                                        ir.setIsCustomizable(product.getIsCustomizable());
 
                                         if (variantId != null && !variantId.isBlank()) {
                                             // variant order — check if variant has main image
@@ -1293,7 +1380,18 @@ public class OrderServiceImpl implements OrderService {
                                         }
                                     });
                         }
-                        // ─────────────────────────────────────────────────────────────
+                        // ── CUSTOMIZATION PATCH: override productImageUrl for customized items ────
+                        // If this order item has a custom image, show THAT instead of product image.
+                        // Admin panel + user order detail will automatically show the uploaded image.
+                        // Normal items: customizationAsset is null → this block skipped entirely.
+                        if (i.getCustomizationAsset() != null) {
+                            String assetUuid = i.getCustomizationAsset().getAssetUuid();
+                            ir.setProductImageUrl("/api/v1/customize/image/" + assetUuid);
+                            ir.setCustomImagePath(i.getCustomImagePath()); // ← snapshot path for audit
+                            log.debug("[ORDER-RESPONSE] Custom image set for orderItem | assetUuid={}", assetUuid);
+                        }
+                        // ── END CUSTOMIZATION PATCH ───────────────────────────────────────────────
+
 
                         return ir;
                     }).collect(Collectors.toList());

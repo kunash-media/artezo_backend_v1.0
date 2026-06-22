@@ -83,6 +83,35 @@ public class CartResponse {
     }
 
 
+    // ── Add this inner class to CartResponse.java ─────────────────────────────
+    public static class AssetSlotInfo {
+        private Integer slotNumber;
+        private String assetUuid;
+        private String imageUrl;      // /api/v1/customize/image/{uuid}
+        private String fieldName;
+
+        public AssetSlotInfo() {}
+        public AssetSlotInfo(Integer slotNumber, String assetUuid,
+                             String imageUrl, String fieldName) {
+            this.slotNumber  = slotNumber;
+            this.assetUuid   = assetUuid;
+            this.imageUrl    = imageUrl;
+            this.fieldName   = fieldName;
+        }
+
+        public Integer getSlotNumber()  { return slotNumber; }
+        public String  getAssetUuid()   { return assetUuid; }
+        public String  getImageUrl()    { return imageUrl; }
+        public String  getFieldName()   { return fieldName; }
+
+        public void setSlotNumber(Integer slotNumber)  { this.slotNumber = slotNumber; }
+        public void setAssetUuid(String assetUuid)     { this.assetUuid  = assetUuid; }
+        public void setImageUrl(String imageUrl)        { this.imageUrl   = imageUrl; }
+        public void setFieldName(String fieldName)      { this.fieldName  = fieldName; }
+    }
+
+
+
     @Builder
     public static class CartItemResponse {
         private Long itemId;
@@ -104,6 +133,10 @@ public class CartResponse {
 
 
         private String productImageUrl;
+
+        // ── Inside CartItemResponse — ADD this field ──────────────────────────────
+        // After existing productImageUrl field:
+        private List<CartResponse.AssetSlotInfo> customizationSlots; // all uploaded images
 
 
         public Long getItemId() {
@@ -232,6 +265,14 @@ public class CartResponse {
 
         public void setProductCategory(String productCategory) {
             this.productCategory = productCategory;
+        }
+
+        public List<CartResponse.AssetSlotInfo> getCustomizationSlots() {
+            return customizationSlots;
+        }
+        public void setCustomizationSlots(
+                List<CartResponse.AssetSlotInfo> customizationSlots) {
+            this.customizationSlots = customizationSlots;
         }
     }
 }

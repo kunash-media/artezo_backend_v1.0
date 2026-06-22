@@ -420,6 +420,32 @@ public class OrderResponse {
     }
 
 
+    public static class AssetSlotInfo {
+        private Integer slotNumber;
+        private String assetUuid;
+        private String imageUrl;      // /api/v1/customize/image/{uuid}
+        private String fieldName;
+
+        public AssetSlotInfo() {}
+        public AssetSlotInfo(Integer slotNumber, String assetUuid,
+                             String imageUrl, String fieldName) {
+            this.slotNumber  = slotNumber;
+            this.assetUuid   = assetUuid;
+            this.imageUrl    = imageUrl;
+            this.fieldName   = fieldName;
+        }
+
+        public Integer getSlotNumber()  { return slotNumber; }
+        public String  getAssetUuid()   { return assetUuid; }
+        public String  getImageUrl()    { return imageUrl; }
+        public String  getFieldName()   { return fieldName; }
+
+        public void setSlotNumber(Integer slotNumber)  { this.slotNumber = slotNumber; }
+        public void setAssetUuid(String assetUuid)     { this.assetUuid  = assetUuid; }
+        public void setImageUrl(String imageUrl)        { this.imageUrl   = imageUrl; }
+        public void setFieldName(String fieldName)      { this.fieldName  = fieldName; }
+    }
+
 
     // ── Inner: Item Response ──────────────────────────────────────────────
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -441,7 +467,14 @@ public class OrderResponse {
 
         private Long productPrimeId;
 
-        // getters and setters ...
+        private Boolean isCustomizable;
+
+        // CUSTOMIZATION: custom uploaded image path snapshot
+        private String customImagePath;
+
+        // ── Inside OrderResponse.OrderItemResponse ────────────────────────────────
+        private List<CartResponse.AssetSlotInfo> customizationSlots;
+
 
 
         public String getProductStrId() {
@@ -554,6 +587,30 @@ public class OrderResponse {
 
         public void setProductPrimeId(Long productPrimeId) {
             this.productPrimeId = productPrimeId;
+        }
+
+        public boolean getIsCustomizable() {
+            return isCustomizable;
+        }
+
+        public void setIsCustomizable(boolean customizable) {
+            isCustomizable = customizable;
+        }
+
+        public String getCustomImagePath() {
+            return customImagePath;
+        }
+
+        public void setCustomImagePath(String customImagePath) {
+            this.customImagePath = customImagePath;
+        }
+
+        public List<CartResponse.AssetSlotInfo> getCustomizationSlots() {
+            return customizationSlots;
+        }
+        public void setCustomizationSlots(
+                List<CartResponse.AssetSlotInfo> slots) {
+            this.customizationSlots = slots;
         }
     }
 

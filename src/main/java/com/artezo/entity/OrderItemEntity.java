@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "order_items")
@@ -61,6 +63,36 @@ public class OrderItemEntity {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    /**
+     * CUSTOMIZATION: FK to customization_asset.
+     * NULL for normal products.
+     * Copied from CartItem.customizationAsset when order is created.
+     * Admin panel uses this to display the custom image on order detail.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customization_asset_id", nullable = true)
+    private CustomizationAssetEntity customizationAsset;
+
+    /**
+     * MULTI-IMAGE: All uploaded assets for this order item ordered by slot.
+     * Copied from CartItem.customizationAssets at order creation time.
+     * Admin panel uses this to fetch all images for printing.
+     */
+    @OneToMany(mappedBy = "orderItem",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @OrderBy("slotNumber ASC")
+    private List<OrderItemCustomizationAssetEntity> customizationAssets = new ArrayList<>();
+
+    /**
+     * CUSTOMIZATION: Snapshot of file path at order time.
+     * Even if asset is later GC'd, we retain the path string for audit trail.
+     */
+    @Column(name = "custom_image_path", length = 500)
+    private String customImagePath;
+
 
     public OrderItemEntity() {
     }
@@ -233,5 +265,30 @@ public class OrderItemEntity {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+
+    public CustomizationAssetEntity getCustomizationAsset() {
+        return customizationAsset;
+    }
+    public void setCustomizationAsset(CustomizationAssetEntity customizationAsset) {
+        this.customizationAsset = customizationAsset;
+    }
+
+
+    public List<OrderItemCustomizationAssetEntity> getCustomizationAssets() {
+        return customizationAssets;
+    }
+
+    public void setCustomizationAssets(List<OrderItemCustomizationAssetEntity> customizationAssets) {
+        this.customizationAssets = customizationAssets;
+    }
+
+    public String getCustomImagePath() {
+        return customImagePath;
+    }
+    public void setCustomImagePath(String customImagePath) {
+        this.customImagePath = customImagePath;
+    }
+
 }
 

@@ -7,6 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "cart_item",
@@ -61,6 +63,30 @@ public class CartItemEntity {
     @Column(name = "custom_fields_json", columnDefinition = "TEXT")
     private String customFieldsJson;
 
+
+    /**
+     * CUSTOMIZATION: FK to customization_asset table.
+     * NULL for all normal (non-customized) products — existing flow untouched.
+     * Set only when product isCustomizable and user uploaded an image.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customization_asset_id", nullable = true)
+    private CustomizationAssetEntity customizationAsset;
+
+    /**
+     * MULTI-IMAGE: All uploaded assets for this cart item ordered by slot.
+     * slot 1 = same as customizationAsset FK (primary)
+     * slot 2,3,4 = additional images
+     * Empty for non-customized products.
+     */
+    @OneToMany(mappedBy = "cartItem",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @OrderBy("slotNumber ASC")
+    @Builder.Default
+    private List<CartItemCustomizationAssetEntity> customizationAssets = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -73,10 +99,9 @@ public class CartItemEntity {
     private String productImageUrl;
 
 
-
     public CartItemEntity(){}
 
-    public CartItemEntity(Long id, CartEntity cart, Long productId, String productStrId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal unitPrice, BigDecimal mrpPrice, Integer quantity, String customFieldsJson, LocalDateTime createdAt, LocalDateTime updatedAt, String productImageUrl) {
+    public CartItemEntity(Long id, CartEntity cart, Long productId, String productStrId, String variantId, String sku, String selectedColor, String selectedSize, String titleName, BigDecimal unitPrice, BigDecimal mrpPrice, Integer quantity, String customFieldsJson, CustomizationAssetEntity customizationAsset, List<CartItemCustomizationAssetEntity> customizationAssets, LocalDateTime createdAt, LocalDateTime updatedAt, String productImageUrl) {
         this.id = id;
         this.cart = cart;
         this.productId = productId;
@@ -90,6 +115,8 @@ public class CartItemEntity {
         this.mrpPrice = mrpPrice;
         this.quantity = quantity;
         this.customFieldsJson = customFieldsJson;
+        this.customizationAsset = customizationAsset;
+        this.customizationAssets = customizationAssets;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.productImageUrl = productImageUrl;
@@ -197,6 +224,22 @@ public class CartItemEntity {
 
     public void setCustomFieldsJson(String customFieldsJson) {
         this.customFieldsJson = customFieldsJson;
+    }
+
+    public CustomizationAssetEntity getCustomizationAsset() {
+        return customizationAsset;
+    }
+
+    public void setCustomizationAsset(CustomizationAssetEntity customizationAsset) {
+        this.customizationAsset = customizationAsset;
+    }
+
+    public List<CartItemCustomizationAssetEntity> getCustomizationAssets() {
+        return customizationAssets;
+    }
+
+    public void setCustomizationAssets(List<CartItemCustomizationAssetEntity> customizationAssets) {
+        this.customizationAssets = customizationAssets;
     }
 
     public LocalDateTime getCreatedAt() {
