@@ -28,7 +28,7 @@ public class ProductEntity {
     private boolean underTrendCategory;
 
     @Column(columnDefinition = "boolean default false")
-    private boolean isDeleted;
+    public boolean isDeleted;
 
     @Column(columnDefinition = "boolean default false")
     private boolean hasVariants;

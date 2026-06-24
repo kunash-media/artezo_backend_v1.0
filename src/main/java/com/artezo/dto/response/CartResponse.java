@@ -18,6 +18,50 @@ public class CartResponse {
     private BigDecimal totalMrp;
     private BigDecimal totalDiscount;
 
+    // BOUGHT-TOGETHER: populated only by addMultipleToCart.
+    // Null/omitted for every existing single-item call site — frontend
+    // contract for the existing add-to-cart response is unchanged.
+    private List<FailedItem> failedItems;
+
+
+    public static class FailedItem {
+        private Long productId;
+        private String variantId;
+        private String reason;
+
+        public FailedItem(){}
+
+        public FailedItem(Long productId, String variantId, String reason) {
+            this.productId = productId;
+            this.variantId = variantId;
+            this.reason = reason;
+        }
+
+        public Long getProductId() {
+            return productId;
+        }
+
+        public void setProductId(Long productId) {
+            this.productId = productId;
+        }
+
+        public String getVariantId() {
+            return variantId;
+        }
+
+        public void setVariantId(String variantId) {
+            this.variantId = variantId;
+        }
+
+        public String getReason() {
+            return reason;
+        }
+
+        public void setReason(String reason) {
+            this.reason = reason;
+        }
+    }
+
     public Long getCartId() {
         return cartId;
     }
@@ -82,6 +126,14 @@ public class CartResponse {
         this.totalDiscount = totalDiscount;
     }
 
+
+    public List<FailedItem> getFailedItems() {
+        return failedItems;
+    }
+
+    public void setFailedItems(List<FailedItem> failedItems) {
+        this.failedItems = failedItems;
+    }
 
     // ── Add this inner class to CartResponse.java ─────────────────────────────
     public static class AssetSlotInfo {

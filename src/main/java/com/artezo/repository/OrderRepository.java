@@ -42,4 +42,7 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
         WHERE o.user.userId = :userId
         """)
     OrderStats getOrderStatsByUserId(@Param("userId") Long userId);
+
+    /** Used by SR webhook handler to find order by shiprocket's numeric ID */
+    Optional<OrderEntity> findByShiprocketOrderId(Long shiprocketOrderId);
 }

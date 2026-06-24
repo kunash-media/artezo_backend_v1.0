@@ -1,5 +1,6 @@
 package com.artezo.controller;
 
+import com.artezo.dto.request.AddMultipleToCartRequest;
 import com.artezo.dto.request.AddToCartRequest;
 import com.artezo.dto.request.RemoveCartItemsRequest;
 import com.artezo.dto.response.CartResponse;
@@ -55,6 +56,24 @@ public class CartController {
     }
 
     // POST /api/v1/cart/add
+//    @PostMapping("/add")
+//    public ResponseEntity<ApiResponse<CartResponse>> addToCart(@RequestBody AddToCartRequest request) {
+//        log.info("[CART] Add to cart request | userId={}, sessionId={}, productId={}, variantId={}",
+//                request.getUserId(), request.getSessionId(), request.getProductId(), request.getVariantId());
+//        try {
+//            CartResponse cart = cartService.addToCart(request);
+//            log.info("[CART] Item added to cart | userId={}, productId={}, sku={}, qty={}",
+//                    request.getUserId(), request.getProductId(), request.getSku(), request.getQuantity());
+//            return ResponseEntity.ok(ApiResponse.success("Item added to cart successfully", cart));
+//        } catch (RuntimeException ex) {
+//            log.error("[CART] Failed to add item to cart | userId={}, productId={} | reason={}",
+//                    request.getUserId(), request.getProductId(), ex.getMessage());
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                    .body(ApiResponse.error("Failed to add item to cart: " + ex.getMessage()));
+//        }
+//    }
+
+    // POST /api/v1/cart/add
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<CartResponse>> addToCart(@RequestBody AddToCartRequest request) {
         log.info("[CART] Add to cart request | userId={}, sessionId={}, productId={}, variantId={}",
@@ -69,6 +88,24 @@ public class CartController {
                     request.getUserId(), request.getProductId(), ex.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Failed to add item to cart: " + ex.getMessage()));
+        }
+    }
+
+    // POST /api/v1/cart/add-multiple
+    @PostMapping("/add-multiple")
+    public ResponseEntity<ApiResponse<CartResponse>> addMultipleToCart(@RequestBody AddMultipleToCartRequest request) {
+        log.info("[CART] Add multiple to cart request | itemCount={}",
+                request.getItems() == null ? 0 : request.getItems().size());
+        try {
+            CartResponse cart = cartService.addMultipleToCart(request);
+            log.info("[CART] Bulk add completed | totalItems={}, failed={}",
+                    cart.getTotalItems(),
+                    cart.getFailedItems() != null ? cart.getFailedItems().size() : 0);
+            return ResponseEntity.ok(ApiResponse.success("Items processed for bought-together add", cart));
+        } catch (RuntimeException ex) {
+            log.error("[CART] Bulk add failed entirely | reason={}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to add items to cart: " + ex.getMessage()));
         }
     }
 
@@ -175,4 +212,5 @@ public class CartController {
                     CountResponse.builder().userId(userId).count(0).build()));
         }
     }
+
 }

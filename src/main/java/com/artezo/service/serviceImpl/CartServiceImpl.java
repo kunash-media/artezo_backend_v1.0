@@ -1,5 +1,6 @@
 package com.artezo.service.serviceImpl;
 
+import com.artezo.dto.request.AddMultipleToCartRequest;
 import com.artezo.dto.request.AddToCartRequest;
 import com.artezo.dto.request.RemoveCartItemsRequest;
 import com.artezo.dto.response.CartResponse;
@@ -13,10 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,6 +51,62 @@ public class CartServiceImpl implements CartService {
         // );
     }
 
+//    @Override
+//    @Transactional
+//    public CartResponse addToCart(AddToCartRequest request) {
+//        logger.info("[CART] Adding item to cart | userId={}, productId={}", request.getUserId(), request.getProductId());
+//
+//        CartEntity cart = getOrCreateCart(request.getUserId(), request.getSessionId());
+//
+//        // ── Guard: quantity cap ──────────────────────────────────────────
+//        if (request.getQuantity() != null && request.getQuantity() > 50) {
+//            throw new RuntimeException("Quantity exceeds allowed limit of 50");
+//        }
+//
+//        // ── Guard: cart item limit ───────────────────────────────────────
+//        Integer itemCount = cartItemRepository.countByCartId(cart.getId());
+//        if (itemCount != null && itemCount >= 100) {
+//            throw new RuntimeException("Cart item limit of 100 reached");
+//        }
+//
+//        Optional<CartItemEntity> existing = cartItemRepository
+//                .findByCart_IdAndProductIdAndVariantId(cart.getId(), request.getProductId(), request.getVariantId());
+//
+//        // Inside addToCart(), before building CartItemEntity
+//        String productStrId = productRepository.findById(request.getProductId())
+//                .map(ProductEntity::getProductStrId)
+//                .orElseThrow(() -> new RuntimeException("Product not found: " + request.getProductId()));
+//
+//
+//        if (existing.isPresent()) {
+//            CartItemEntity item = existing.get();
+//            item.setQuantity(item.getQuantity() + (request.getQuantity() != null ? request.getQuantity() : 1));
+//            cartItemRepository.save(item);
+//            logger.info("[CART] Quantity updated for existing item | itemId={}", item.getId());
+//        } else {
+//            CartItemEntity newItem = CartItemEntity.builder()
+//                    .cart(cart)
+//                    .productId(request.getProductId())
+//                    .productStrId(productStrId)   // ← add this
+//                    .variantId(request.getVariantId())
+//                    .sku(request.getSku())
+//                    .selectedColor(request.getSelectedColor())
+//                    .selectedSize(request.getSelectedSize())
+//                    .titleName(request.getProductName() != null ? request.getProductName() : request.getTitleName())
+//                    .unitPrice(request.getUnitPrice())
+//                    .mrpPrice(request.getMrpPrice())
+//                    .quantity(request.getQuantity() != null ? request.getQuantity() : 1)
+//                    .customFieldsJson(request.getCustomFieldsJson())
+//                    .productImageUrl(calculateImageUrl(request.getProductId()))
+//                    .build();
+//            cartItemRepository.save(newItem);
+//            logger.info("[CART] New item added to cart | productId={}", request.getProductId());
+//        }
+//
+//        Long userId = cart.getUser() != null ? cart.getUser().getUserId() : null;
+//        return buildCartResponse(cart.getId(), userId, cart.getStatus().name());
+//    }
+
     @Override
     @Transactional
     public CartResponse addToCart(AddToCartRequest request) {
@@ -60,12 +114,50 @@ public class CartServiceImpl implements CartService {
 
         CartEntity cart = getOrCreateCart(request.getUserId(), request.getSessionId());
 
-        // ── Guard: quantity cap ──────────────────────────────────────────
+        addSingleItemInternal(cart, request);
+
+        Long userId = cart.getUser() != null ? cart.getUser().getUserId() : null;
+        return buildCartResponse(cart.getId(), userId, cart.getStatus().name());
+    }
+
+    @Override
+    @Transactional
+    public CartResponse addMultipleToCart(AddMultipleToCartRequest request) {
+        List<AddToCartRequest> requestedItems = request.getItems();
+        logger.info("[CART] Adding multiple items to cart | count={}",
+                requestedItems == null ? 0 : requestedItems.size());
+
+        if (requestedItems == null || requestedItems.isEmpty()) {
+            throw new RuntimeException("No items provided for bulk add");
+        }
+
+        AddToCartRequest first = requestedItems.get(0);
+        CartEntity cart = getOrCreateCart(first.getUserId(), first.getSessionId());
+
+        List<CartResponse.FailedItem> failedItems = new ArrayList<>();
+
+        for (AddToCartRequest item : requestedItems) {
+            try {
+                addSingleItemInternal(cart, item);
+            } catch (RuntimeException ex) {
+                logger.warn("[CART] Bulk add: item failed | productId={}, variantId={} | reason={}",
+                        item.getProductId(), item.getVariantId(), ex.getMessage());
+                failedItems.add(new CartResponse.FailedItem(
+                        item.getProductId(), item.getVariantId(), ex.getMessage()));
+            }
+        }
+
+        Long userId = cart.getUser() != null ? cart.getUser().getUserId() : null;
+        CartResponse response = buildCartResponse(cart.getId(), userId, cart.getStatus().name());
+        response.setFailedItems(failedItems.isEmpty() ? null : failedItems);
+        return response;
+    }
+
+    private void addSingleItemInternal(CartEntity cart, AddToCartRequest request) {
         if (request.getQuantity() != null && request.getQuantity() > 50) {
             throw new RuntimeException("Quantity exceeds allowed limit of 50");
         }
 
-        // ── Guard: cart item limit ───────────────────────────────────────
         Integer itemCount = cartItemRepository.countByCartId(cart.getId());
         if (itemCount != null && itemCount >= 100) {
             throw new RuntimeException("Cart item limit of 100 reached");
@@ -74,11 +166,9 @@ public class CartServiceImpl implements CartService {
         Optional<CartItemEntity> existing = cartItemRepository
                 .findByCart_IdAndProductIdAndVariantId(cart.getId(), request.getProductId(), request.getVariantId());
 
-        // Inside addToCart(), before building CartItemEntity
         String productStrId = productRepository.findById(request.getProductId())
                 .map(ProductEntity::getProductStrId)
                 .orElseThrow(() -> new RuntimeException("Product not found: " + request.getProductId()));
-
 
         if (existing.isPresent()) {
             CartItemEntity item = existing.get();
@@ -89,7 +179,7 @@ public class CartServiceImpl implements CartService {
             CartItemEntity newItem = CartItemEntity.builder()
                     .cart(cart)
                     .productId(request.getProductId())
-                    .productStrId(productStrId)   // ← add this
+                    .productStrId(productStrId)
                     .variantId(request.getVariantId())
                     .sku(request.getSku())
                     .selectedColor(request.getSelectedColor())
@@ -104,9 +194,6 @@ public class CartServiceImpl implements CartService {
             cartItemRepository.save(newItem);
             logger.info("[CART] New item added to cart | productId={}", request.getProductId());
         }
-
-        Long userId = cart.getUser() != null ? cart.getUser().getUserId() : null;
-        return buildCartResponse(cart.getId(), userId, cart.getStatus().name());
     }
 
     private String calculateImageUrl(Long productPrimeId) {

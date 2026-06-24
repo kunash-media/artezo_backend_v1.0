@@ -10,5 +10,7 @@ public enum OrderStatus {
     RETURNED,
     EXCHANGE_REQUESTED,
     EXCHANGED,
-    FAILED
+    FAILED,
+    CONFIRMED,
+    PAYMENT_FAILED
 }

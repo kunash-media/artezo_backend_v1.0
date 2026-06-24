@@ -1,5 +1,6 @@
 package com.artezo.service;
 
+import com.artezo.dto.request.AddMultipleToCartRequest;
 import com.artezo.dto.request.AddToCartRequest;
 import com.artezo.dto.request.RemoveCartItemsRequest;
 import com.artezo.dto.response.CartResponse;
@@ -27,4 +28,6 @@ public interface CartService {
     int getCartCount(Long userId);
 
     CartResponse removeItems(Long userId, List<RemoveCartItemsRequest.CartItemIdentifier> items);
+
+    CartResponse addMultipleToCart(AddMultipleToCartRequest request);
 }

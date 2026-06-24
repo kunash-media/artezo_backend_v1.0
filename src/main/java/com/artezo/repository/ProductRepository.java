@@ -169,4 +169,39 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
 
     @Query("SELECT DISTINCT p.productSubCategory FROM ProductEntity p WHERE p.isDeleted = false AND p.productSubCategory IS NOT NULL AND p.productSubCategory != '' ORDER BY p.productSubCategory ASC")
     List<String> findDistinctSubCategories();
+
+
+    // ── SR Catalog Sync ───────────────────────────────────────────────────────
+
+    Page<ProductEntity> findByProductCategoryAndIsDeletedFalse(String productCategory, Pageable pageable);
+
+    /**
+     * Eagerly fetches variants in a single JOIN query — avoids LazyInitializationException
+     * and N+1 selects when mapping products for SR catalog response.
+     *
+     * Note: Can't use Page<> with JOIN FETCH — use List + count query separately.
+     * Called from SRCatalogController after the pageable IDs are known.
+     */
+    @Query("""
+        SELECT DISTINCT p FROM ProductEntity p
+        LEFT JOIN FETCH p.variants
+        WHERE p.isDeleted = false
+        AND p.productPrimeId IN :ids
+    """)
+    List<ProductEntity> findByIdInWithVariants(@Param("ids") List<Long> ids);
+
+    @Query("SELECT DISTINCT p.productCategory FROM ProductEntity p WHERE p.isDeleted = false AND p.productCategory IS NOT NULL")
+    Page<String> findDistinctCategories(Pageable pageable);
+
+    // ── SR order-sync SKU lookup ──────────────────────────────────────────────
+
+    @Query("""
+        SELECT DISTINCT p FROM ProductEntity p
+        LEFT JOIN p.variants v
+        WHERE p.currentSku = :sku OR v.sku = :sku
+    """)
+    Optional<ProductEntity> findByCurrentSkuOrVariantSku(@Param("sku") String sku);
+
+    @Query("SELECT DISTINCT p.productCategory FROM ProductEntity p WHERE p.isDeleted = false AND p.productCategory IS NOT NULL")
+    List<String> findAllDistinctCategories();
 }
